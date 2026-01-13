@@ -16,11 +16,15 @@ public class GenderButton extends Actor
         this.isSelected = false;
         this.isHovered = false;
         
-        // Load and scale character image
+        // Load character image; keep GIFs unscaled to preserve animation per Greenfoot docs
         try
         {
             this.characterImage = new GreenfootImage(imagePath);
-            this.characterImage.scale(80, 80);
+            String lower = imagePath.toLowerCase();
+            if (!lower.endsWith(".gif"))
+            {
+                this.characterImage.scale(80, 80);
+            }
         }
         catch (Exception e)
         {

@@ -9,10 +9,10 @@ public class Girl extends Actor
 
     public Girl()
     {
-        // Load the girl actor image
+        // Load the updated girl actor image
         try
         {
-            GreenfootImage image = new GreenfootImage("avatarfata.png");
+            GreenfootImage image = new GreenfootImage("redhairgirl.gif");
             image.scale(50, 60);
             setImage(image);
         }
