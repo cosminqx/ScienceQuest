@@ -4,6 +4,10 @@ public class StartButton extends Actor
 {
     private String label;
     private boolean isHovered;
+    private int baseY;
+    private int hoverOffset = 10; // How many pixels to move up when hovering
+    private int imageWidth;
+    private int imageHeight;
 
     public StartButton()
     {
@@ -45,19 +49,11 @@ public class StartButton extends Actor
             
             image.scale(scaledWidth, scaledHeight);
             
-            // Add a subtle border effect when hovered
-            if (isHovered)
-            {
-                GreenfootImage bordered = new GreenfootImage(scaledWidth + 10, scaledHeight + 10);
-                bordered.setColor(new Color(255, 215, 0)); // Gold border
-                bordered.fillRect(0, 0, scaledWidth + 10, scaledHeight + 10);
-                bordered.drawImage(image, 5, 5);
-                setImage(bordered);
-            }
-            else
-            {
-                setImage(image);
-            }
+            // Store the image dimensions for hitbox calculation
+            this.imageWidth = scaledWidth;
+            this.imageHeight = scaledHeight;
+            
+            setImage(image);
         }
         catch (Exception e)
         {
@@ -67,26 +63,46 @@ public class StartButton extends Actor
             fallback.fillRect(0, 0, 200, 60);
             fallback.setColor(Color.WHITE);
             fallback.drawString(label, 50, 40);
+            
+            this.imageWidth = 200;
+            this.imageHeight = 60;
+            
             setImage(fallback);
         }
     }
 
     public void act()
     {
-        // Check if mouse is hovering
+        // Store base Y position on first frame
+        if (baseY == 0)
+        {
+            baseY = getY();
+        }
+        
+        // Check if mouse is hovering using image dimensions as hitbox
         MouseInfo mouse = Greenfoot.getMouseInfo();
-        if (mouse != null && getDistance(mouse.getX(), mouse.getY()) < 80)
+        if (mouse != null && isMouseOnButton(mouse.getX(), mouse.getY()))
         {
             if (!isHovered)
             {
                 isHovered = true;
-                updateImage();
             }
         }
         else if (isHovered)
         {
             isHovered = false;
-            updateImage();
+        }
+        
+        // Animate position based on hover state
+        if (isHovered)
+        {
+            // Move up when hovering
+            setLocation(getX(), baseY - hoverOffset);
+        }
+        else
+        {
+            // Return to original position
+            setLocation(getX(), baseY);
         }
         
         if (Greenfoot.mouseClicked(this))
@@ -95,11 +111,21 @@ public class StartButton extends Actor
         }
     }
 
-    private double getDistance(int x, int y)
+    /**
+     * Check if mouse is within the button's image bounds
+     */
+    private boolean isMouseOnButton(int mouseX, int mouseY)
     {
-        int dx = getX() - x;
-        int dy = getY() - y;
-        return Math.sqrt(dx * dx + dy * dy);
+        int actorX = getX();
+        int actorY = getY();
+        
+        // Calculate button bounds (actor position is at center)
+        int left = actorX - imageWidth / 2;
+        int right = actorX + imageWidth / 2;
+        int top = actorY - imageHeight / 2;
+        int bottom = actorY + imageHeight / 2;
+        
+        return mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom;
     }
 
     public void onButtonClicked()
