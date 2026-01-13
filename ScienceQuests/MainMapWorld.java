@@ -27,6 +27,17 @@ public class MainMapWorld extends World
         else if ("Female".equals(playerGender))
         {
             Girl girl = new Girl();
+            // Ensure the main world uses the original avatar image for female selection
+            try
+            {
+                GreenfootImage avatar = new GreenfootImage("avatarfata.png");
+                avatar.scale(50, 60);
+                girl.setImage(avatar);
+            }
+            catch (Exception e)
+            {
+                // If loading fails, Girl keeps its constructor image
+            }
             addObject(girl, getWidth()/2, getHeight()/2);
         }
         else

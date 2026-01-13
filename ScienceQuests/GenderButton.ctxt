@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=GenderButton
-comment0.text=\r\n\ GenderButton\ -\ Button\ for\ selecting\ player\ gender\ with\ character\ image\r\n
+comment0.text=\n\ GenderButton\ -\ Button\ for\ selecting\ player\ gender\ with\ character\ image\n
 comment1.params=gender\ imagePath
 comment1.target=GenderButton(java.lang.String,\ java.lang.String)
 comment2.params=
