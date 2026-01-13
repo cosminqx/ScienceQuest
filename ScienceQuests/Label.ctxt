@@ -1,0 +1,5 @@
+#BlueJ class context
+comment0.target=Label
+comment1.params=text\ fontSize
+comment1.target=Label(java.lang.String,\ int)
+numComments=2
