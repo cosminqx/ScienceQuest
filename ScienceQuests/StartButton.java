@@ -2,14 +2,28 @@ import greenfoot.*;
 
 public class StartButton extends Actor
 {
+    private String label;
+
     public StartButton()
+    {
+        this("START");
+    }
+
+    public StartButton(String label)
+    {
+        this.label = label;
+        updateImage();
+    }
+
+    private void updateImage()
     {
         GreenfootImage image = new GreenfootImage(200, 50);
         image.setColor(Color.DARK_GRAY);
         image.fillRect(0, 0, 200, 50);
 
         image.setColor(Color.WHITE);
-        image.drawString("START", 75, 32);
+        int stringWidth = label.length() * 6;
+        image.drawString(label, 100 - stringWidth/2, 32);
 
         setImage(image);
     }
@@ -18,12 +32,19 @@ public class StartButton extends Actor
     {
         if (Greenfoot.mouseClicked(this))
         {
-            startGame();
+            onButtonClicked();
         }
     }
 
-    private void startGame()
+    public void onButtonClicked()
     {
-        Greenfoot.setWorld(new MainMapWorld());
+        // Default behavior - override in subclasses if needed
+        startGame();
+    }
+
+    public void startGame()
+    {
+        StartWorld world = (StartWorld) getWorld();
+        world.showNameScreen();
     }
 }
