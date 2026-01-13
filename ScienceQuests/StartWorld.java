@@ -15,6 +15,17 @@ public class StartWorld extends World
         showTitleScreen();
     }
 
+    /**
+     * Remove all objects from the world
+     */
+    private void removeAllObjects()
+    {
+        for (Actor actor : getObjects(Actor.class))
+        {
+            removeObject(actor);
+        }
+    }
+
     private void showTitleScreen()
     {
         removeAllObjects();
