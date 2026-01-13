@@ -7,7 +7,7 @@ public class Label extends Actor
         GreenfootImage image = new GreenfootImage(
             text,
             fontSize,
-            Color.WHITE,
+            Color.BLACK,
             new Color(0, 0, 0, 0) // transparent background
         );
         setImage(image);
