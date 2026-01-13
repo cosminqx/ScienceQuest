@@ -1,0 +1,16 @@
+#BlueJ class context
+comment0.target=InputField
+comment0.text=\r\n\ InputField\ -\ Text\ input\ field\ for\ player\ name\ entry\r\n
+comment1.params=width\ height\ maxLength
+comment1.target=InputField(int,\ int,\ int)
+comment2.params=
+comment2.target=void\ act()
+comment3.params=
+comment3.target=void\ updateImage()
+comment4.params=
+comment4.target=java.lang.String\ getText()
+comment5.params=newText
+comment5.target=void\ setText(java.lang.String)
+comment6.params=focused
+comment6.target=void\ setFocused(boolean)
+numComments=7

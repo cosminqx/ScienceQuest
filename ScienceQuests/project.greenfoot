@@ -1,4 +1,5 @@
 #Greenfoot project file
+class.StartWorld.image=pngtree-nobody-interface-of-pixel-game-platform-picture-image_1962988.jpg
 dependency1.from=StartWorld
 dependency1.to=InputField
 dependency1.type=UsesDependency
