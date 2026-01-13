@@ -14,6 +14,7 @@ public class StartWorld extends World
         super(600, 400, 1);  // width, height, cell size
         setScaledBackground();
         showTitleScreen();
+        prepare();
     }
 
     /**
@@ -43,7 +44,7 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 0;
 
-        Label title = new Label("ScienceQuests", 48);
+        Label title = new Label("ScienceQuests", 48, Color.WHITE);
         addObject(title, getWidth()/2, 120);
 
         StartButton startButton = new StartButton();
@@ -55,10 +56,10 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 1;
 
-        Label title = new Label("Create Your Character", 36);
+        Label title = new Label("Create Your Character", 36, Color.WHITE);
         addObject(title, getWidth()/2, 50);
 
-        Label nameLabel = new Label("Enter your name:", 24);
+        Label nameLabel = new Label("Enter your name:", 24, Color.WHITE);
         addObject(nameLabel, getWidth()/2, 130);
 
         nameField = new InputField(300, 40, 20);
@@ -79,17 +80,17 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 2;
 
-        Label title = new Label("Select your gender:", 36);
-        addObject(title, getWidth()/2, 50);
+        Label title = new Label("Select your gender:", 36, Color.WHITE);
+        addObject(title, getWidth()/2, 30);
 
-        maleButton = new GenderButton("Male");
-        addObject(maleButton, 150, 180);
+        maleButton = new GenderButton("Male", "avatar.png");
+        addObject(maleButton, 100, 180);
 
-        femaleButton = new GenderButton("Female");
+        femaleButton = new GenderButton("Female", "avatarfata.png");
         addObject(femaleButton, getWidth()/2, 180);
 
-        otherButton = new GenderButton("Other");
-        addObject(otherButton, getWidth() - 150, 180);
+        otherButton = new GenderButton("Other", "ppl2.png");
+        addObject(otherButton, getWidth() - 100, 180);
 
         continueButton = new StartButton()
         {
@@ -98,7 +99,7 @@ public class StartWorld extends World
                 proceedToGame();
             }
         };
-        addObject(continueButton, getWidth()/2, 300);
+        addObject(continueButton, getWidth()/2, 360);
     }
 
     private void proceedToGenderScreen()
@@ -127,5 +128,12 @@ public class StartWorld extends World
     public void showNameScreen()
     {
         showNameInputScreen();
+    }
+    /**
+     * Prepare the world for the start of the program.
+     * That is: create the initial objects and add them to the world.
+     */
+    private void prepare()
+    {
     }
 }

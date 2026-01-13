@@ -2,4 +2,6 @@
 comment0.target=Label
 comment1.params=text\ fontSize
 comment1.target=Label(java.lang.String,\ int)
-numComments=2
+comment2.params=text\ fontSize\ textColor
+comment2.target=Label(java.lang.String,\ int,\ greenfoot.Color)
+numComments=3

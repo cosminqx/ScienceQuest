@@ -1,22 +1,53 @@
 import greenfoot.*;
 
 /**
- * GenderButton - Button for selecting player gender
+ * GenderButton - Button for selecting player gender with character image
  */
 public class GenderButton extends Actor
 {
     private String gender;
     private boolean isSelected;
+    private boolean isHovered;
+    private GreenfootImage characterImage;
 
-    public GenderButton(String gender)
+    public GenderButton(String gender, String imagePath)
     {
         this.gender = gender;
         this.isSelected = false;
+        this.isHovered = false;
+        
+        // Load and scale character image
+        try
+        {
+            this.characterImage = new GreenfootImage(imagePath);
+            this.characterImage.scale(80, 80);
+        }
+        catch (Exception e)
+        {
+            this.characterImage = null;
+        }
+        
         updateImage();
     }
 
     public void act()
     {
+        // Check if mouse is hovering
+        MouseInfo mouse = Greenfoot.getMouseInfo();
+        if (mouse != null && getDistance(mouse.getX(), mouse.getY()) < 60)
+        {
+            if (!isHovered)
+            {
+                isHovered = true;
+                updateImage();
+            }
+        }
+        else if (isHovered)
+        {
+            isHovered = false;
+            updateImage();
+        }
+        
         if (Greenfoot.mouseClicked(this))
         {
             isSelected = !isSelected;
@@ -24,22 +55,55 @@ public class GenderButton extends Actor
         }
     }
 
+    private double getDistance(int x, int y)
+    {
+        int dx = getX() - x;
+        int dy = getY() - y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     private void updateImage()
     {
-        GreenfootImage image = new GreenfootImage(120, 50);
+        GreenfootImage image = new GreenfootImage(140, 160);
 
         if (isSelected)
         {
+            // Selected state - vibrant blue with gradient effect
+            image.setColor(new Color(70, 130, 250));
+            image.fillRect(0, 0, 140, 160);
             image.setColor(new Color(100, 150, 255));
+            image.fillRect(2, 2, 136, 156);
+        }
+        else if (isHovered)
+        {
+            // Hovered state - light gray
+            image.setColor(new Color(180, 200, 220));
+            image.fillRect(0, 0, 140, 160);
+            image.setColor(new Color(200, 220, 240));
+            image.fillRect(2, 2, 136, 156);
         }
         else
         {
-            image.setColor(Color.DARK_GRAY);
+            // Default state - darker gray
+            image.setColor(new Color(90, 110, 140));
+            image.fillRect(0, 0, 140, 160);
+            image.setColor(new Color(120, 140, 170));
+            image.fillRect(2, 2, 136, 156);
         }
 
-        image.fillRect(0, 0, 120, 50);
+        // Border
+        image.setColor(new Color(50, 70, 110));
+        image.drawRect(0, 0, 139, 159);
+        
+        // Draw character image if available
+        if (characterImage != null)
+        {
+            image.drawImage(characterImage, 30, 20);
+        }
+        
+        // Text label at bottom
         image.setColor(Color.WHITE);
-        image.drawString(gender, 30, 32);
+        image.drawString(gender, 25, 150);
 
         setImage(image);
     }
@@ -60,3 +124,4 @@ public class GenderButton extends Actor
         updateImage();
     }
 }
+    

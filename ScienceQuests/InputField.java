@@ -55,7 +55,7 @@ public class InputField extends Actor
             image.fillRect(1, 1, width - 2, height - 2);
         }
 
-        image.setColor(Color.BLACK);
+        image.setColor(Color.WHITE);
         image.drawString(text, 10, height / 2 + 5);
 
         setImage(image);
