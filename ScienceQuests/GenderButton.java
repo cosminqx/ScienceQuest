@@ -9,6 +9,7 @@ public class GenderButton extends Actor
     private boolean isSelected;
     private boolean isHovered;
     private GreenfootImage characterImage;
+    private boolean usesSpritesheet = false;
 
     public GenderButton(String gender, String imagePath)
     {
@@ -16,22 +17,61 @@ public class GenderButton extends Actor
         this.isSelected = false;
         this.isHovered = false;
         
-        // Load character image; keep GIFs unscaled to preserve animation per Greenfoot docs
+        // Check if this is a spritesheet path
+        if (imagePath.startsWith("spritesheet/"))
+        {
+            usesSpritesheet = true;
+            loadSpriteFromSheet(imagePath);
+        }
+        else
+        {
+            // Load character image; keep GIFs unscaled to preserve animation per Greenfoot docs
+            try
+            {
+                this.characterImage = new GreenfootImage(imagePath);
+                String lower = imagePath.toLowerCase();
+                if (!lower.endsWith(".gif"))
+                {
+                    this.characterImage.scale(140, 140);
+                }
+            }
+            catch (Exception e)
+            {
+                this.characterImage = null;
+            }
+        }
+        
+        updateImage();
+    }
+    
+    /**
+     * Load the first frame from a spritesheet
+     */
+    private void loadSpriteFromSheet(String spritesheetPath)
+    {
         try
         {
-            this.characterImage = new GreenfootImage(imagePath);
-            String lower = imagePath.toLowerCase();
-            if (!lower.endsWith(".gif"))
-            {
-                this.characterImage.scale(80, 80);
-            }
+            GreenfootImage spritesheet = new GreenfootImage(spritesheetPath);
+            int spriteWidth = 480;
+            int spriteHeight = 320;
+            
+            // Extract first sprite (frame 0)
+            GreenfootImage fullFrame = new GreenfootImage(spriteWidth, spriteHeight);
+            fullFrame.drawImage(spritesheet, 0, 0);
+            
+            // Crop the center portion to fit button (80x80)
+            int cropWidth = 140;
+            int cropHeight = 140;
+            int cropX = (spriteWidth - cropWidth) / 2;
+            int cropY = (spriteHeight - cropHeight) / 2;
+            
+            this.characterImage = new GreenfootImage(cropWidth, cropHeight);
+            this.characterImage.drawImage(fullFrame, -cropX, -cropY);
         }
         catch (Exception e)
         {
             this.characterImage = null;
         }
-        
-        updateImage();
     }
 
     public void act()
@@ -68,41 +108,47 @@ public class GenderButton extends Actor
 
     private void updateImage()
     {
-        GreenfootImage image = new GreenfootImage(140, 160);
+        int buttonWidth = 140;
+        int buttonHeight = 160;
+        
+        GreenfootImage image = new GreenfootImage(buttonWidth, buttonHeight);
 
         if (isSelected)
         {
             // Selected state - vibrant blue with gradient effect
             image.setColor(new Color(70, 130, 250));
-            image.fillRect(0, 0, 140, 160);
+            image.fillRect(0, 0, buttonWidth, buttonHeight);
             image.setColor(new Color(100, 150, 255));
-            image.fillRect(2, 2, 136, 156);
+            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
         }
         else if (isHovered)
         {
             // Hovered state - light gray
             image.setColor(new Color(180, 200, 220));
-            image.fillRect(0, 0, 140, 160);
+            image.fillRect(0, 0, buttonWidth, buttonHeight);
             image.setColor(new Color(200, 220, 240));
-            image.fillRect(2, 2, 136, 156);
+            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
         }
         else
         {
             // Default state - darker gray
             image.setColor(new Color(90, 110, 140));
-            image.fillRect(0, 0, 140, 160);
+            image.fillRect(0, 0, buttonWidth, buttonHeight);
             image.setColor(new Color(120, 140, 170));
-            image.fillRect(2, 2, 136, 156);
+            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
         }
 
         // Border
         image.setColor(new Color(50, 70, 110));
-        image.drawRect(0, 0, 139, 159);
+        image.drawRect(0, 0, buttonWidth - 1, buttonHeight - 1);
         
         // Draw character image if available
         if (characterImage != null)
         {
-            image.drawImage(characterImage, 30, 20);
+            // Center the character image
+            int imgX = (buttonWidth - characterImage.getWidth()) / 2;
+            int imgY = (buttonHeight - characterImage.getHeight() - 30) / 2 + 20; // Move down 20 pixels
+            image.drawImage(characterImage, imgX, imgY);
         }
         
         // Text label at bottom
