@@ -14,6 +14,8 @@ public class SpriteAnimator
     private boolean isAnimating;
     private int targetWidth;
     private int targetHeight;
+    private int rangeStart;
+    private int rangeEnd;
 
     public SpriteAnimator(String spritesheetPath, String jsonPath, int width, int height)
     {
@@ -23,6 +25,8 @@ public class SpriteAnimator
         this.isAnimating = true;
         this.targetWidth = width;
         this.targetHeight = height;
+        this.rangeStart = 0;
+        this.rangeEnd = -1; // -1 means full range
         
         try
         {
@@ -144,14 +148,29 @@ public class SpriteAnimator
     public void update()
     {
         if (!isAnimating || frames.isEmpty()) return;
-        
+
+        // Ensure currentFrameIndex is within active range
+        int start = (rangeEnd >= 0) ? rangeStart : 0;
+        int end = (rangeEnd >= 0) ? rangeEnd : frames.size() - 1;
+        if (currentFrameIndex < start || currentFrameIndex > end)
+        {
+            currentFrameIndex = start;
+        }
+
         FrameData currentFrame = frames.get(currentFrameIndex);
         animationCounter += 1; // Increment by 1 per act cycle
-        
+
         if (animationCounter >= currentFrame.duration / 16) // ~60fps, so divide by ~16
         {
             animationCounter = 0;
-            currentFrameIndex = (currentFrameIndex + 1) % frames.size();
+            if (currentFrameIndex >= end)
+            {
+                currentFrameIndex = start;
+            }
+            else
+            {
+                currentFrameIndex++;
+            }
         }
     }
 
@@ -160,8 +179,15 @@ public class SpriteAnimator
      */
     public void setFrameRange(int startFrame, int endFrame)
     {
-        // This would require a more complex frame list structure
-        // For now, we'll use the full frame list
+        if (frames.isEmpty()) return;
+        if (startFrame < 0) startFrame = 0;
+        if (endFrame >= frames.size()) endFrame = frames.size() - 1;
+        if (startFrame > endFrame) return;
+
+        this.rangeStart = startFrame;
+        this.rangeEnd = endFrame;
+        this.currentFrameIndex = startFrame;
+        this.animationCounter = 0;
     }
 
     /**
@@ -190,6 +216,14 @@ public class SpriteAnimator
             currentFrameIndex = frameIndex;
             animationCounter = 0;
         }
+    }
+
+    /**
+     * Get total number of frames parsed from the json
+     */
+    public int getFrameCount()
+    {
+        return frames.size();
     }
 
     /**
