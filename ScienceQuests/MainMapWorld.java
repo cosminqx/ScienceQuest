@@ -1,7 +1,5 @@
 import greenfoot.*;
 import java.util.*;
-import java.io.*;
-import java.nio.file.*;
 
 public class MainMapWorld extends World
 {
@@ -13,13 +11,14 @@ public class MainMapWorld extends World
     private int maxScrollY;
     private List<CollisionObject> collisionObjects = new ArrayList<>();
     private int tileSize = 48;
+    private TiledMap tiledMap;
 
     public MainMapWorld()
     {
         super(600, 400, 1);
         
-        // Load and set up the background image
-        setUpBackground();
+        // Load TMX map (floor + collisions)
+        loadMap();
         
         // Retrieve player data
         String playerName = PlayerData.getPlayerName();
@@ -46,19 +45,21 @@ public class MainMapWorld extends World
             character = boy;
         }
         
-        // Load map data from JSON and add collision objects AFTER character
-        loadMapFromJson();
+        // Add collision objects AFTER character so they render behind
+        addCollisionObjects();
         
         // Instructions
         Label instructionsLabel = new Label("Use arrow keys to move", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
     }
     
-    private void setUpBackground()
+    private void loadMap()
     {
         try
         {
-            backgroundImage = new GreenfootImage("images/floor.png");
+            tiledMap = new TiledMap("test-map.tmx");
+            tileSize = tiledMap.tileSize;
+            backgroundImage = tiledMap.getFullMapImage();
         }
         catch (Exception e)
         {
@@ -66,86 +67,60 @@ public class MainMapWorld extends World
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 139, 34)); // Forest green
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
+            tiledMap = null;
         }
         
         // Calculate max scroll values to prevent scrolling past the edges
         maxScrollX = Math.max(0, backgroundImage.getWidth() - getWidth());
         maxScrollY = Math.max(0, backgroundImage.getHeight() - getHeight());
     }
-    
-    private void loadMapFromJson()
+
+    private void addCollisionObjects()
     {
-        try
+        if (tiledMap == null) return;
+
+        for (int y = 0; y < tiledMap.mapH; y++)
         {
-            // Read map.json file from parent directory
-            String jsonPath = "../map.json";
-            String content = new String(Files.readAllBytes(Paths.get(jsonPath)));
-            
-            // Parse collision layer manually
-            parseCollisionLayer(content);
-            
-            // Add all collision objects to the world
-            updateCollisionObjectPositions();
-        }
-        catch (Exception e)
-        {
-            System.out.println("Could not load map.json: " + e.getMessage());
-        }
-    }
-    
-    private void parseCollisionLayer(String json)
-    {
-        // Find the Collision layer
-        int collisionStart = json.indexOf("\"name\":\"Collision\"");
-        if (collisionStart == -1) return;
-        
-        // Find tiles array within collision layer
-        int tilesStart = json.indexOf("\"tiles\":[", collisionStart);
-        if (tilesStart == -1) return;
-        
-        int tilesEnd = json.indexOf("]", tilesStart);
-        String tilesSection = json.substring(tilesStart + 9, tilesEnd);
-        
-        // Parse each tile object
-        String[] tiles = tilesSection.split("\\},\\{");
-        for (String tile : tiles)
-        {
-            tile = tile.replace("{", "").replace("}", "");
-            
-            int x = -1, y = -1;
-            
-            // Extract x coordinate
-            int xPos = tile.indexOf("\"x\":");
-            if (xPos != -1)
+            for (int x = 0; x < tiledMap.mapW; x++)
             {
-                int xStart = xPos + 4;
-                int xEnd = tile.indexOf(",", xStart);
-                if (xEnd == -1) xEnd = tile.length();
-                try {
-                    x = Integer.parseInt(tile.substring(xStart, xEnd).trim());
-                } catch (Exception e) {}
-            }
-            
-            // Extract y coordinate
-            int yPos = tile.indexOf("\"y\":");
-            if (yPos != -1)
-            {
-                int yStart = yPos + 4;
-                int yEnd = tile.indexOf(",", yStart);
-                if (yEnd == -1) yEnd = tile.length();
-                try {
-                    y = Integer.parseInt(tile.substring(yStart, yEnd).trim());
-                } catch (Exception e) {}
-            }
-            
-            // Add desk at tile position
-            if (x >= 0 && y >= 0)
-            {
+                boolean isSolid = tiledMap.solid[y][x];
+                if (!isSolid) continue;
+
                 int pixelX = x * tileSize + tileSize / 2;
                 int pixelY = y * tileSize + tileSize / 2;
-                collisionObjects.add(new CollisionObject(new Desk(), pixelX, pixelY));
+
+                // Use Wall for primary collision layer, Desk for secondary (visual differentiation)
+                Actor collider;
+                if (tiledMap.collisionA[y][x] != 0)
+                {
+                    collider = new Wall();
+                }
+                else
+                {
+                    collider = new Desk();
+                }
+
+                makeColliderInvisible(collider);
+                collisionObjects.add(new CollisionObject(collider, pixelX, pixelY));
             }
         }
+
+        updateCollisionObjectPositions();
+    }
+
+    private void makeColliderInvisible(Actor collider)
+    {
+        GreenfootImage img = collider.getImage();
+        if (img == null)
+        {
+            img = new GreenfootImage(tileSize, tileSize);
+        }
+        else
+        {
+            img = new GreenfootImage(img); // clone to avoid shared refs
+        }
+        img.setTransparency(0);
+        collider.setImage(img);
     }
     
     private void updateCollisionObjectPositions()

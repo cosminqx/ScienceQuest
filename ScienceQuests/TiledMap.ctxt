@@ -1,0 +1,26 @@
+#BlueJ class context
+comment0.target=TiledMap
+comment0.text=\n\ TiledMap\ -\ lightweight\ TMX\ loader\ for\ CSV-encoded\ tile\ layers.\n\ Supports\ Floor,\ Collision,\ and\ Collision1\ layers\ with\ 48x48\ tiles.\n
+comment1.params=tmxPath
+comment1.target=TiledMap(java.lang.String)
+comment10.params=layer
+comment10.target=int\ countNonZero(int[][])
+comment11.params=
+comment11.target=greenfoot.GreenfootImage\ getFullMapImage()
+comment2.params=xml\ prefix\ terminator
+comment2.target=int\ extractIntAttr(java.lang.String,\ java.lang.String,\ java.lang.String)
+comment3.params=xml\ layerName\ w\ h
+comment3.target=int[][]\ parseLayer(java.lang.String,\ java.lang.String,\ int,\ int)
+comment4.params=
+comment4.target=void\ buildFullMapImage()
+comment5.params=target\ layer
+comment5.target=void\ drawLayerOnto(greenfoot.GreenfootImage,\ int[][])
+comment6.params=
+comment6.target=void\ loadTilesetImage()
+comment7.params=gid
+comment7.target=greenfoot.GreenfootImage\ getTileFromGid(int)
+comment8.params=xml
+comment8.target=int\ extractTilesetFirstGid(java.lang.String)
+comment9.params=
+comment9.target=void\ logLayerCounts()
+numComments=12
