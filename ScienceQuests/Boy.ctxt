@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=Boy
-comment0.text=\n\ Boy\ -\ Playable\ character\ that\ can\ be\ controlled\ with\ arrow\ keys\n\ Uses\ directional\ spritesheets\ (UP,\ DOWN,\ LEFT,\ RIGHT)\ with\ 8\ frames\ each\n
+comment0.text=\n\ Boy\ -\ Playable\ character\ that\ can\ be\ controlled\ with\ arrow\ keys\n\ Uses\ directional\ spritesheets\ (UP,\ DOWN,\ LEFT,\ RIGHT,\ UP_LEFT,\ UP_RIGHT)\ with\ 8\ frames\ each\n
 comment1.params=
 comment1.target=Boy()
 comment2.params=spritesheetPath

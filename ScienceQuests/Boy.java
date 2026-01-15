@@ -2,7 +2,7 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 
 /**
  * Boy - Playable character that can be controlled with arrow keys
- * Uses directional spritesheets (UP, DOWN, LEFT, RIGHT) with 8 frames each
+ * Uses directional spritesheets (UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT) with 8 frames each
  */
 public class Boy extends Actor
 {
@@ -13,6 +13,8 @@ public class Boy extends Actor
     private GreenfootImage[] downFrames;
     private GreenfootImage[] leftFrames;
     private GreenfootImage[] rightFrames;
+     private GreenfootImage[] upLeftFrames;
+     private GreenfootImage[] upRightFrames;
     
     // Animation state
     private GreenfootImage[] currentAnimation;
@@ -20,7 +22,8 @@ public class Boy extends Actor
     private int animationCounter = 0;
     private static final int FRAME_DELAY = 5; // acts between frames
     private boolean isMoving = false;
-    private int lastDirection = 2; // 0=up, 1=left, 2=down, 3=right
+     // Direction indices: 0=up,1=left,2=down,3=right,4=up-left,5=up-right,6=down-left,7=down-right
+     private int lastDirection = 2;
     
     // Frame dimensions
     private static final int FRAME_WIDTH = 96;
@@ -38,6 +41,8 @@ public class Boy extends Actor
             downFrames = loadDirectionalFrames("spritesheet/boy/DOWN.png");
             leftFrames = loadDirectionalFrames("spritesheet/boy/LEFT.png");
             rightFrames = loadDirectionalFrames("spritesheet/boy/RIGHT.png");
+            upLeftFrames = loadDirectionalFrames("spritesheet/boy/UP_LEFT.png");
+            upRightFrames = loadDirectionalFrames("spritesheet/boy/UP_RIGHT.png");
             
             // Start with down-facing idle frame
             currentAnimation = downFrames;
@@ -100,59 +105,95 @@ public class Boy extends Actor
     {
         isMoving = false;
 
-        if (Greenfoot.isKeyDown("up"))
+        boolean up = Greenfoot.isKeyDown("up");
+        boolean down = Greenfoot.isKeyDown("down");
+        boolean left = Greenfoot.isKeyDown("left");
+        boolean right = Greenfoot.isKeyDown("right");
+
+        // Neutralize opposing keys
+        if (up && down) { up = false; down = false; }
+        if (left && right) { left = false; right = false; }
+
+        int startX = getX();
+        int startY = getY();
+        int newX = startX;
+        int newY = startY;
+        int chosenDir = lastDirection;
+        GreenfootImage[] chosenFrames = currentAnimation;
+
+        if (up && left)
         {
-            setLocation(getX(), getY() - speed);
-            if (isTouching(Desk.class) || isTouching(Wall.class))
-            {
-                setLocation(getX(), getY() + speed);
-            }
-            else
-            {
-                setDirection(0, upFrames);
-                isMoving = true;
-            }
+            newY -= speed;
+            newX -= speed;
+            chosenDir = 4;
+            chosenFrames = upLeftFrames != null ? upLeftFrames : leftFrames;
         }
-        else if (Greenfoot.isKeyDown("down"))
+        else if (up && right)
         {
-            setLocation(getX(), getY() + speed);
-            if (isTouching(Desk.class) || isTouching(Wall.class))
-            {
-                setLocation(getX(), getY() - speed);
-            }
-            else
-            {
-                setDirection(2, downFrames);
-                isMoving = true;
-            }
+            newY -= speed;
+            newX += speed;
+            chosenDir = 5;
+            chosenFrames = upRightFrames != null ? upRightFrames : rightFrames;
         }
-        else if (Greenfoot.isKeyDown("left"))
+        else if (down && left)
         {
-            setLocation(getX() - speed, getY());
-            if (isTouching(Desk.class) || isTouching(Wall.class))
-            {
-                setLocation(getX() + speed, getY());
-            }
-            else
-            {
-                setDirection(1, leftFrames);
-                isMoving = true;
-            }
+            newY += speed;
+            newX -= speed;
+            chosenDir = 6;
+            chosenFrames = leftFrames;
         }
-        else if (Greenfoot.isKeyDown("right"))
+        else if (down && right)
         {
-            setLocation(getX() + speed, getY());
-            if (isTouching(Desk.class) || isTouching(Wall.class))
-            {
-                setLocation(getX() - speed, getY());
-            }
-            else
-            {
-                setDirection(3, rightFrames);
-                isMoving = true;
-            }
+            newY += speed;
+            newX += speed;
+            chosenDir = 7;
+            chosenFrames = rightFrames;
         }
-        
+        else if (up)
+        {
+            newY -= speed;
+            chosenDir = 0;
+            chosenFrames = upFrames;
+        }
+        else if (down)
+        {
+            newY += speed;
+            chosenDir = 2;
+            chosenFrames = downFrames;
+        }
+        else if (left)
+        {
+            newX -= speed;
+            chosenDir = 1;
+            chosenFrames = leftFrames;
+        }
+        else if (right)
+        {
+            newX += speed;
+            chosenDir = 3;
+            chosenFrames = rightFrames;
+        }
+
+        if (chosenDir != lastDirection)
+        {
+            setDirection(chosenDir, chosenFrames);
+        }
+
+        // Move and collision check
+        setLocation(newX, newY);
+        if (isTouching(Desk.class) || isTouching(Wall.class))
+        {
+            // revert move
+            setLocation(startX, startY);
+            isMoving = false;
+            currentFrame = 0;
+            animationCounter = 0;
+            return;
+        }
+
+        // Mark moving if any directional key was active
+        isMoving = up || down || left || right;
+
         // If not moving, reset to first frame of current direction
         if (!isMoving)
         {
@@ -166,6 +207,7 @@ public class Boy extends Actor
      */
     private void setDirection(int direction, GreenfootImage[] frames)
     {
+        if (frames == null) return;
         if (lastDirection != direction)
         {
             lastDirection = direction;
