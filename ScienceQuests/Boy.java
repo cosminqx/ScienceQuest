@@ -31,8 +31,8 @@ public class Boy extends Actor
     private static final int DISPLAY_WIDTH = 288;  // 3x scale
     private static final int DISPLAY_HEIGHT = 192; // 3x scale
     private static final int FRAMES_PER_DIRECTION = 8;
-    private static final int CROP_WIDTH = 80;      // Cropped collision box width
-    private static final int CROP_HEIGHT = 100;    // Cropped collision box height
+    private static final int CROP_WIDTH = 60;
+    private static final int CROP_HEIGHT = 80;
 
     public Boy()
     {
@@ -75,9 +75,9 @@ public class Boy extends Actor
             // Scale to 3x size
             frame.scale(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             
-            // Crop to remove transparent areas - center the character
-            int startX = (int)Math.round(DISPLAY_WIDTH / 2 - CROP_WIDTH / 2);
-            int startY = (int)Math.round(DISPLAY_HEIGHT / 2 - CROP_HEIGHT / 2);
+            // Crop to tight hitbox centered on character
+            int startX = (DISPLAY_WIDTH - CROP_WIDTH) / 2;
+            int startY = (DISPLAY_HEIGHT - CROP_HEIGHT) / 2;
             GreenfootImage croppedFrame = new GreenfootImage(CROP_WIDTH, CROP_HEIGHT);
             croppedFrame.drawImage(frame, -startX, -startY);
             frames[i] = croppedFrame;
