@@ -43,7 +43,7 @@ public class Boy extends Actor
         if (Greenfoot.isKeyDown("up"))
         {
             setLocation(getX(), getY() - speed);
-            if (isTouching(Desk.class))
+            if (isTouching(Desk.class) || isTouching(Wall.class))
             {
                 setLocation(getX(), getY() + speed);
             }
@@ -51,7 +51,7 @@ public class Boy extends Actor
         if (Greenfoot.isKeyDown("down"))
         {
             setLocation(getX(), getY() + speed);
-            if (isTouching(Desk.class))
+            if (isTouching(Desk.class) || isTouching(Wall.class))
             {
                 setLocation(getX(), getY() - speed);
             }
@@ -59,7 +59,7 @@ public class Boy extends Actor
         if (Greenfoot.isKeyDown("left"))
         {
             setLocation(getX() - speed, getY());
-            if (isTouching(Desk.class))
+            if (isTouching(Desk.class) || isTouching(Wall.class))
             {
                 setLocation(getX() + speed, getY());
             }
@@ -67,7 +67,7 @@ public class Boy extends Actor
         if (Greenfoot.isKeyDown("right"))
         {
             setLocation(getX() + speed, getY());
-            if (isTouching(Desk.class))
+            if (isTouching(Desk.class) || isTouching(Wall.class))
             {
                 setLocation(getX() - speed, getY());
             }

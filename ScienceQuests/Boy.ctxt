@@ -1,11 +1,11 @@
 #BlueJ class context
 comment0.target=Boy
-comment0.text=\r\n\ Boy\ -\ Playable\ character\ that\ can\ be\ controlled\ with\ arrow\ keys\r\n
+comment0.text=\n\ Boy\ -\ Playable\ character\ that\ can\ be\ controlled\ with\ arrow\ keys\n
 comment1.params=
 comment1.target=Boy()
 comment2.params=
 comment2.target=void\ act()
-comment2.text=\r\n\ Act\ -\ Handle\ keyboard\ input\ for\ movement\r\n
+comment2.text=\n\ Act\ -\ Handle\ keyboard\ input\ for\ movement\n
 comment3.params=
 comment3.target=void\ handleMovement()
 numComments=4
