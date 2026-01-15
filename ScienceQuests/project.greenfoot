@@ -15,19 +15,11 @@ dependency10.type=UsesDependency
 dependency11.from=MainMapWorld
 dependency11.to=Wall
 dependency11.type=UsesDependency
-<<<<<<< HEAD
 dependency12.from=MainMapWorld
 dependency12.to=Desk
 dependency12.type=UsesDependency
 dependency13.from=MainMapWorld
 dependency13.to=PlayerData
-=======
-dependency12.from=Boy
-dependency12.to=Desk
-dependency12.type=UsesDependency
-dependency13.from=Boy
-dependency13.to=Wall
->>>>>>> 19030a46b6339013a0997ce6487888c2aa347dc0
 dependency13.type=UsesDependency
 dependency14.from=Boy
 dependency14.to=Desk
@@ -35,7 +27,6 @@ dependency14.type=UsesDependency
 dependency15.from=Boy
 dependency15.to=Wall
 dependency15.type=UsesDependency
-<<<<<<< HEAD
 dependency16.from=StartButton
 dependency16.to=StartWorld
 dependency16.type=UsesDependency
@@ -48,14 +39,6 @@ dependency18.type=UsesDependency
 dependency19.from=GenderButton
 dependency19.to=AnimatedCharacter
 dependency19.type=UsesDependency
-=======
-dependency16.from=Girl
-dependency16.to=Wall
-dependency16.type=UsesDependency
-dependency17.from=GenderButton
-dependency17.to=AnimatedCharacter
-dependency17.type=UsesDependency
->>>>>>> 19030a46b6339013a0997ce6487888c2aa347dc0
 dependency2.from=StartWorld
 dependency2.to=GenderButton
 dependency2.type=UsesDependency
@@ -85,13 +68,8 @@ editor.fx.0.width=0
 editor.fx.0.x=0
 editor.fx.0.y=0
 height=634
-<<<<<<< HEAD
 package.numDependencies=19
 package.numTargets=14
-=======
-package.numDependencies=17
-package.numTargets=13
->>>>>>> 19030a46b6339013a0997ce6487888c2aa347dc0
 project.charset=UTF-8
 publish.hasSource=false
 publish.locked=true
@@ -207,5 +185,5 @@ target9.y=0
 version=3.1.0
 width=879
 world.lastInstantiated=StartWorld
-xPosition=402
-yPosition=282
+xPosition=426
+yPosition=277
