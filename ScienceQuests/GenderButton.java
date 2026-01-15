@@ -10,6 +10,8 @@ public class GenderButton extends Actor
     private boolean isHovered;
     private GreenfootImage characterImage;
     private boolean usesSpritesheet = false;
+    private AnimatedCharacter animatedCharacter = null;
+    private boolean isAnimated = false;
 
     public GenderButton(String gender, String imagePath)
     {
@@ -17,8 +19,24 @@ public class GenderButton extends Actor
         this.isSelected = false;
         this.isHovered = false;
         
-        // Check if this is a spritesheet path
-        if (imagePath.startsWith("spritesheet/"))
+        // Check if this is a spritesheet path with animation
+        if (imagePath.equals("spritesheet/boy/animated"))
+        {
+            isAnimated = true;
+            // Create animated character for boy (frames 0-3, 192x128 size)
+            // Crop centered 120x128 portion to make character bigger, display at 120x140
+            animatedCharacter = new AnimatedCharacter(
+                "spritesheet/boy/idle_simple.png",
+                192,
+                128,
+                120,
+                140,
+                new int[]{0, 1, 2, 3},
+                45,  // crop width - centered portion
+                48   // crop height - full height
+            );
+        }
+        else if (imagePath.startsWith("spritesheet/"))
         {
             usesSpritesheet = true;
             loadSpriteFromSheet(imagePath);
@@ -85,10 +103,21 @@ public class GenderButton extends Actor
                 isHovered = true;
                 updateImage();
             }
+            // Update animation ONLY when hovering
+            if (isAnimated && animatedCharacter != null)
+            {
+                animatedCharacter.act();
+                updateImage(); // Update image to show new frame
+            }
         }
         else if (isHovered)
         {
             isHovered = false;
+            // Reset animation to first frame when not hovering
+            if (isAnimated && animatedCharacter != null)
+            {
+                animatedCharacter.resetAnimation();
+            }
             updateImage();
         }
         
@@ -108,34 +137,68 @@ public class GenderButton extends Actor
 
     private void updateImage()
     {
-        int buttonWidth = 140;
-        int buttonHeight = 160;
+        int buttonWidth = 150;
+        int buttonHeight = 180;
         
         GreenfootImage image = new GreenfootImage(buttonWidth, buttonHeight);
 
+        // Use custom color for Male button
+        boolean isMaleButton = gender.equals("Male");
+        boolean isFemaleButton = gender.equals("Female");
+
         if (isSelected)
         {
-            // Selected state - vibrant blue with gradient effect
-            image.setColor(new Color(70, 130, 250));
-            image.fillRect(0, 0, buttonWidth, buttonHeight);
-            image.setColor(new Color(100, 150, 255));
-            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            // Selected state - lighter red
+            if (isMaleButton || isFemaleButton)
+            {
+                image.setColor(new Color(255, 100, 115)); // lighter red
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(255, 130, 145));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
+            else
+            {
+                image.setColor(new Color(70, 130, 250));
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(100, 150, 255));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
         }
         else if (isHovered)
         {
-            // Hovered state - light gray
-            image.setColor(new Color(180, 200, 220));
-            image.fillRect(0, 0, buttonWidth, buttonHeight);
-            image.setColor(new Color(200, 220, 240));
-            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            // Hovered state - darker red
+            if (isMaleButton || isFemaleButton)
+            {
+                image.setColor(new Color(180, 30, 45)); // darker red
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(210, 50, 65));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
+            else
+            {
+                image.setColor(new Color(180, 200, 220));
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(200, 220, 240));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
         }
         else
         {
-            // Default state - darker gray
-            image.setColor(new Color(90, 110, 140));
-            image.fillRect(0, 0, buttonWidth, buttonHeight);
-            image.setColor(new Color(120, 140, 170));
-            image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            // Default state - normal red
+            if (isMaleButton || isFemaleButton)
+            {
+                image.setColor(new Color(233, 50, 69)); // #e93245
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(240, 80, 95));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
+            else
+            {
+                image.setColor(new Color(90, 110, 140));
+                image.fillRect(0, 0, buttonWidth, buttonHeight);
+                image.setColor(new Color(120, 140, 170));
+                image.fillRect(2, 2, buttonWidth - 4, buttonHeight - 4);
+            }
         }
 
         // Border
@@ -143,7 +206,18 @@ public class GenderButton extends Actor
         image.drawRect(0, 0, buttonWidth - 1, buttonHeight - 1);
         
         // Draw character image if available
-        if (characterImage != null)
+        if (isAnimated && animatedCharacter != null)
+        {
+            // Get the current frame from animated character
+            GreenfootImage currentFrame = animatedCharacter.getCurrentFrame();
+            if (currentFrame != null)
+            {
+                int imgX = (buttonWidth - currentFrame.getWidth()) / 2;
+                int imgY = (buttonHeight - currentFrame.getHeight() - 30) / 2 + 20;
+                image.drawImage(currentFrame, imgX, imgY);
+            }
+        }
+        else if (characterImage != null)
         {
             // Center the character image
             int imgX = (buttonWidth - characterImage.getWidth()) / 2;
@@ -153,7 +227,7 @@ public class GenderButton extends Actor
         
         // Text label at bottom
         image.setColor(Color.WHITE);
-        image.drawString(gender, 25, 150);
+        image.drawString(gender, 25, 170);
 
         setImage(image);
     }

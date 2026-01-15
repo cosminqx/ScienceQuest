@@ -83,7 +83,7 @@ public class StartWorld extends World
         Label title = new Label("Select your gender:", 36, Color.WHITE);
         addObject(title, getWidth()/2, 30);
 
-        maleButton = new GenderButton("Male", "avatar.png");
+        maleButton = new GenderButton("Male", "spritesheet/boy/animated");
         addObject(maleButton, 100, 180);
 
         femaleButton = new GenderButton("Female", "spritesheet/redgirlhair.png");
