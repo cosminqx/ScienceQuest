@@ -44,7 +44,7 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 0;
 
-        Label title = new Label("ScienceQuests", 48, Color.WHITE);
+        Label title = new Label("ScienceQuests", loadTitleFont(), Color.WHITE);
         addObject(title, getWidth()/2, 120);
 
         StartButton startButton = new StartButton();
@@ -135,5 +135,19 @@ public class StartWorld extends World
      */
     private void prepare()
     {
+    }
+
+    private Font loadTitleFont()
+    {
+        try
+        {
+            // Use bundled pixel font for the title
+            return new Font("fonts/8-BIT WONDER.TTF", true, false, 48);
+        }
+        catch (Exception e)
+        {
+            // Fallback to monospaced bold if font cannot be loaded
+            return new Font("Monospaced", true, false, 48);
+        }
     }
 }
