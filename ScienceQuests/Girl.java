@@ -1,123 +1,359 @@
 import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 
 /**
- * Girl - Playable character that can be controlled with arrow keys
+ * Girl - Playable character with 8-direction movement
+ * Uses LEFT and RIGHT walking animations, faking UP/DOWN directions with visual effects
+ * 
+ * Visual Tricks:
+ * - UP movement: scales slightly smaller vertically + darker (simulates moving away)
+ * - DOWN movement: scales slightly larger vertically + brighter (simulates coming closer)
+ * - This creates depth perception in top-down pixel art without needing separate sprites
  */
 public class Girl extends Actor
 {
-    private GreenfootImage[] frames;
-    private int frameIndex = 0;
-    private int delay = 5;
-    private int counter = 0;
+    // Direction constants
+    private static final int DIR_UP = 0;
+    private static final int DIR_LEFT = 1;
+    private static final int DIR_DOWN = 2;
+    private static final int DIR_RIGHT = 3;
+    private static final int DIR_UP_LEFT = 4;
+    private static final int DIR_UP_RIGHT = 5;
+    private static final int DIR_DOWN_LEFT = 6;
+    private static final int DIR_DOWN_RIGHT = 7;
+    
     private int speed = 3;
-    private static final int CROP_WIDTH = 60;
-    private static final int CROP_HEIGHT = 80;
+    
+    // Base frames (never modified - kept clean for visual transformations)
+    private GreenfootImage[] baseLeftFrames;
+    private GreenfootImage[] baseRightFrames;
+    
+    // Animation state
+    private int currentDirection = DIR_LEFT;
+    private int currentFrame = 0;
+    private int animationCounter = 0;
+    private static final int FRAME_DELAY = 5;
+    private boolean isMoving = false;
+    
+    // Frame dimensions
+    private static final int FRAME_WIDTH = 96;
+    private static final int FRAME_HEIGHT = 64;
+    private static final int BASE_DISPLAY_WIDTH = 288;  // 3x scale
+    private static final int BASE_DISPLAY_HEIGHT = 192; // 3x scale
+    private static final int FRAMES_PER_DIRECTION = 8;
+    private static final int CROP_WIDTH = 80;      // Cropped collision box width
+    private static final int CROP_HEIGHT = 100;    // Cropped collision box height
+    
+    // Visual effect parameters for depth simulation
+    private static final double UP_VERTICAL_SCALE = 0.96;    // 96% height (moving away)
+    private static final double DOWN_VERTICAL_SCALE = 1.04;  // 104% height (coming closer)
+    private static final int UP_BRIGHTNESS_ADJUST = -15;     // Darker when moving away
+    private static final int DOWN_BRIGHTNESS_ADJUST = 15;    // Brighter when coming closer
 
     public Girl()
     {
-        int frameWidth = 480;
-        int frameHeight = 320;
-        double scale = 0.7;
-        
         try
         {
-            GreenfootImage sheet = new GreenfootImage("spritesheet/redgirlhair.png");
-            frames = new GreenfootImage[9];
+            // Load base frames (kept pristine for transformations)
+            baseLeftFrames = loadDirectionalFrames("spritesheet/girl/LEFT.png");
+            baseRightFrames = loadDirectionalFrames("spritesheet/girl/RIGHT.png");
             
-            for (int i = 0; i < 9; i++)
-            {
-                GreenfootImage frame = new GreenfootImage(frameWidth, frameHeight);
-                frame.drawImage(sheet, -i * frameWidth, 0);
-                frames[i] = frame;
-            }
-            
-            // Scale all frames
-            int targetW = (int)Math.round(frameWidth * scale);
-            int targetH = (int)Math.round(frameHeight * scale);
-            for (int i = 0; i < frames.length; i++)
-            {
-                frames[i].scale(targetW, targetH);
-            }
-            
-            // Crop to remove transparent areas - center the character
-            int startX = (int)Math.round(targetW / 2 - CROP_WIDTH / 2);
-            int startY = (int)Math.round(targetH / 2 - CROP_HEIGHT / 2);
-            for (int i = 0; i < frames.length; i++)
-            {
-                GreenfootImage croppedFrame = new GreenfootImage(CROP_WIDTH, CROP_HEIGHT);
-                croppedFrame.drawImage(frames[i], -startX, -startY);
-                frames[i] = croppedFrame;
-            }
-            
-            setImage(frames[0]);
+            // Start with left-facing idle frame
+            currentDirection = DIR_LEFT;
+            currentFrame = 0;
+            updateDisplayImage();
         }
         catch (Exception e)
         {
-            // Fallback: create a simple pink rectangle if spritesheet not found
-            frames = new GreenfootImage[1];
-            GreenfootImage image = new GreenfootImage(CROP_WIDTH, CROP_HEIGHT);
-            image.setColor(new Color(255, 100, 200)); // Pink
-            image.fillRect(0, 0, CROP_WIDTH, CROP_HEIGHT);
-            image.setColor(Color.WHITE);
-            image.fillOval(18, 12, 8, 8);
-            image.fillOval(34, 12, 8, 8);
-            image.drawLine(22, 32, 38, 32);
-            frames[0] = image;
-            setImage(frames[0]);
+            System.out.println("Error loading girl sprites: " + e.getMessage());
+            createFallbackImage();
         }
     }
+    
+    /**
+     * Load frames from a horizontal spritesheet
+     * These are kept as base frames and copied when applying visual effects
+     */
+    private GreenfootImage[] loadDirectionalFrames(String spritesheetPath)
+    {
+        GreenfootImage spritesheet = new GreenfootImage(spritesheetPath);
+        GreenfootImage[] frames = new GreenfootImage[FRAMES_PER_DIRECTION];
+        
+        for (int i = 0; i < FRAMES_PER_DIRECTION; i++)
+        {
+            // Extract each frame
+            GreenfootImage frame = new GreenfootImage(FRAME_WIDTH, FRAME_HEIGHT);
+            frame.drawImage(spritesheet, -i * FRAME_WIDTH, 0);
+            
+            // Scale to 3x size
+            frame.scale(BASE_DISPLAY_WIDTH, BASE_DISPLAY_HEIGHT);
+            
+            // Crop to remove transparent areas - center the character
+            int startX = (int)Math.round(BASE_DISPLAY_WIDTH / 2 - CROP_WIDTH / 2);
+            int startY = (int)Math.round(BASE_DISPLAY_HEIGHT / 2 - CROP_HEIGHT / 2);
+            GreenfootImage croppedFrame = new GreenfootImage(CROP_WIDTH, CROP_HEIGHT);
+            croppedFrame.drawImage(frame, -startX, -startY);
+            frames[i] = croppedFrame;
+        }
+        
+        return frames;
+    }
+    
+    /**
+     * Create a fallback image if spritesheets fail to load
+     */
+    private void createFallbackImage()
+    {
+        GreenfootImage image = new GreenfootImage(BASE_DISPLAY_WIDTH, BASE_DISPLAY_HEIGHT);
+        image.setColor(new Color(255, 100, 200)); // Pink
+        image.fillRect(0, 0, BASE_DISPLAY_WIDTH, BASE_DISPLAY_HEIGHT);
+        image.setColor(Color.WHITE);
+        image.fillOval(80, 50, 40, 40);
+        image.fillOval(168, 50, 40, 40);
+        setImage(image);
+    }
 
+    /**
+     * Act - Handle keyboard input for movement and animation
+     */
     public void act()
     {
-        System.out.println("Girl act() called, position: " + getX() + ", " + getY());
-        handleInput();
-        
-        counter++;
-        if (counter >= delay)
-        {
-            frameIndex = (frameIndex + 1) % frames.length;
-            setImage(frames[frameIndex]);
-            counter = 0;
-        }
+        handleMovement();
+        updateAnimation();
     }
 
-    private void handleInput()
+    /**
+     * Handle keyboard input and determine movement direction
+     * Separates movement logic from visual/animation logic
+     */
+    private void handleMovement()
     {
-        if (Greenfoot.isKeyDown("up"))
+        isMoving = false;
+
+        boolean up = Greenfoot.isKeyDown("up");
+        boolean down = Greenfoot.isKeyDown("down");
+        boolean left = Greenfoot.isKeyDown("left");
+        boolean right = Greenfoot.isKeyDown("right");
+
+        // Neutralize opposing keys
+        if (up && down) { up = false; down = false; }
+        if (left && right) { left = false; right = false; }
+
+        int startX = getX();
+        int startY = getY();
+        int newX = startX;
+        int newY = startY;
+        int newDirection = currentDirection;
+
+        // Determine direction and movement (8 directions)
+        if (up && left)
         {
-            setLocation(getX(), getY() - speed);
+            newY -= speed;
+            newX -= speed;
+            newDirection = DIR_UP_LEFT;
+        }
+        else if (up && right)
+        {
+            newY -= speed;
+            newX += speed;
+            newDirection = DIR_UP_RIGHT;
+        }
+        else if (down && left)
+        {
+            newY += speed;
+            newX -= speed;
+            newDirection = DIR_DOWN_LEFT;
+        }
+        else if (down && right)
+        {
+            newY += speed;
+            newX += speed;
+            newDirection = DIR_DOWN_RIGHT;
+        }
+        else if (up)
+        {
+            newY -= speed;
+            newDirection = DIR_UP;
+        }
+        else if (down)
+        {
+            newY += speed;
+            newDirection = DIR_DOWN;
+        }
+        else if (left)
+        {
+            newX -= speed;
+            newDirection = DIR_LEFT;
+        }
+        else if (right)
+        {
+            newX += speed;
+            newDirection = DIR_RIGHT;
+        }
+
+        // Update direction if changed
+        if (newDirection != currentDirection)
+        {
+            currentDirection = newDirection;
+            currentFrame = 0;
+            animationCounter = 0;
+        }
+
+        // Attempt movement - only if actually moved
+        if (newX != startX || newY != startY)
+        {
+            setLocation(newX, newY);
+            
+            // Check collision and revert if needed
             if (isTouching(Desk.class) || isTouching(Wall.class))
             {
-                System.out.println("Collision detected moving up!");
-                setLocation(getX(), getY() + speed);
+                setLocation(startX, startY);
             }
-        }
-        if (Greenfoot.isKeyDown("down"))
-        {
-            setLocation(getX(), getY() + speed);
-            if (isTouching(Desk.class) || isTouching(Wall.class))
+            else
             {
-                System.out.println("Collision detected moving down!");
-                setLocation(getX(), getY() - speed);
+                isMoving = true;
             }
         }
-        if (Greenfoot.isKeyDown("left"))
+
+        // If not moving, reset to first frame (idle pose)
+        if (!isMoving)
         {
-            setLocation(getX() - speed, getY());
-            if (isTouching(Desk.class) || isTouching(Wall.class))
-            {
-                System.out.println("Collision detected moving left!");
-                setLocation(getX() + speed, getY());
-            }
+            currentFrame = 0;
+            animationCounter = 0;
         }
-        if (Greenfoot.isKeyDown("right"))
+    }
+    
+    /**
+     * Update animation frame counter and cycle through frames
+     */
+    private void updateAnimation()
+    {
+        if (isMoving)
         {
-            setLocation(getX() + speed, getY());
-            if (isTouching(Desk.class) || isTouching(Wall.class))
+            animationCounter++;
+            if (animationCounter >= FRAME_DELAY)
             {
-                System.out.println("Collision detected moving right!");
-                setLocation(getX() - speed, getY());
+                animationCounter = 0;
+                currentFrame = (currentFrame + 1) % FRAMES_PER_DIRECTION;
             }
         }
+        
+        updateDisplayImage();
+    }
+    
+    /**
+     * Apply the current frame with visual effects based on direction
+     * Fakes UP/DOWN movement by transforming LEFT/RIGHT animations
+     */
+    private void updateDisplayImage()
+    {
+        if (baseLeftFrames == null || baseRightFrames == null) return;
+        
+        // Get the base frame (LEFT or RIGHT)
+        GreenfootImage baseFrame = getBaseFrameForDirection();
+        if (baseFrame == null) return;
+        
+        // Create a copy to apply effects
+        GreenfootImage displayFrame = new GreenfootImage(baseFrame);
+        
+        // Apply visual effects based on direction
+        applyDirectionEffects(displayFrame);
+        
+        setImage(displayFrame);
+    }
+    
+    /**
+     * Get the base LEFT or RIGHT frame for the current direction
+     */
+    private GreenfootImage getBaseFrameForDirection()
+    {
+        switch (currentDirection)
+        {
+            case DIR_LEFT:
+            case DIR_UP_LEFT:
+            case DIR_DOWN_LEFT:
+            case DIR_UP:  // Pure vertical uses LEFT as base
+            case DIR_DOWN:
+                return baseLeftFrames[currentFrame];
+                
+            case DIR_RIGHT:
+            case DIR_UP_RIGHT:
+            case DIR_DOWN_RIGHT:
+                return baseRightFrames[currentFrame];
+                
+            default:
+                return baseLeftFrames[currentFrame];
+        }
+    }
+    
+    /**
+     * Apply visual effects to fake UP/DOWN movement
+     * - UP: scale smaller vertically + darken
+     * - DOWN: scale larger vertically + brighten
+     */
+    private void applyDirectionEffects(GreenfootImage image)
+    {
+        switch (currentDirection)
+        {
+            case DIR_UP:
+            case DIR_UP_LEFT:
+            case DIR_UP_RIGHT:
+                // Moving away - smaller and darker
+                int upHeight = (int)(CROP_HEIGHT * UP_VERTICAL_SCALE);
+                image.scale(CROP_WIDTH, upHeight);
+                adjustBrightness(image, UP_BRIGHTNESS_ADJUST);
+                break;
+                
+            case DIR_DOWN:
+            case DIR_DOWN_LEFT:
+            case DIR_DOWN_RIGHT:
+                // Moving closer - larger and brighter
+                int downHeight = (int)(CROP_HEIGHT * DOWN_VERTICAL_SCALE);
+                image.scale(CROP_WIDTH, downHeight);
+                adjustBrightness(image, DOWN_BRIGHTNESS_ADJUST);
+                break;
+                
+            case DIR_LEFT:
+            case DIR_RIGHT:
+                // No effects for pure horizontal movement
+                break;
+        }
+    }
+    
+    /**
+     * Adjust image brightness by adding/subtracting from RGB values
+     * Positive adjustment = brighter, negative = darker
+     */
+    private void adjustBrightness(GreenfootImage image, int adjustment)
+    {
+        if (adjustment == 0) return;
+        
+        int width = image.getWidth();
+        int height = image.getHeight();
+        
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Color color = image.getColorAt(x, y);
+                
+                // Skip fully transparent pixels
+                if (color.getAlpha() == 0) continue;
+                
+                // Adjust RGB values, clamping to 0-255
+                int r = clamp(color.getRed() + adjustment, 0, 255);
+                int g = clamp(color.getGreen() + adjustment, 0, 255);
+                int b = clamp(color.getBlue() + adjustment, 0, 255);
+                
+                image.setColorAt(x, y, new Color(r, g, b, color.getAlpha()));
+            }
+        }
+    }
+    
+    /**
+     * Clamp a value between min and max
+     */
+    private int clamp(int value, int min, int max)
+    {
+        return Math.max(min, Math.min(max, value));
     }
 }

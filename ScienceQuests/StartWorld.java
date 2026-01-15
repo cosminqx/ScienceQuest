@@ -86,7 +86,7 @@ public class StartWorld extends World
         maleButton = new GenderButton("Male", "spritesheet/boy/animated");
         addObject(maleButton, 100, 180);
 
-        femaleButton = new GenderButton("Female", "spritesheet/redgirlhair.png");
+        femaleButton = new GenderButton("Female", "spritesheet/girl/animated");
         addObject(femaleButton, getWidth()/2, 180);
 
         otherButton = new GenderButton("Other", "ppl2.png");

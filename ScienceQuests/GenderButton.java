@@ -36,6 +36,22 @@ public class GenderButton extends Actor
                 48   // crop height - full height
             );
         }
+        else if (imagePath.equals("spritesheet/girl/animated"))
+        {
+            isAnimated = true;
+            // Create animated character for girl (9 frames, 96x64 per frame, 3x scale = 288x192, 7 FPS)
+            animatedCharacter = new AnimatedCharacter(
+                "spritesheet/girl/idle.png",
+                96,
+                64,
+                288,
+                192,
+                new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8},
+                0,
+                0,
+                7  // 7 FPS
+            );
+        }
         else if (imagePath.startsWith("spritesheet/"))
         {
             usesSpritesheet = true;

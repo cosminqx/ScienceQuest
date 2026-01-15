@@ -18,17 +18,24 @@ public class AnimatedCharacter extends Actor
     private int cropWidth;
     private int cropHeight;
     private boolean useCrop;
-    private static final int FRAME_DURATION = 167; // milliseconds per frame (6 FPS)
+    private int frameDuration; // milliseconds per frame
 
     public AnimatedCharacter(String spritesheetPath, int frameW, int frameH, 
                             int displayW, int displayH, int[] idleFrameIndices)
     {
-        this(spritesheetPath, frameW, frameH, displayW, displayH, idleFrameIndices, 0, 0);
+        this(spritesheetPath, frameW, frameH, displayW, displayH, idleFrameIndices, 0, 0, 167);
     }
 
     public AnimatedCharacter(String spritesheetPath, int frameW, int frameH, 
                             int displayW, int displayH, int[] idleFrameIndices,
                             int cropW, int cropH)
+    {
+        this(spritesheetPath, frameW, frameH, displayW, displayH, idleFrameIndices, cropW, cropH, 167);
+    }
+
+    public AnimatedCharacter(String spritesheetPath, int frameW, int frameH, 
+                            int displayW, int displayH, int[] idleFrameIndices,
+                            int cropW, int cropH, int fps)
     {
         this.frameWidth = frameW;
         this.frameHeight = frameH;
@@ -39,6 +46,7 @@ public class AnimatedCharacter extends Actor
         this.useCrop = (cropW > 0 && cropH > 0);
         this.currentFrameIndex = 0;
         this.animationCounter = 0;
+        this.frameDuration = (fps > 0) ? (1000 / fps) : 167;
         this.idleFrames = new ArrayList<>();
         
         try
@@ -84,8 +92,8 @@ public class AnimatedCharacter extends Actor
     {
         animationCounter++;
         
-        // Update frame approximately every 200ms (assuming ~60fps, that's 12 frames)
-        if (animationCounter >= FRAME_DURATION / 16)
+        // Update frame based on custom FPS (assuming ~60fps, divide by ~16)
+        if (animationCounter >= frameDuration / 16)
         {
             animationCounter = 0;
             currentFrameIndex = (currentFrameIndex + 1) % idleFrames.size();
