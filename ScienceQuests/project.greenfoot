@@ -12,27 +12,21 @@ dependency1.type=UsesDependency
 dependency10.from=MainMapWorld
 dependency10.to=Desk
 dependency10.type=UsesDependency
-<<<<<<< Updated upstream
 dependency11.from=MainMapWorld
 dependency11.to=PlayerData
 dependency11.type=UsesDependency
 dependency12.from=Boy
 dependency12.to=Desk
 dependency12.type=UsesDependency
-dependency13.from=Girl
-dependency13.to=Desk
+dependency13.from=StartButton
+dependency13.to=StartWorld
 dependency13.type=UsesDependency
-dependency14.from=StartButton
-dependency14.to=StartWorld
+dependency14.from=Girl
+dependency14.to=Desk
 dependency14.type=UsesDependency
-=======
-dependency11.from=GenderButton
-dependency11.to=AnimatedCharacter
-dependency11.type=UsesDependency
-dependency12.from=StartButton
-dependency12.to=StartWorld
-dependency12.type=UsesDependency
->>>>>>> Stashed changes
+dependency15.from=GenderButton
+dependency15.to=AnimatedCharacter
+dependency15.type=UsesDependency
 dependency2.from=StartWorld
 dependency2.to=GenderButton
 dependency2.type=UsesDependency
@@ -57,18 +51,13 @@ dependency8.type=UsesDependency
 dependency9.from=MainMapWorld
 dependency9.to=Label
 dependency9.type=UsesDependency
-editor.fx.0.height=0
-editor.fx.0.width=0
-editor.fx.0.x=0
-editor.fx.0.y=0
-<<<<<<< Updated upstream
-height=775
-package.numDependencies=14
-=======
+editor.fx.0.height=728
+editor.fx.0.width=800
+editor.fx.0.x=560
+editor.fx.0.y=134
 height=634
-package.numDependencies=12
->>>>>>> Stashed changes
-package.numTargets=11
+package.numDependencies=15
+package.numTargets=13
 project.charset=UTF-8
 publish.hasSource=false
 publish.locked=true
@@ -79,7 +68,7 @@ publish.title=
 publish.url=
 readme.height=60
 readme.name=@README
-readme.width=49
+readme.width=48
 readme.x=10
 readme.y=10
 simulation.speed=50
@@ -91,32 +80,35 @@ target1.width=120
 target1.x=0
 target1.y=0
 target10.height=70
-<<<<<<< Updated upstream
-target10.name=MainMapWorld
+target10.name=PlayerData
 target10.showInterface=false
 target10.type=ClassTarget
 target10.width=120
-=======
-target10.name=AnimatedCharacter
-target10.showInterface=false
-target10.type=ClassTarget
-target10.width=130
->>>>>>> Stashed changes
 target10.x=0
 target10.y=0
 target11.height=70
-target11.name=StartButton
+target11.name=MainMapWorld
 target11.showInterface=false
 target11.type=ClassTarget
 target11.width=120
 target11.x=0
 target11.y=0
+target12.height=70
+target12.name=GenderButton
+target12.showInterface=false
+target12.type=ClassTarget
+target12.width=120
+target12.x=0
+target12.y=0
+target13.height=70
+target13.name=AnimatedCharacter
+target13.showInterface=false
+target13.type=ClassTarget
+target13.width=130
+target13.x=0
+target13.y=0
 target2.height=70
-<<<<<<< Updated upstream
 target2.name=Wall
-=======
-target2.name=SpriteAnimator
->>>>>>> Stashed changes
 target2.showInterface=false
 target2.type=ClassTarget
 target2.width=120
@@ -130,66 +122,42 @@ target3.width=120
 target3.x=0
 target3.y=0
 target4.height=70
-<<<<<<< Updated upstream
-target4.name=Desk
-=======
 target4.name=StartWorld
->>>>>>> Stashed changes
 target4.showInterface=false
 target4.type=ClassTarget
 target4.width=120
 target4.x=0
 target4.y=0
 target5.height=70
-<<<<<<< Updated upstream
-target5.name=StartWorld
-=======
 target5.name=Boy
->>>>>>> Stashed changes
 target5.showInterface=false
 target5.type=ClassTarget
 target5.width=120
 target5.x=0
 target5.y=0
 target6.height=70
-<<<<<<< Updated upstream
-target6.name=Boy
-=======
-target6.name=Girl
->>>>>>> Stashed changes
+target6.name=StartButton
 target6.showInterface=false
 target6.type=ClassTarget
 target6.width=120
 target6.x=0
 target6.y=0
 target7.height=70
-<<<<<<< Updated upstream
-target7.name=Girl
-=======
-target7.name=PlayerData
->>>>>>> Stashed changes
+target7.name=SpriteAnimator
 target7.showInterface=false
 target7.type=ClassTarget
 target7.width=120
 target7.x=0
 target7.y=0
 target8.height=70
-<<<<<<< Updated upstream
-target8.name=PlayerData
-=======
-target8.name=GenderButton
->>>>>>> Stashed changes
+target8.name=Desk
 target8.showInterface=false
 target8.type=ClassTarget
 target8.width=120
 target8.x=0
 target8.y=0
 target9.height=70
-<<<<<<< Updated upstream
-target9.name=GenderButton
-=======
-target9.name=MainMapWorld
->>>>>>> Stashed changes
+target9.name=Girl
 target9.showInterface=false
 target9.type=ClassTarget
 target9.width=120
@@ -198,10 +166,5 @@ target9.y=0
 version=3.1.0
 width=879
 world.lastInstantiated=StartWorld
-<<<<<<< Updated upstream
-xPosition=579
-yPosition=93
-=======
-xPosition=402
-yPosition=282
->>>>>>> Stashed changes
+xPosition=283
+yPosition=218
