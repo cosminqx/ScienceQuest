@@ -1,0 +1,9 @@
+#BlueJ class context
+comment0.target=Wall
+comment0.text=\r\n\ Wall\ -\ A\ collision\ object\ that\ blocks\ player\ movement\r\n
+comment1.params=
+comment1.target=Wall()
+comment2.params=
+comment2.target=void\ act()
+comment2.text=\r\n\ Act\ -\ do\ whatever\ the\ Wall\ wants\ to\ do.\ This\ method\ is\ called\ whenever\r\n\ the\ 'Act'\ or\ 'Run'\ button\ gets\ pressed\ in\ the\ environment.\r\n
+numComments=3

@@ -40,22 +40,37 @@ public class Boy extends Actor
 
     private void handleMovement()
     {
-        // Handle arrow keys for movement
         if (Greenfoot.isKeyDown("up"))
         {
             setLocation(getX(), getY() - speed);
+            if (isTouching(Desk.class))
+            {
+                setLocation(getX(), getY() + speed);
+            }
         }
         if (Greenfoot.isKeyDown("down"))
         {
             setLocation(getX(), getY() + speed);
+            if (isTouching(Desk.class))
+            {
+                setLocation(getX(), getY() - speed);
+            }
         }
         if (Greenfoot.isKeyDown("left"))
         {
             setLocation(getX() - speed, getY());
+            if (isTouching(Desk.class))
+            {
+                setLocation(getX() + speed, getY());
+            }
         }
         if (Greenfoot.isKeyDown("right"))
         {
             setLocation(getX() + speed, getY());
+            if (isTouching(Desk.class))
+            {
+                setLocation(getX() - speed, getY());
+            }
         }
     }
 }

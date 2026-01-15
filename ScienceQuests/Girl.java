@@ -64,34 +64,47 @@ public class Girl extends Actor
             setImage(frames[frameIndex]);
             counter = 0;
         }
+        System.out.println("Girl act() called, position: " + getX() + ", " + getY());
         handleInput();
     }
 
     private void handleInput()
     {
-        World world = getWorld();
-        if (world == null) return;
-        
-        int x = getX();
-        int y = getY();
-        
         if (Greenfoot.isKeyDown("up"))
         {
-            y = Math.max(getImage().getHeight() / 2, y - speed);
+            setLocation(getX(), getY() - speed);
+            if (isTouching(Desk.class))
+            {
+                System.out.println("Collision detected moving up!");
+                setLocation(getX(), getY() + speed);
+            }
         }
         if (Greenfoot.isKeyDown("down"))
         {
-            y = Math.min(world.getHeight() - getImage().getHeight() / 2, y + speed);
+            setLocation(getX(), getY() + speed);
+            if (isTouching(Desk.class))
+            {
+                System.out.println("Collision detected moving down!");
+                setLocation(getX(), getY() - speed);
+            }
         }
         if (Greenfoot.isKeyDown("left"))
         {
-            x = Math.max(getImage().getWidth() / 2, x - speed);
+            setLocation(getX() - speed, getY());
+            if (isTouching(Desk.class))
+            {
+                System.out.println("Collision detected moving left!");
+                setLocation(getX() + speed, getY());
+            }
         }
         if (Greenfoot.isKeyDown("right"))
         {
-            x = Math.min(world.getWidth() - getImage().getWidth() / 2, x + speed);
+            setLocation(getX() + speed, getY());
+            if (isTouching(Desk.class))
+            {
+                System.out.println("Collision detected moving right!");
+                setLocation(getX() - speed, getY());
+            }
         }
-        
-        setLocation(x, y);
     }
 }
