@@ -6,7 +6,6 @@ public class StartWorld extends World
     private InputField nameField;
     private GenderButton maleButton;
     private GenderButton femaleButton;
-    private GenderButton otherButton;
     private StartButton continueButton;
 
     public StartWorld()
@@ -83,15 +82,11 @@ public class StartWorld extends World
         Label title = new Label("Select your gender:", 36, Color.WHITE);
         addObject(title, getWidth()/2, 30);
 
-        maleButton = new GenderButton("Male", "spritesheet/boy/animated");
-        addObject(maleButton, 100, 180);
+        maleButton = new GenderButton("Alex", "spritesheet/boy/animated");
+        addObject(maleButton, 175, 180);
 
-        femaleButton = new GenderButton("Female", "spritesheet/girl/animated");
-        addObject(femaleButton, getWidth()/2, 180);
-
-        otherButton = new GenderButton("Other", "ppl2.png");
-        addObject(otherButton, getWidth() - 100, 180);
-
+        femaleButton = new GenderButton("Maria", "spritesheet/girl/animated");
+        addObject(femaleButton, 425, 180);
         continueButton = new StartButton()
         {
             public void startGame()
@@ -117,8 +112,6 @@ public class StartWorld extends World
             PlayerData.setPlayerGender("Male");
         else if (femaleButton.isSelected())
             PlayerData.setPlayerGender("Female");
-        else if (otherButton.isSelected())
-            PlayerData.setPlayerGender("Other");
         else
             return;
 
