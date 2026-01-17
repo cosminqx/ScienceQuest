@@ -8,6 +8,7 @@ public class GenderButton extends Actor
     private String gender;
     private boolean isSelected;
     private boolean isHovered;
+    private static GenderButton selectedButton = null;
     private GreenfootImage characterImage;
     private boolean usesSpritesheet = false;
     private AnimatedCharacter animatedCharacter = null;
@@ -24,32 +25,33 @@ public class GenderButton extends Actor
         {
             isAnimated = true;
             // Create animated character for boy (frames 0-3, 192x128 size)
-            // Crop centered 120x128 portion to make character bigger, display at 120x140
+            // Crop centered 122x143 portion to make character bigger, display at 122x143
             animatedCharacter = new AnimatedCharacter(
                 "spritesheet/boy/idle_simple.png",
                 192,
                 128,
-                120,
-                140,
+                122,
+                143,
                 new int[]{0, 1, 2, 3},
                 45,  // crop width - centered portion
-                48   // crop height - full height
+                48,  // crop height - full height
+                10   // 10 FPS
             );
         }
         else if (imagePath.equals("spritesheet/girl/animated"))
         {
             isAnimated = true;
-            // Create animated character for girl (9 frames, 96x64 per frame, 3x scale = 288x192, 7 FPS)
+            // Create animated character for girl (9 frames, 96x64 per frame, 6x scale = 576x384, 20 FPS)
             animatedCharacter = new AnimatedCharacter(
                 "spritesheet/girl/idle.png",
                 96,
                 64,
-                288,
-                192,
+                576,
+                384,
                 new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8},
                 0,
                 0,
-                7  // 7 FPS
+                20  // 20 FPS
             );
         }
         else if (imagePath.startsWith("spritesheet/"))
@@ -139,8 +141,16 @@ public class GenderButton extends Actor
         
         if (Greenfoot.mouseClicked(this))
         {
-            isSelected = !isSelected;
-            updateImage();
+            // Enforce single selection across all gender buttons
+            if (selectedButton != this)
+            {
+                if (selectedButton != null)
+                {
+                    selectedButton.setSelected(false);
+                }
+                selectedButton = this;
+                setSelected(true);
+            }
         }
     }
 
@@ -159,8 +169,8 @@ public class GenderButton extends Actor
         GreenfootImage image = new GreenfootImage(buttonWidth, buttonHeight);
 
         // Use custom color for Male button
-        boolean isMaleButton = gender.equals("Male");
-        boolean isFemaleButton = gender.equals("Female");
+        boolean isMaleButton = gender.equals("Alex");
+        boolean isFemaleButton = gender.equals("Maria");
 
         if (isSelected)
         {
@@ -241,9 +251,11 @@ public class GenderButton extends Actor
             image.drawImage(characterImage, imgX, imgY);
         }
         
-        // Text label at bottom
-        image.setColor(Color.WHITE);
-        image.drawString(gender, 25, 170);
+        // Text label at bottom, centered
+        GreenfootImage textImg = new GreenfootImage(gender, 24, Color.WHITE, new Color(0, 0, 0, 0));
+        int textX = (buttonWidth - textImg.getWidth()) / 2;
+        int textY = buttonHeight - textImg.getHeight() - 8;
+        image.drawImage(textImg, textX, textY);
 
         setImage(image);
     }
