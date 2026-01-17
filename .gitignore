@@ -1,2 +1,5 @@
 context.txt
 .DS_Store
+
+# Java compiled files
+*.class
