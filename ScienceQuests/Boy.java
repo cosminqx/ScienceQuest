@@ -33,6 +33,7 @@ public class Boy extends Actor
     private static final int FRAMES_PER_DIRECTION = 8;
     private static final int CROP_WIDTH = 60;
     private static final int CROP_HEIGHT = 80;
+    private static final int HITBOX_OFFSET_Y = 30; // Collision hitbox offset toward feet
 
     public Boy()
     {
@@ -187,17 +188,54 @@ public class Boy extends Actor
             setDirection(chosenDir, chosenFrames);
         }
 
-        // Move and collision check
-        setLocation(newX, newY);
-        if (isTouching(Desk.class) || isTouching(Wall.class))
+        // Check collision using feet rectangle with sliding collision
+        MainMapWorld world = (MainMapWorld) getWorld();
+        if (world != null)
         {
-            // revert move
-            setLocation(startX, startY);
-            isMoving = false;
-            currentFrame = 0;
-            animationCounter = 0;
-            return;
+            int newMapX = world.screenToMapX(newX);
+            int newMapY = world.screenToMapY(newY + HITBOX_OFFSET_Y);
+            
+            // Feet hitbox: full character width, 18px height
+            boolean fullMoveCollides = world.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
+            
+            if (fullMoveCollides)
+            {
+                // Try moving only horizontally
+                int xOnlyMapX = world.screenToMapX(newX);
+                int xOnlyMapY = world.screenToMapY(startY + HITBOX_OFFSET_Y);
+                boolean xMoveCollides = world.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
+                
+                if (!xMoveCollides && newX != startX)
+                {
+                    // Can slide horizontally
+                    setLocation(newX, startY);
+                    isMoving = true;
+                    return;
+                }
+                
+                // Try moving only vertically
+                int yOnlyMapX = world.screenToMapX(startX);
+                int yOnlyMapY = world.screenToMapY(newY + HITBOX_OFFSET_Y);
+                boolean yMoveCollides = world.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
+                
+                if (!yMoveCollides && newY != startY)
+                {
+                    // Can slide vertically
+                    setLocation(startX, newY);
+                    isMoving = true;
+                    return;
+                }
+                
+                // Completely blocked
+                isMoving = false;
+                currentFrame = 0;
+                animationCounter = 0;
+                return;
+            }
         }
+
+        // No collision; apply movement
+        setLocation(newX, newY);
 
         // Mark moving if any directional key was active
         isMoving = up || down || left || right;
