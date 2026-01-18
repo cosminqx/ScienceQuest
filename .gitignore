@@ -3,3 +3,4 @@ context.txt
 
 # Java compiled files
 *.class
+*.ctxt
