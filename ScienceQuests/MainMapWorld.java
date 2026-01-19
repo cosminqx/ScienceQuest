@@ -36,13 +36,6 @@ public class MainMapWorld extends World
             addObject(girl, getWidth()/2, getHeight()/2);
             character = girl;
         }
-        else
-        {
-            // Default to boy for "Other" or unknown gender
-            Boy boy = new Boy();
-            addObject(boy, getWidth()/2, getHeight()/2);
-            character = boy;
-        }
         
         // Add collision objects AFTER character so they render behind
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
