@@ -1,5 +1,6 @@
 import greenfoot.*;
 import java.util.ArrayList;
+import java.text.Normalizer;
 
 /**
  * DialogueBox
@@ -41,7 +42,7 @@ public class DialogueBox extends Actor {
     private int boxHeight = BOX_HEIGHT;
 
     public DialogueBox(String text, String iconPath, boolean typewriter) {
-        this.fullText = text;
+        this.fullText = removeDiacritics(text);
         this.iconPath = iconPath;
         this.useTypewriter = typewriter;
         this.questionMode = false;
@@ -311,6 +312,15 @@ public class DialogueBox extends Actor {
     
     public void setTypewriterSpeed(int speed) {
         this.typewriterSpeed = Math.max(1, speed);
+    }
+    
+    /**
+     * Remove diacritical marks from text (e.g., ã -> a, î -> i)
+     */
+    private static String removeDiacritics(String text) {
+        if (text == null) return null;
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "");
     }
 }
 
