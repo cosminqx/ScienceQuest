@@ -1,4 +1,5 @@
-https://hackatime-badge.hackclub.com/U0A9CUR24GJ/ScienceQuest
+![Stats Badge](https://hackatime-badge.hackclub.com/U0A9CUR24GJ/ScienceQuest)
+
 # ScienceQuest
 
 An educational 2D top-down RPG game developed in Java using Greenfoot, created by two high school students for the National Competition "Java – Programează în Greenfoot" organized by ADFABER.org and sponsored by Oracle Academy.
