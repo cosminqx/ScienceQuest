@@ -11,6 +11,10 @@ public class MainMapWorld extends World
     private int maxScrollY;
     private int tileSize = 48;
     private TiledMap tiledMap;
+    private Teacher teacher;
+    private TeacherDisplay teacherDisplay;
+    private int teacherMapX = 339; // Fixed position on map
+    private int teacherMapY = 115;
 
     public MainMapWorld()
     {
@@ -19,11 +23,18 @@ public class MainMapWorld extends World
         // Load TMX map (floor + collisions)
         loadMap();
         
+        // Add teacher NPC to the map (front area) - static on map
+        // Added BEFORE character so character renders on top
+        teacher = new Teacher();
+        teacherDisplay = new TeacherDisplay();
+        addObject(teacher, teacherMapX, teacherMapY);
+        addObject(teacherDisplay, teacherMapX, teacherMapY);
+        
         // Retrieve player data
         String playerName = PlayerData.getPlayerName();
         String playerGender = PlayerData.getPlayerGender();
         
-        // Spawn the correct character based on gender FIRST
+        // Spawn the correct character based on gender - added AFTER teacher to render on top
         if ("Male".equals(playerGender))
         {
             Boy boy = new Boy();
@@ -97,6 +108,23 @@ public class MainMapWorld extends World
             {
                 System.out.println("WARNING: backgroundImage is null!");
             }
+            
+            // Update teacher position to stay static on map
+            updateTeacherPosition();
+        }
+    }
+    
+    /**
+     * Update teacher screen position based on scroll to keep it static on map
+     */
+    private void updateTeacherPosition()
+    {
+        if (teacher != null && teacher.getWorld() != null)
+        {
+            int screenX = teacherMapX - scrollX;
+            int screenY = teacherMapY - scrollY;
+            teacher.setLocation(screenX, screenY);
+            teacherDisplay.setLocation(screenX, screenY);
         }
     }
     

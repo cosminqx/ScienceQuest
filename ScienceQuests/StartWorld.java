@@ -14,10 +14,6 @@ public class StartWorld extends World
         super(600, 400, 1);  // width, height, cell size
         setScaledBackground();
         
-        // Start background music
-        backgroundMusic = new GreenfootSound("sounds/The Moment You've Been Waiting For.mp3");
-        backgroundMusic.play();
-        
         showTitleScreen();
         prepare();
     }
