@@ -7,11 +7,17 @@ public class StartWorld extends World
     private GenderButton maleButton;
     private GenderButton femaleButton;
     private StartButton continueButton;
+    private GreenfootSound backgroundMusic;
 
     public StartWorld()
     {    
         super(600, 400, 1);  // width, height, cell size
         setScaledBackground();
+        
+        // Start background music
+        backgroundMusic = new GreenfootSound("sounds/The Moment You've Been Waiting For.mp3");
+        backgroundMusic.play();
+        
         showTitleScreen();
         prepare();
     }
@@ -115,6 +121,12 @@ public class StartWorld extends World
         else
             return;
 
+        // Stop the background music before transitioning
+        if (backgroundMusic != null)
+        {
+            backgroundMusic.stop();
+        }
+        
         Greenfoot.setWorld(new MainMapWorld());
     }
 
