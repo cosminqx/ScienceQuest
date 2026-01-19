@@ -25,16 +25,25 @@ public class Label extends Actor
     public Label(String text, Font font, Color textColor)
     {
         int size = font.getSize();
-        int width = Math.max(10, text.length() * size + 20);
-        int height = size * 2;
+
+        // Render text once to measure exact width/height
+        GreenfootImage textImg = new GreenfootImage(text, size, textColor, new Color(0, 0, 0, 0));
+
+        // Canvas wide enough for StartWorld (600px) plus padding
+        int padding = size; // simple padding around text
+        int width = Math.max(textImg.getWidth() + padding * 2, 600);
+        int height = Math.max(textImg.getHeight() + padding * 2, size * 2);
 
         GreenfootImage img = new GreenfootImage(width, height);
         img.setColor(new Color(0, 0, 0, 0));
         img.clear();
         img.setFont(font);
         img.setColor(textColor);
-        int baseline = (int)(size * 1.1);
-        img.drawString(text, 10, baseline);
+
+        // Center text image precisely
+        int textX = (width - textImg.getWidth()) / 2;
+        int textY = (height - textImg.getHeight()) / 2;
+        img.drawImage(textImg, textX, textY);
         setImage(img);
     }
 }

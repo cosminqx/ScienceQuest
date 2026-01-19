@@ -7,11 +7,17 @@ public class StartWorld extends World
     private GenderButton maleButton;
     private GenderButton femaleButton;
     private StartButton continueButton;
+    private GreenfootSound backgroundMusic;
 
     public StartWorld()
     {    
         super(600, 400, 1);  // width, height, cell size
         setScaledBackground();
+        
+        // Start background music
+        backgroundMusic = new GreenfootSound("sounds/The Moment You've Been Waiting For.mp3");
+        backgroundMusic.play();
+        
         showTitleScreen();
         prepare();
     }
@@ -43,8 +49,8 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 0;
 
-        Label title = new Label("ScienceQuests", loadTitleFont(), Color.WHITE);
-        addObject(title, getWidth()/2, 120);
+        TitleImage title = new TitleImage();
+        addObject(title, 300, 135);
 
         StartButton startButton = new StartButton();
         addObject(startButton, getWidth()/2, 250);
@@ -115,6 +121,12 @@ public class StartWorld extends World
         else
             return;
 
+        // Stop the background music before transitioning
+        if (backgroundMusic != null)
+        {
+            backgroundMusic.stop();
+        }
+        
         Greenfoot.setWorld(new MainMapWorld());
     }
 
@@ -134,13 +146,13 @@ public class StartWorld extends World
     {
         try
         {
-            // Use bundled pixel font for the title
-            return new Font("fonts/8-BIT WONDER.TTF", true, false, 48);
+            // Use bundled pixel font for the title (scaled x1.5)
+            return new Font("fonts/8-BIT WONDER.TTF", true, false, 54);
         }
         catch (Exception e)
         {
             // Fallback to monospaced bold if font cannot be loaded
-            return new Font("Monospaced", true, false, 48);
+            return new Font("Monospaced", true, false, 54);
         }
     }
 }

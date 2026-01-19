@@ -9,7 +9,6 @@ public class MainMapWorld extends World
     private int scrollY = 0;
     private int maxScrollX;
     private int maxScrollY;
-    private List<CollisionObject> collisionObjects = new ArrayList<>();
     private int tileSize = 48;
     private TiledMap tiledMap;
 
@@ -37,16 +36,9 @@ public class MainMapWorld extends World
             addObject(girl, getWidth()/2, getHeight()/2);
             character = girl;
         }
-        else
-        {
-            // Default to boy for "Other" or unknown gender
-            Boy boy = new Boy();
-            addObject(boy, getWidth()/2, getHeight()/2);
-            character = boy;
-        }
         
         // Add collision objects AFTER character so they render behind
-        addCollisionObjects();
+        // (REMOVED: using rectangle-based collision from Collision object layer instead)
         
         // Instructions
         Label instructionsLabel = new Label("Use arrow keys to move", 16, Color.WHITE);
@@ -57,13 +49,16 @@ public class MainMapWorld extends World
     {
         try
         {
-            tiledMap = new TiledMap("test-map.tmx");
+            tiledMap = new TiledMap("test-map-LayersFixed.tmj");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
+            System.out.println("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
+                             backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
         catch (Exception e)
         {
             // Fallback: create a simple green background if image not found
+            System.out.println("ERROR loading TMJ: " + e.getMessage());
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 139, 34)); // Forest green
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
@@ -75,78 +70,6 @@ public class MainMapWorld extends World
         maxScrollY = Math.max(0, backgroundImage.getHeight() - getHeight());
     }
 
-    private void addCollisionObjects()
-    {
-        if (tiledMap == null) return;
-
-        for (int y = 0; y < tiledMap.mapH; y++)
-        {
-            for (int x = 0; x < tiledMap.mapW; x++)
-            {
-                boolean isSolid = tiledMap.solid[y][x];
-                if (!isSolid) continue;
-
-                int pixelX = x * tileSize + tileSize / 2;
-                int pixelY = y * tileSize + tileSize / 2;
-
-                // Use Wall for primary collision layer, Desk for secondary (visual differentiation)
-                Actor collider;
-                if (tiledMap.collisionA[y][x] != 0)
-                {
-                    collider = new Wall();
-                }
-                else
-                {
-                    collider = new Desk();
-                }
-
-                makeColliderInvisible(collider);
-                collisionObjects.add(new CollisionObject(collider, pixelX, pixelY));
-            }
-        }
-
-        updateCollisionObjectPositions();
-    }
-
-    private void makeColliderInvisible(Actor collider)
-    {
-        GreenfootImage img = collider.getImage();
-        if (img == null)
-        {
-            img = new GreenfootImage(tileSize, tileSize);
-        }
-        else
-        {
-            img = new GreenfootImage(img); // clone to avoid shared refs
-        }
-        img.setTransparency(0);
-        collider.setImage(img);
-    }
-    
-    private void updateCollisionObjectPositions()
-    {
-        // Update scroll values first if character exists
-        if (character != null && character.getWorld() != null)
-        {
-            scrollX = character.getX() - getWidth() / 2;
-            scrollY = character.getY() - getHeight() / 2;
-            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
-            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-        }
-        
-        for (CollisionObject obj : collisionObjects)
-        {
-            if (obj.actor.getWorld() == null)
-            {
-                // Calculate screen position from map position
-                int screenX = obj.mapX - scrollX;
-                int screenY = obj.mapY - scrollY;
-                addObject(obj.actor, screenX, screenY);
-                System.out.println("Added desk at screen position: " + screenX + ", " + screenY + " (map: " + obj.mapX + ", " + obj.mapY + ")");
-            }
-        }
-    }
-    
     public void act()
     {
         // Update the camera position to keep the character centered
@@ -162,56 +85,75 @@ public class MainMapWorld extends World
             
             // Draw the background image with the scroll offset
             GreenfootImage worldImage = getBackground();
-            worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
-            
-            // Update collision object screen positions to match scroll
-            for (CollisionObject obj : collisionObjects)
+            // Fill with solid color first to avoid StartWorld bleed-through
+            worldImage.setColor(new Color(0, 0, 0));
+            worldImage.fillRect(0, 0, getWidth(), getHeight());
+            // Draw map at scroll offset
+            if (backgroundImage != null)
             {
-                int screenX = obj.mapX - scrollX;
-                int screenY = obj.mapY - scrollY;
-                
-                // Always update position to match scroll
-                obj.actor.setLocation(screenX, screenY);
+                worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
+            }
+            else
+            {
+                System.out.println("WARNING: backgroundImage is null!");
             }
         }
     }
     
     /**
-     * Get the background image dimensions for collision checking
+     * Convert screen coordinates to map coordinates
+     * Screen coords are relative to the camera view (0-600 width, 0-400 height)
+     * Map coords are absolute positions in the full map (0-768 width, 0-576 height)
      */
-    public GreenfootImage getBackgroundImage()
+    public int screenToMapX(int screenX)
     {
-        return backgroundImage;
-    }
-    
-    /**
-     * Get the current scroll offset for proper collision detection
-     */
-    public int getScrollX()
-    {
-        return scrollX;
-    }
-    
-    public int getScrollY()
-    {
-        return scrollY;
-    }
-    
-    /**
-     * Inner class to store collision object data
-     */
-    private class CollisionObject
-    {
-        Actor actor;
-        int mapX;
-        int mapY;
-        
-        CollisionObject(Actor actor, int mapX, int mapY)
+        // Update scroll first to ensure latest values
+        if (character != null && character.getWorld() != null)
         {
-            this.actor = actor;
-            this.mapX = mapX;
-            this.mapY = mapY;
+            scrollX = character.getX() - getWidth() / 2;
+            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
         }
+        return screenX + scrollX;
+    }
+    
+    public int screenToMapY(int screenY)
+    {
+        // Update scroll first to ensure latest values
+        if (character != null && character.getWorld() != null)
+        {
+            scrollY = character.getY() - getHeight() / 2;
+            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+        }
+        return screenY + scrollY;
+    }
+    
+    /**
+     * Check if a rectangle (character's feet area) collides with any collision rectangle
+     * @param mapX center X position in map coordinates
+     * @param mapY center Y position in map coordinates  
+     * @param width width of the feet hitbox
+     * @param height height of the feet hitbox (should be small, like 10-15px)
+     */
+    public boolean isCollisionAt(int mapX, int mapY, int width, int height)
+    {
+        if (tiledMap == null) return false;
+        
+        // Calculate feet rectangle bounds (centered on mapX, mapY)
+        int x1 = mapX - width / 2;
+        int y1 = mapY - height / 2;
+        int x2 = x1 + width;
+        int y2 = y1 + height;
+        
+        // AABB collision check against all collision rectangles
+        for (TiledMap.CollisionRect r : tiledMap.collisionRects)
+        {
+            if (x1 < r.x + r.w && x2 > r.x &&
+                y1 < r.y + r.h && y2 > r.y)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
