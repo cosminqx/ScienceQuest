@@ -1,33 +1,20 @@
 import greenfoot.*;
 
 /**
- * TitleImage - displays the title using a provided PNG asset with loading animation.
+ * TitleImage - displays the title using a provided PNG asset.
  */
 public class TitleImage extends Actor
 {
     private static final int MAX_WIDTH = 520;
     private static final int MAX_HEIGHT = 160;
-    private GreenfootImage fullImage;
-    private int totalFrames;
-    private int currentFrame;
-    private int scaledWidth;
-    private int scaledHeight;
 
     public TitleImage()
     {
         try
         {
-            fullImage = new GreenfootImage("fonts/696d62d95d863.png");
+            GreenfootImage fullImage = new GreenfootImage("fonts/696d62d95d863.png");
             scaleToFit(fullImage);
-            scaledWidth = fullImage.getWidth();
-            scaledHeight = fullImage.getHeight();
-            
-            // 36 seconds at 60 FPS = 2160 frames
-            totalFrames = 36 * 60;
-            currentFrame = 0;
-            
-            // Start with a minimal visible portion
-            updateDisplay();
+            setImage(fullImage);
         }
         catch (Exception e)
         {
@@ -41,35 +28,7 @@ public class TitleImage extends Actor
     
     public void act()
     {
-        if (fullImage != null && currentFrame < totalFrames)
-        {
-            currentFrame++;
-            updateDisplay();
-        }
-    }
-    
-    private void updateDisplay()
-    {
-        // Calculate progress (0.0 to 1.0)
-        double progress = (double) currentFrame / totalFrames;
-        int visibleWidth = Math.max(1, (int) (scaledWidth * progress));
-        
-        // Create display image with transparent background
-        GreenfootImage display = new GreenfootImage(scaledWidth, scaledHeight);
-        display.clear();
-        
-        // Draw only the visible portion (left side) of the full image
-        GreenfootImage temp = new GreenfootImage(fullImage);
-        display.drawImage(temp, 0, 0);
-        
-        // Mask out the right side that shouldn't be visible yet
-        display.setColor(getWorld() != null ? getWorld().getBackground().getColor() : Color.BLACK);
-        if (visibleWidth < scaledWidth)
-        {
-            display.fillRect(visibleWidth, 0, scaledWidth - visibleWidth, scaledHeight);
-        }
-        
-        setImage(display);
+        // No animation needed
     }
 
     private void scaleToFit(GreenfootImage img)
@@ -89,9 +48,5 @@ public class TitleImage extends Actor
         int newH = (int) Math.round(h * scale);
         img.scale(newW, newH);
     }
-    
-    public boolean isComplete()
-    {
-        return currentFrame >= totalFrames;
-    }
 }
+

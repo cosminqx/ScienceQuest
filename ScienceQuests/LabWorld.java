@@ -5,6 +5,9 @@ public class LabWorld extends World
 {
     private Actor character;
     private GreenfootImage backgroundImage;
+    private GreenfootImage overPlayerLayerImage;
+    private GreenfootImage overPlayerViewport;
+    private OverlayLayer overlayActor;
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -15,6 +18,9 @@ public class LabWorld extends World
     public LabWorld()
     {
         super(600, 400, 1);
+
+        // Draw UI on top, then overlay, then characters
+        setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
         
         // Load lab map FIRST
         loadMap();
@@ -66,6 +72,17 @@ public class LabWorld extends World
             backgroundImage = tiledMap.getFullMapImage();
             System.out.println("SUCCESS: Loaded lab map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
+
+            // Prepare optional overlay layer that should draw above the player
+            overPlayerLayerImage = tiledMap.getLayerImage("Over-Player");
+            if (overPlayerLayerImage != null)
+            {
+                overPlayerViewport = new GreenfootImage(getWidth(), getHeight());
+                overlayActor = new OverlayLayer();
+                overlayActor.setImage(overPlayerViewport);
+                addObject(overlayActor, getWidth() / 2, getHeight() / 2);
+                System.out.println("Over-Player overlay initialized");
+            }
         }
         catch (Exception e)
         {
@@ -109,6 +126,8 @@ public class LabWorld extends World
             {
                 System.out.println("WARNING: backgroundImage is null!");
             }
+
+            updateOverlayImage();
             
             // Check for transition back to MainMapWorld
             checkWorldTransition();
@@ -122,12 +141,17 @@ public class LabWorld extends World
     {
         if (character == null) return;
         
-        // Get character's map position
-        int mapX = screenToMapX(character.getX());
+        // Character's map position (adjusted by scroll)
+        int mapX = character.getX() + scrollX;
+        int mapY = character.getY() + scrollY;
         
-        // Transition to MainMapWorld when reaching left edge
-        if (mapX <= 5)
+        System.out.println("Character screen: (" + character.getX() + ", " + character.getY() + 
+                           "), map: (" + mapX + ", " + mapY + "), scroll: (" + scrollX + ", " + scrollY + ")");
+        
+        // Transition to MainMapWorld when inside the exit window (bottom-left area)
+        if (mapX >= 62 && mapX <= 74 && mapY >= 580 && mapY <= 600)
         {
+            System.out.println("TRANSITION TRIGGERED!");
             Greenfoot.setWorld(new MainMapWorld());
         }
     }
@@ -153,6 +177,22 @@ public class LabWorld extends World
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
         }
         return screenY + scrollY;
+    }
+
+    /**
+     * Refresh the Over-Player layer viewport so it scrolls with the camera.
+     */
+    private void updateOverlayImage()
+    {
+        if (overPlayerLayerImage == null || overlayActor == null || overPlayerViewport == null)
+        {
+            return;
+        }
+
+        overPlayerViewport.clear();
+        overPlayerViewport.drawImage(overPlayerLayerImage, -scrollX, -scrollY);
+        overlayActor.setImage(overPlayerViewport);
+        overlayActor.setLocation(getWidth() / 2, getHeight() / 2);
     }
     
     /**

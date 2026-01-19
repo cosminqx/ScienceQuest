@@ -19,6 +19,8 @@ public class TiledMap
     public final int[][] floor;
     public final int[][] objectsA;
     public final int[][] objectsB;
+    private final List<int[][]> tileLayers = new ArrayList<>();
+    private final List<String> tileLayerNames = new ArrayList<>();
     public final boolean[][] solid;
     public final List<CollisionRect> collisionRects = new ArrayList<>();
     private GreenfootImage fullMapImage;
@@ -52,24 +54,13 @@ public class TiledMap
             tileSize = extractJsonInt(content, "\"tilewidth\":");
             tilesetFirstGid = extractTilesetFirstGid(content);
 
-            // Try known layer names first, then fall back to generic names
-            int[][] tempFloor = parseJsonTileLayer(content, "Floor", mapW, mapH);
-            if (countNonZero(tempFloor) == 0) {
-                tempFloor = parseJsonTileLayer(content, "Tile Layer 1", mapW, mapH);
-            }
-            floor = tempFloor;
-            
-            int[][] tempObjectsA = parseJsonTileLayer(content, "Objects", mapW, mapH);
-            if (countNonZero(tempObjectsA) == 0) {
-                tempObjectsA = parseJsonTileLayer(content, "Tile Layer 2", mapW, mapH);
-            }
-            objectsA = tempObjectsA;
-            
-            int[][] tempObjectsB = parseJsonTileLayer(content, "Objects1", mapW, mapH);
-            if (countNonZero(tempObjectsB) == 0) {
-                tempObjectsB = parseJsonTileLayer(content, "Tile Layer 3", mapW, mapH);
-            }
-            objectsB = tempObjectsB;
+            // Parse every tile layer in order (for multi-layer maps like lab_noapte_2.json)
+            parseAllJsonTileLayers(content, mapW, mapH);
+
+            // Keep backward compatibility fields for existing code paths
+            floor = tileLayers.size() > 0 ? tileLayers.get(0) : new int[mapH][mapW];
+            objectsA = tileLayers.size() > 1 ? tileLayers.get(1) : new int[mapH][mapW];
+            objectsB = tileLayers.size() > 2 ? tileLayers.get(2) : new int[mapH][mapW];
         }
         else
         {
@@ -81,6 +72,14 @@ public class TiledMap
             floor = parseLayer(content, "Floor", mapW, mapH);
             objectsA = parseLayer(content, "Collision", mapW, mapH);
             objectsB = parseLayer(content, "Collision1", mapW, mapH);
+
+            // Populate tileLayers list for unified rendering path
+            tileLayers.add(floor);
+            tileLayerNames.add("Floor");
+            tileLayers.add(objectsA);
+            tileLayerNames.add("Collision");
+            tileLayers.add(objectsB);
+            tileLayerNames.add("Collision1");
         }
 
         loadTilesetImage();
@@ -177,15 +176,19 @@ public class TiledMap
                 System.out.println("Tileset size: " + tileset.getWidth() + "x" + tileset.getHeight());
                 System.out.println("Tile cache size: " + tileCache.size());
             }
-            System.out.println("Floor layer non-zero tiles: " + countNonZero(floor));
-            System.out.println("Objects layer non-zero tiles: " + countNonZero(objectsA));
-            System.out.println("Objects1 layer non-zero tiles: " + countNonZero(objectsB));
-            System.out.println("Starting to draw layers...");
+            System.out.println("Layers parsed: " + tileLayers.size());
+            for (int i = 0; i < tileLayers.size(); i++)
+            {
+                System.out.println("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero=" + countNonZero(tileLayers.get(i)));
+            }
+            System.out.println("Starting to draw layers in order...");
 
-            // Draw visual layers in order: Floor -> Objects -> Objects1
-            drawLayerOnto(fullMapImage, floor, "Floor");
-            drawLayerOnto(fullMapImage, objectsA, "Objects");
-            drawLayerOnto(fullMapImage, objectsB, "Objects1");
+            // Draw every tile layer in the order they appear in TMJ
+            for (int i = 0; i < tileLayers.size(); i++)
+            {
+                String name = i < tileLayerNames.size() ? tileLayerNames.get(i) : ("Layer " + i);
+                drawLayerOnto(fullMapImage, tileLayers.get(i), name);
+            }
             
             System.out.println("===== Map building complete =====");
         }
@@ -467,6 +470,35 @@ public class TiledMap
         return new GreenfootImage(fullMapImage);
     }
 
+    /**
+     * Build and return a single-layer image by layer name (e.g. "Over-Player").
+     * Returns null if the layer is not found.
+     */
+    public GreenfootImage getLayerImage(String layerName)
+    {
+        if (layerName == null) return null;
+
+        int idx = -1;
+        for (int i = 0; i < tileLayerNames.size(); i++)
+        {
+            if (layerName.equalsIgnoreCase(tileLayerNames.get(i)))
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx == -1)
+        {
+            System.out.println("Layer not found: " + layerName);
+            return null;
+        }
+
+        GreenfootImage img = new GreenfootImage(mapW * tileSize, mapH * tileSize);
+        drawLayerOnto(img, tileLayers.get(idx), tileLayerNames.get(idx));
+        return img;
+    }
+
     private int extractJsonInt(String json, String key)
     {
         int pos = json.indexOf(key);
@@ -532,6 +564,50 @@ public class TiledMap
             System.out.println("TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
+    }
+
+    /**
+     * Parse every tilelayer in the TMJ/JSON file in the order they appear.
+     * Stores results in tileLayers / tileLayerNames for rendering all layers.
+     */
+    private void parseAllJsonTileLayers(String json, int w, int h)
+    {
+        int searchPos = json.indexOf("\"layers\":[");
+        if (searchPos == -1)
+        {
+            System.out.println("No layers array found in TMJ");
+            return;
+        }
+
+        while (true)
+        {
+            // Find next tilelayer
+            int tilePos = json.indexOf("\"type\":\"tilelayer\"", searchPos);
+            if (tilePos == -1) break;
+
+            // Extract layer name (search backward from tilePos)
+            int namePos = json.lastIndexOf("\"name\":\"", tilePos);
+            String layerName = "Layer";
+            if (namePos != -1)
+            {
+                int nameStart = namePos + "\"name\":\"".length();
+                int nameEnd = json.indexOf('"', nameStart);
+                if (nameEnd > nameStart) layerName = json.substring(nameStart, nameEnd);
+            }
+
+            int[][] layerData = parseJsonTileLayer(json, layerName, w, h);
+            tileLayers.add(layerData);
+            tileLayerNames.add(layerName);
+
+            searchPos = tilePos + 1;
+        }
+
+        if (tileLayers.isEmpty())
+        {
+            System.out.println("Warning: no tile layers parsed; creating empty floor");
+            tileLayers.add(new int[h][w]);
+            tileLayerNames.add("Floor");
+        }
     }
 
     private void buildSolidFromObjectLayer(String json)
