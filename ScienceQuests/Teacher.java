@@ -118,7 +118,7 @@ public class Teacher extends Actor implements NPC
         
         // Greeting dialogue
         DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, true);
-        dialogue.setTypewriterSpeed(2); // 1=fastest, higher=slower
+        dialogue.setTypewriterSpeed(2);
 
         // Queue the quiz question to show after greeting
         DialogueQuestion question = buildScienceQuestion();
@@ -131,11 +131,11 @@ public class Teacher extends Actor implements NPC
 
     private DialogueQuestion buildScienceQuestion()
     {
-        String questionText = "Let's start with a simple science question: What's the smallest form of the universe?";
-        String[] answers = { "Atom", "Molecule", "Cell", "Galaxy" };
+        String questionText = "Hai să comenzi cu o întrebare ușoară de știință: Care este cea mai mică formă a universului?";
+        String[] answers = { "Atom", "Moleculă", "Celulă", "Galaxie" };
         int correctIndex = 0;
-        String correctResponse = "Correct! Everything in the universe is built from atoms. Well done!";
-        String incorrectResponse = "Not quite. The correct answer is an atom. We'll cover this in more detail soon.";
+        String correctResponse = "Corect! Tot în univers este construit din atomi. Bravo!";
+        String incorrectResponse = "Nu chiar. Răspunsul corect este atomul. Vom acoperi asta mai detaliat curând.";
         return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
     }
     
@@ -191,11 +191,11 @@ public class Teacher extends Actor implements NPC
     @Override
     public String getDialogueText(String playerName)
     {
-        return "Hello there, " + playerName + "!\n" +
+        return "Salut " + playerName + "!\n" +
             "---\n" +
-            "Welcome to Science Quests!\n" +
+            "Bine ai venit la Science Quests!\n" +
             "---\n" +
-            "Feel free to explore and learn.";
+            "Simte-te liber să explorezi și să înveți.";
     }
     
     /**

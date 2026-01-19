@@ -12,10 +12,42 @@ public class StartWorld extends World
     public StartWorld()
     {    
         super(600, 400, 1);  // width, height, cell size
+        
+        // Load custom fonts once at startup (required for all dialogue)
+        FontManager.loadFonts();
+        
         setScaledBackground();
         
         showTitleScreen();
         prepare();
+    }
+
+    public void act()
+    {
+        // Check for Enter key press
+        if (Greenfoot.isKeyDown("enter"))
+        {
+            handleEnterKey();
+        }
+    }
+
+    private void handleEnterKey()
+    {
+        // Add a small delay to prevent double triggering
+        Greenfoot.delay(5);
+        
+        switch(currentScreen)
+        {
+            case 0: // Title screen
+                showNameInputScreen();
+                break;
+            case 1: // Name input screen
+                proceedToGenderScreen();
+                break;
+            case 2: // Gender selection screen
+                proceedToGame();
+                break;
+        }
     }
 
     /**

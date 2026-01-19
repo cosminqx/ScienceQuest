@@ -21,6 +21,8 @@ public class MainMapWorld extends World
     {
         super(600, 400, 1);
         
+        FontManager.loadFonts();
+        
         // Initialize dialogue manager
         dialogueManager = DialogueManager.getInstance();
         

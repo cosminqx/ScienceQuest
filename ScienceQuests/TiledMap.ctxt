@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=TiledMap
-comment0.text=\r\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\r\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\r\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\r\n
+comment0.text=\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\n
 comment1.params=tmxPath
 comment1.target=TiledMap(java.lang.String)
 comment10.params=gid
