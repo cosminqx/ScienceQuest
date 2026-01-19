@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=TiledMap
-comment0.text=\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\n
+comment0.text=\r\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\r\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\r\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\r\n
 comment1.params=tmxPath
 comment1.target=TiledMap(java.lang.String)
 comment10.params=isJson
@@ -15,6 +15,8 @@ comment14.params=json
 comment14.target=void\ buildSolidFromObjectLayer(java.lang.String)
 comment15.params=json\ key
 comment15.target=double\ extractJsonDouble(java.lang.String,\ java.lang.String)
+comment16.params=
+comment16.target=java.util.List\ getCollisionRects()
 comment2.params=xml\ prefix\ terminator
 comment2.target=int\ extractIntAttr(java.lang.String,\ java.lang.String,\ java.lang.String)
 comment3.params=xml\ layerName\ w\ h
@@ -31,4 +33,4 @@ comment8.params=gid
 comment8.target=greenfoot.GreenfootImage\ getTileFromGid(int)
 comment9.params=xmlOrJson
 comment9.target=int\ extractTilesetFirstGid(java.lang.String)
-numComments=16
+numComments=17

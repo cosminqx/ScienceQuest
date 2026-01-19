@@ -20,7 +20,7 @@ public class TiledMap
     public final int[][] objectsA;
     public final int[][] objectsB;
     public final boolean[][] solid;
-    public final List<CollisionRect> collisionRects = new ArrayList<>();
+    private final List<CollisionRect> collisionRects = new ArrayList<>();
     private GreenfootImage fullMapImage;
     private GreenfootImage tileset;
     private List<GreenfootImage> tileCache;
@@ -454,6 +454,11 @@ public class TiledMap
         int end = start;
         while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end)=='.')) end++;
         try { return Double.parseDouble(json.substring(start, end)); } catch (Exception ex) { return 0.0; }
+    }
+
+    public List<CollisionRect> getCollisionRects()
+    {
+        return collisionRects;
     }
     
     public static class CollisionRect
