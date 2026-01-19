@@ -1,36 +1,36 @@
 #BlueJ class context
 comment0.target=Girl
-comment0.text=\r\n\ Girl\ -\ Playable\ character\ with\ 8-direction\ movement\r\n\ Uses\ LEFT\ and\ RIGHT\ walking\ animations,\ faking\ UP/DOWN\ directions\ with\ visual\ effects\r\n\ \r\n\ Visual\ Tricks\:\r\n\ -\ UP\ movement\:\ scales\ slightly\ smaller\ vertically\ +\ darker\ (simulates\ moving\ away)\r\n\ -\ DOWN\ movement\:\ scales\ slightly\ larger\ vertically\ +\ brighter\ (simulates\ coming\ closer)\r\n\ -\ This\ creates\ depth\ perception\ in\ top-down\ pixel\ art\ without\ needing\ separate\ sprites\r\n
+comment0.text=\n\ Girl\ -\ Playable\ character\ with\ 8-direction\ movement\n\ Uses\ LEFT\ and\ RIGHT\ walking\ animations,\ faking\ UP/DOWN\ directions\ with\ visual\ effects\n\ \n\ Visual\ Tricks\:\n\ -\ UP\ movement\:\ scales\ slightly\ smaller\ vertically\ +\ darker\ (simulates\ moving\ away)\n\ -\ DOWN\ movement\:\ scales\ slightly\ larger\ vertically\ +\ brighter\ (simulates\ coming\ closer)\n\ -\ This\ creates\ depth\ perception\ in\ top-down\ pixel\ art\ without\ needing\ separate\ sprites\n
 comment1.params=
 comment1.target=Girl()
 comment10.params=image\ adjustment
 comment10.target=void\ adjustBrightness(greenfoot.GreenfootImage,\ int)
-comment10.text=\r\n\ Adjust\ image\ brightness\ by\ adding/subtracting\ from\ RGB\ values\r\n\ Positive\ adjustment\ \=\ brighter,\ negative\ \=\ darker\r\n
+comment10.text=\n\ Adjust\ image\ brightness\ by\ adding/subtracting\ from\ RGB\ values\n\ Positive\ adjustment\ \=\ brighter,\ negative\ \=\ darker\n
 comment11.params=value\ min\ max
 comment11.target=int\ clamp(int,\ int,\ int)
-comment11.text=\r\n\ Clamp\ a\ value\ between\ min\ and\ max\r\n
+comment11.text=\n\ Clamp\ a\ value\ between\ min\ and\ max\n
 comment2.params=spritesheetPath
 comment2.target=greenfoot.GreenfootImage[]\ loadDirectionalFrames(java.lang.String)
-comment2.text=\r\n\ Load\ frames\ from\ a\ horizontal\ spritesheet\r\n\ These\ are\ kept\ as\ base\ frames\ and\ copied\ when\ applying\ visual\ effects\r\n
+comment2.text=\n\ Load\ frames\ from\ a\ horizontal\ spritesheet\n\ These\ are\ kept\ as\ base\ frames\ and\ copied\ when\ applying\ visual\ effects\n
 comment3.params=
 comment3.target=void\ createFallbackImage()
-comment3.text=\r\n\ Create\ a\ fallback\ image\ if\ spritesheets\ fail\ to\ load\r\n
+comment3.text=\n\ Create\ a\ fallback\ image\ if\ spritesheets\ fail\ to\ load\n
 comment4.params=
 comment4.target=void\ act()
-comment4.text=\r\n\ Act\ -\ Handle\ keyboard\ input\ for\ movement\ and\ animation\r\n
+comment4.text=\n\ Act\ -\ Handle\ keyboard\ input\ for\ movement\ and\ animation\n
 comment5.params=
 comment5.target=void\ handleMovement()
-comment5.text=\r\n\ Handle\ keyboard\ input\ and\ determine\ movement\ direction\r\n\ Separates\ movement\ logic\ from\ visual/animation\ logic\r\n
+comment5.text=\n\ Handle\ keyboard\ input\ and\ determine\ movement\ direction\n\ Separates\ movement\ logic\ from\ visual/animation\ logic\n
 comment6.params=
 comment6.target=void\ updateAnimation()
-comment6.text=\r\n\ Update\ animation\ frame\ counter\ and\ cycle\ through\ frames\r\n
+comment6.text=\n\ Update\ animation\ frame\ counter\ and\ cycle\ through\ frames\n
 comment7.params=
 comment7.target=void\ updateDisplayImage()
-comment7.text=\r\n\ Apply\ the\ current\ frame\ with\ visual\ effects\ based\ on\ direction\r\n\ Fakes\ UP/DOWN\ movement\ by\ transforming\ LEFT/RIGHT\ animations\r\n
+comment7.text=\n\ Apply\ the\ current\ frame\ with\ visual\ effects\ based\ on\ direction\n\ Fakes\ UP/DOWN\ movement\ by\ transforming\ LEFT/RIGHT\ animations\n
 comment8.params=
 comment8.target=greenfoot.GreenfootImage\ getBaseFrameForDirection()
-comment8.text=\r\n\ Get\ the\ base\ LEFT\ or\ RIGHT\ frame\ for\ the\ current\ direction\r\n
+comment8.text=\n\ Get\ the\ base\ LEFT\ or\ RIGHT\ frame\ for\ the\ current\ direction\n
 comment9.params=image
 comment9.target=void\ applyDirectionEffects(greenfoot.GreenfootImage)
-comment9.text=\r\n\ Apply\ visual\ effects\ to\ fake\ UP/DOWN\ movement\r\n\ -\ UP\:\ scale\ smaller\ vertically\ +\ darken\r\n\ -\ DOWN\:\ scale\ larger\ vertically\ +\ brighten\r\n
+comment9.text=\n\ Apply\ visual\ effects\ to\ fake\ UP/DOWN\ movement\n\ -\ UP\:\ scale\ smaller\ vertically\ +\ darken\n\ -\ DOWN\:\ scale\ larger\ vertically\ +\ brighten\n
 numComments=12

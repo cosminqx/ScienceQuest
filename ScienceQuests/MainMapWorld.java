@@ -145,7 +145,7 @@ public class MainMapWorld extends World
         int y2 = y1 + height;
         
         // AABB collision check against all collision rectangles
-        for (TiledMap.CollisionRect r : tiledMap.getCollisionRects())
+        for (TiledMap.CollisionRect r : tiledMap.collisionRects)
         {
             if (x1 < r.x + r.w && x2 > r.x &&
                 y1 < r.y + r.h && y2 > r.y)
