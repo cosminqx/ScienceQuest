@@ -2,11 +2,13 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 
 /**
  * Teacher - A static NPC character (man teacher) in the classroom
+ * Implements NPC interface for dialogue system
  */
-public class Teacher extends Actor
+public class Teacher extends Actor implements NPC
 {
     private TeacherInteractionDisplay interactionDisplay;
     private static final int INTERACTION_DISTANCE = 80; // Distance in pixels to trigger interaction
+    private boolean fKeyPressed = false; // Track F key state to prevent repeated presses
     
     public Teacher()
     {
@@ -37,6 +39,85 @@ public class Teacher extends Actor
     public void act()
     {
         checkPlayerProximity();
+        checkDialogueInteraction();
+    }
+    
+    /**
+     * Check if player presses F key nearby to initiate dialogue
+     */
+    private void checkDialogueInteraction()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        
+        // Find the player character (Boy or Girl)
+        Actor player = null;
+        if (!world.getObjects(Boy.class).isEmpty())
+        {
+            player = world.getObjects(Boy.class).get(0);
+        }
+        else if (!world.getObjects(Girl.class).isEmpty())
+        {
+            player = world.getObjects(Girl.class).get(0);
+        }
+        
+        if (player != null)
+        {
+            // Calculate distance to player
+            int dx = player.getX() - getX();
+            int dy = player.getY() - getY();
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Debug output
+            boolean fKeyDown = Greenfoot.isKeyDown("f");
+            if (distance < INTERACTION_DISTANCE)
+            {
+                System.out.println("DEBUG: Player in range. Distance: " + distance + ", F key: " + fKeyDown);
+            }
+            
+            // Check if player is close enough and F key is pressed
+            if (distance < INTERACTION_DISTANCE && fKeyDown)
+            {
+                // Prevent repeated dialogue triggers from holding F key
+                if (!fKeyPressed)
+                {
+                    System.out.println("DEBUG: F key pressed, initiating dialogue");
+                    fKeyPressed = true;
+                    initiateDialogue();
+                }
+            }
+            else if (!fKeyDown)
+            {
+                // Reset when F key is released
+                fKeyPressed = false;
+            }
+        }
+    }
+    
+    /**
+     * Initiate dialogue with the teacher
+     */
+    private void initiateDialogue()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        
+        // Get the dialogue manager
+        DialogueManager manager = DialogueManager.getInstance();
+        
+        // Check if dialogue is already active
+        if (manager.isDialogueActive())
+        {
+            return;
+        }
+        
+        // Create and show the dialogue
+        String playerName = PlayerData.getPlayerName();
+        String dialogueText = getDialogueText(playerName);
+        String iconPath = getIconPath();
+        
+        DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, false);
+        manager.showDialogue(dialogue, world, this);
     }
     
     /**
@@ -83,5 +164,23 @@ public class Teacher extends Actor
                 }
             }
         }
+    }
+    
+    /**
+     * Get the dialogue text for this NPC (from NPC interface)
+     */
+    @Override
+    public String getDialogueText(String playerName)
+    {
+        return "Hello there, " + playerName + "!";
+    }
+    
+    /**
+     * Get the icon path for this NPC's dialogue box (from NPC interface)
+     */
+    @Override
+    public String getIconPath()
+    {
+        return "images/man_teacher_icon.png";
     }
 }
