@@ -15,10 +15,14 @@ public class MainMapWorld extends World
     private TeacherDisplay teacherDisplay;
     private int teacherMapX = 339; // Fixed position on map
     private int teacherMapY = 115;
+    private DialogueManager dialogueManager; // For managing dialogue interactions
 
     public MainMapWorld()
     {
         super(600, 400, 1);
+        
+        // Initialize dialogue manager
+        dialogueManager = DialogueManager.getInstance();
         
         // Load TMX map (floor + collisions)
         loadMap();
@@ -83,6 +87,9 @@ public class MainMapWorld extends World
 
     public void act()
     {
+        // Process dialogue input (ENTER key to dismiss)
+        dialogueManager.processInput();
+        
         // Update the camera position to keep the character centered
         if (character != null && character.getWorld() != null)
         {

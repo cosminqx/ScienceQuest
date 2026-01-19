@@ -106,7 +106,11 @@ public class Boy extends Actor
      */
     public void act()
     {
-        handleMovement();
+        // Only allow movement if no dialogue is active
+        if (!DialogueManager.getInstance().isDialogueActive())
+        {
+            handleMovement();
+        }
         updateAnimation();
     }
 
