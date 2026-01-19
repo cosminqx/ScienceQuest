@@ -116,8 +116,27 @@ public class Teacher extends Actor implements NPC
         String dialogueText = getDialogueText(playerName);
         String iconPath = getIconPath();
         
-        DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, false);
+        // Greeting dialogue
+        DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, true);
+        dialogue.setTypewriterSpeed(2); // 1=fastest, higher=slower
+
+        // Queue the quiz question to show after greeting
+        DialogueQuestion question = buildScienceQuestion();
+        DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+        questionBox.setTypewriterSpeed(2);
+        manager.queueDialogue(questionBox);
+        
         manager.showDialogue(dialogue, world, this);
+    }
+
+    private DialogueQuestion buildScienceQuestion()
+    {
+        String questionText = "Let's start with a simple science question: What's the smallest form of the universe?";
+        String[] answers = { "Atom", "Molecule", "Cell", "Galaxy" };
+        int correctIndex = 0;
+        String correctResponse = "Correct! Everything in the universe is built from atoms. Well done!";
+        String incorrectResponse = "Not quite. The correct answer is an atom. We'll cover this in more detail soon.";
+        return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
     }
     
     /**
@@ -172,7 +191,11 @@ public class Teacher extends Actor implements NPC
     @Override
     public String getDialogueText(String playerName)
     {
-        return "Hello there, " + playerName + "!";
+        return "Hello there, " + playerName + "!\n" +
+            "---\n" +
+            "Welcome to Science Quests!\n" +
+            "---\n" +
+            "Feel free to explore and learn.";
     }
     
     /**

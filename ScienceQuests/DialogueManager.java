@@ -14,6 +14,11 @@ public class DialogueManager
     private DialogueBox currentDialogue;
     private World currentWorld;
     private NPC currentNPC; // Reference to the NPC that triggered the dialogue
+    private boolean enterKeyPressed = false; // Track ENTER key state to prevent repeated advances
+    private DialogueBox queuedDialogue; // Dialogue to show after the current one
+    private int inputCooldown = 0; // Small cooldown to avoid carrying key presses between dialogues
+    private boolean questionReady = true; // Wait until ENTER is released before accepting question input
+    private int questionReadyDelay = 0; // Additional frames to wait after release
     
     /**
      * Private constructor (singleton pattern)
@@ -23,6 +28,11 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
+        enterKeyPressed = false;
+        queuedDialogue = null;
+        inputCooldown = 0;
+        questionReady = true;
+        questionReadyDelay = 0;
     }
     
     /**
@@ -56,6 +66,10 @@ public class DialogueManager
         currentDialogue = dialogue;
         currentWorld = world;
         currentNPC = npc;
+        enterKeyPressed = false; // reset key state on new dialogue
+        inputCooldown = 6; // ignore inputs for a few ticks to avoid carryover
+        questionReady = !dialogue.isQuestionMode(); // question input locked until released
+        questionReadyDelay = dialogue.isQuestionMode() ? 8 : 0; // wait a few frames after release
         
         // Position the dialogue box at the bottom center of the screen
         int worldWidth = world.getWidth();
@@ -66,6 +80,14 @@ public class DialogueManager
         
         System.out.println("DEBUG: Dialogue shown at (" + centeredX + ", " + positionedY + "): " + dialogue.getFullText());
         return true;
+    }
+
+    /**
+     * Queue a dialogue to be shown immediately after the current one finishes
+     */
+    public void queueDialogue(DialogueBox dialogue)
+    {
+        queuedDialogue = dialogue;
     }
     
     /**
@@ -82,6 +104,9 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
+        enterKeyPressed = false;
+        questionReady = true;
+        questionReadyDelay = 0;
     }
     
     /**
@@ -116,10 +141,104 @@ public class DialogueManager
     {
         if (currentDialogue != null)
         {
-            // Check for ENTER key to dismiss dialogue
-            if (Greenfoot.isKeyDown("enter"))
+            // Prevent immediate re-trigger right after showing dialogue
+            if (inputCooldown > 0)
             {
-                hideDialogue();
+                inputCooldown--;
+                return;
+            }
+
+            // Handle question-mode dialogues separately
+            if (currentDialogue.isQuestionMode())
+            {
+                // Require ENTER to be released before accepting question input
+                if (!questionReady)
+                {
+                    if (!Greenfoot.isKeyDown("enter"))
+                    {
+                        if (questionReadyDelay > 0)
+                        {
+                            questionReadyDelay--;
+                        }
+                        else
+                        {
+                            questionReady = true;
+                        }
+                    }
+                    else
+                    {
+                        questionReadyDelay = Math.max(questionReadyDelay, 8);
+                    }
+                    return;
+                }
+
+                String key = Greenfoot.getKey();
+                if (key != null)
+                {
+                    if ("1".equals(key)) currentDialogue.selectIndex(0);
+                    else if ("2".equals(key)) currentDialogue.selectIndex(1);
+                    else if ("3".equals(key)) currentDialogue.selectIndex(2);
+                    else if ("4".equals(key)) currentDialogue.selectIndex(3);
+                    else if ("up".equals(key) || "w".equals(key)) currentDialogue.moveSelection(-1);
+                    else if ("down".equals(key) || "s".equals(key)) currentDialogue.moveSelection(1);
+                    else if ("enter".equals(key))
+                    {
+                        // Confirm answer and show follow-up response
+                        boolean correct = currentDialogue.confirmSelection();
+                        DialogueQuestion q = currentDialogue.getQuestion();
+                        String responseText = correct ? q.getCorrectResponse() : q.getIncorrectResponse();
+                        String iconPath = currentDialogue.getIconPath();
+                        World w = currentWorld;
+                        NPC npc = currentNPC;
+                        hideDialogue();
+                        DialogueBox response = new DialogueBox(responseText, iconPath, true);
+                        response.setTypewriterSpeed(2);
+                        showDialogue(response, w, npc);
+                        enterKeyPressed = false;
+                        questionReady = true;
+                        questionReadyDelay = 0;
+                        return;
+                    }
+                }
+                return; // Do not process normal ENTER while question active
+            }
+            
+            // Check for ENTER key
+            boolean enterKeyDown = Greenfoot.isKeyDown("enter");
+            
+            if (enterKeyDown && !enterKeyPressed)
+            {
+                // ENTER key just pressed (not held from previous frame)
+                enterKeyPressed = true;
+                
+                // Try to advance to the next page
+                if (!currentDialogue.nextPage())
+                {
+                    DialogueBox next = queuedDialogue;
+                    World w = currentWorld;
+                    NPC npc = currentNPC;
+                    queuedDialogue = null;
+                    hideDialogue();
+                    if (next != null)
+                    {
+                        System.out.println("DEBUG: Showing queued dialogue");
+                        showDialogue(next, w, npc);
+                    }
+                    else
+                    {
+                        // No more pages, so dismiss the dialogue
+                        System.out.println("DEBUG: Last page reached, dismissing dialogue");
+                    }
+                }
+                else
+                {
+                    System.out.println("DEBUG: Advanced dialogue page");
+                }
+            }
+            else if (!enterKeyDown)
+            {
+                // Reset when ENTER key is released
+                enterKeyPressed = false;
             }
         }
     }
@@ -136,5 +255,9 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
+        enterKeyPressed = false;
+        inputCooldown = 0;
+        questionReady = true;
+        questionReadyDelay = 0;
     }
 }
