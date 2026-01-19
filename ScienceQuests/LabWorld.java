@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class MainMapWorld extends World
+public class LabWorld extends World
 {
     private Actor character;
     private GreenfootImage backgroundImage;
@@ -11,34 +11,19 @@ public class MainMapWorld extends World
     private int maxScrollY;
     private int tileSize = 48;
     private TiledMap tiledMap;
-    private Teacher teacher;
-    private TeacherDisplay teacherDisplay;
-    private int teacherMapX = 339; // Fixed position on map
-    private int teacherMapY = 115;
-    private DialogueManager dialogueManager; // For managing dialogue interactions
 
-    public MainMapWorld()
+    public LabWorld()
     {
         super(600, 400, 1);
         
-        // Initialize dialogue manager
-        dialogueManager = DialogueManager.getInstance();
-        
-        // Load TMX map (floor + collisions)
+        // Load lab map FIRST
         loadMap();
-        
-        // Add teacher NPC to the map (front area) - static on map
-        // Added BEFORE character so character renders on top
-        teacher = new Teacher();
-        teacherDisplay = new TeacherDisplay();
-        addObject(teacher, teacherMapX, teacherMapY);
-        addObject(teacherDisplay, teacherMapX, teacherMapY);
         
         // Retrieve player data
         String playerName = PlayerData.getPlayerName();
         String playerGender = PlayerData.getPlayerGender();
         
-        // Spawn the correct character based on gender - added AFTER teacher to render on top
+        // Spawn the correct character based on gender at screen center initially
         if ("Male".equals(playerGender))
         {
             Boy boy = new Boy();
@@ -52,8 +37,19 @@ public class MainMapWorld extends World
             character = girl;
         }
         
-        // Add collision objects AFTER character so they render behind
-        // (REMOVED: using rectangle-based collision from Collision object layer instead)
+        // Now set character to map position 74, 163 (will be adjusted by scroll in act())
+        if (character != null)
+        {
+            character.setLocation(74, 163);
+            // Force initial scroll calculation
+            scrollX = character.getX() - getWidth() / 2;
+            scrollY = character.getY() - getHeight() / 2;
+            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
+            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+            
+            System.out.println("Character spawned at: " + character.getX() + ", " + character.getY());
+            System.out.println("Initial scroll: " + scrollX + ", " + scrollY);
+        }
         
         // Instructions
         Label instructionsLabel = new Label("Use arrow keys to move", 16, Color.WHITE);
@@ -64,18 +60,20 @@ public class MainMapWorld extends World
     {
         try
         {
-            tiledMap = new TiledMap("test-map-LayersFixed.tmj");
+            // Load the lab map
+            tiledMap = new TiledMap("images/lab_noapte_2.json");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
+            System.out.println("SUCCESS: Loaded lab map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
         catch (Exception e)
         {
-            // Fallback: create a simple green background if image not found
-            System.out.println("ERROR loading TMJ: " + e.getMessage());
+            // Fallback: create a simple background if image not found
+            System.out.println("ERROR loading lab map: " + e.getMessage());
+            e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
-            backgroundImage.setColor(new Color(34, 139, 34)); // Forest green
+            backgroundImage.setColor(new Color(34, 34, 50)); // Dark blue-gray
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
             tiledMap = null;
         }
@@ -87,9 +85,6 @@ public class MainMapWorld extends World
 
     public void act()
     {
-        // Process dialogue input (ENTER key to dismiss)
-        dialogueManager.processInput();
-        
         // Update the camera position to keep the character centered
         if (character != null && character.getWorld() != null)
         {
@@ -103,10 +98,9 @@ public class MainMapWorld extends World
             
             // Draw the background image with the scroll offset
             GreenfootImage worldImage = getBackground();
-            // Fill with solid color first to avoid StartWorld bleed-through
             worldImage.setColor(new Color(0, 0, 0));
             worldImage.fillRect(0, 0, getWidth(), getHeight());
-            // Draw map at scroll offset
+            
             if (backgroundImage != null)
             {
                 worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
@@ -116,36 +110,33 @@ public class MainMapWorld extends World
                 System.out.println("WARNING: backgroundImage is null!");
             }
             
-            // Update teacher position to stay static on map
-            updateTeacherPosition();
-            
-            // Check for world transition
+            // Check for transition back to MainMapWorld
             checkWorldTransition();
         }
     }
     
     /**
-     * Update teacher screen position based on scroll to keep it static on map
+     * Check if player should transition back to MainMapWorld
      */
-    private void updateTeacherPosition()
+    private void checkWorldTransition()
     {
-        if (teacher != null && teacher.getWorld() != null)
+        if (character == null) return;
+        
+        // Get character's map position
+        int mapX = screenToMapX(character.getX());
+        
+        // Transition to MainMapWorld when reaching left edge
+        if (mapX <= 5)
         {
-            int screenX = teacherMapX - scrollX;
-            int screenY = teacherMapY - scrollY;
-            teacher.setLocation(screenX, screenY);
-            teacherDisplay.setLocation(screenX, screenY);
+            Greenfoot.setWorld(new MainMapWorld());
         }
     }
     
     /**
      * Convert screen coordinates to map coordinates
-     * Screen coords are relative to the camera view (0-600 width, 0-400 height)
-     * Map coords are absolute positions in the full map (0-768 width, 0-576 height)
      */
     public int screenToMapX(int screenX)
     {
-        // Update scroll first to ensure latest values
         if (character != null && character.getWorld() != null)
         {
             scrollX = character.getX() - getWidth() / 2;
@@ -156,7 +147,6 @@ public class MainMapWorld extends World
     
     public int screenToMapY(int screenY)
     {
-        // Update scroll first to ensure latest values
         if (character != null && character.getWorld() != null)
         {
             scrollY = character.getY() - getHeight() / 2;
@@ -167,10 +157,6 @@ public class MainMapWorld extends World
     
     /**
      * Check if a rectangle (character's feet area) collides with any collision rectangle
-     * @param mapX center X position in map coordinates
-     * @param mapY center Y position in map coordinates  
-     * @param width width of the feet hitbox
-     * @param height height of the feet hitbox (should be small, like 10-15px)
      */
     public boolean isCollisionAt(int mapX, int mapY, int width, int height)
     {
@@ -193,23 +179,4 @@ public class MainMapWorld extends World
         }
         return false;
     }
-    
-    /**
-     * Check if player should transition to LabWorld
-     */
-    private void checkWorldTransition()
-    {
-        if (character == null || backgroundImage == null) return;
-        
-        // Get character's map position
-        int mapX = screenToMapX(character.getX());
-        
-        // Transition to LabWorld when reaching right edge
-        if (mapX >= backgroundImage.getWidth() - 5)
-        {
-            Greenfoot.setWorld(new LabWorld());
-        }
-    }
 }
-
-

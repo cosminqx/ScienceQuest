@@ -193,21 +193,40 @@ public class Boy extends Actor
         }
 
         // Check collision using feet rectangle with sliding collision
-        MainMapWorld world = (MainMapWorld) getWorld();
-        if (world != null)
+        World world = getWorld();
+        if (world != null && (world instanceof MainMapWorld || world instanceof LabWorld))
         {
-            int newMapX = world.screenToMapX(newX);
-            int newMapY = world.screenToMapY(newY + HITBOX_OFFSET_Y);
+            int newMapX, newMapY, xOnlyMapX, xOnlyMapY, yOnlyMapX, yOnlyMapY;
+            boolean fullMoveCollides, xMoveCollides, yMoveCollides;
+            
+            if (world instanceof MainMapWorld) {
+                MainMapWorld mainWorld = (MainMapWorld) world;
+                newMapX = mainWorld.screenToMapX(newX);
+                newMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                fullMoveCollides = mainWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
+            } else {
+                LabWorld labWorld = (LabWorld) world;
+                newMapX = labWorld.screenToMapX(newX);
+                newMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                fullMoveCollides = labWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
+            }
             
             // Feet hitbox: full character width, 18px height
-            boolean fullMoveCollides = world.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
             
             if (fullMoveCollides)
             {
                 // Try moving only horizontally
-                int xOnlyMapX = world.screenToMapX(newX);
-                int xOnlyMapY = world.screenToMapY(startY + HITBOX_OFFSET_Y);
-                boolean xMoveCollides = world.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
+                if (world instanceof MainMapWorld) {
+                    MainMapWorld mainWorld = (MainMapWorld) world;
+                    xOnlyMapX = mainWorld.screenToMapX(newX);
+                    xOnlyMapY = mainWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
+                    xMoveCollides = mainWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
+                } else {
+                    LabWorld labWorld = (LabWorld) world;
+                    xOnlyMapX = labWorld.screenToMapX(newX);
+                    xOnlyMapY = labWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
+                    xMoveCollides = labWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
+                }
                 
                 if (!xMoveCollides && newX != startX)
                 {
@@ -218,9 +237,17 @@ public class Boy extends Actor
                 }
                 
                 // Try moving only vertically
-                int yOnlyMapX = world.screenToMapX(startX);
-                int yOnlyMapY = world.screenToMapY(newY + HITBOX_OFFSET_Y);
-                boolean yMoveCollides = world.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
+                if (world instanceof MainMapWorld) {
+                    MainMapWorld mainWorld = (MainMapWorld) world;
+                    yOnlyMapX = mainWorld.screenToMapX(startX);
+                    yOnlyMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                    yMoveCollides = mainWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
+                } else {
+                    LabWorld labWorld = (LabWorld) world;
+                    yOnlyMapX = labWorld.screenToMapX(startX);
+                    yOnlyMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                    yMoveCollides = labWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
+                }
                 
                 if (!yMoveCollides && newY != startY)
                 {

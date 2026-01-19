@@ -24,6 +24,13 @@ public class TiledMap
     private GreenfootImage fullMapImage;
     private GreenfootImage tileset;
     private List<GreenfootImage> tileCache;
+    private List<TilesetInfo> tilesets = new ArrayList<>();
+    
+    private static class TilesetInfo {
+        int firstgid;
+        List<GreenfootImage> tiles;
+        TilesetInfo(int gid, List<GreenfootImage> t) { firstgid = gid; tiles = t; }
+    }
 
     public TiledMap(String tmxPath)
     {
@@ -37,7 +44,7 @@ public class TiledMap
             throw new RuntimeException("Failed to read TMX: " + e.getMessage());
         }
 
-        boolean isJson = tmxPath.endsWith(".tmj") || content.trim().startsWith("{");
+        boolean isJson = tmxPath.endsWith(".tmj") || tmxPath.endsWith(".json") || content.trim().startsWith("{");
         if (isJson)
         {
             mapW = extractJsonInt(content, "\"width\":");
@@ -45,9 +52,24 @@ public class TiledMap
             tileSize = extractJsonInt(content, "\"tilewidth\":");
             tilesetFirstGid = extractTilesetFirstGid(content);
 
-            floor = parseJsonTileLayer(content, "Floor", mapW, mapH);
-            objectsA = parseJsonTileLayer(content, "Objects", mapW, mapH);
-            objectsB = parseJsonTileLayer(content, "Objects1", mapW, mapH);
+            // Try known layer names first, then fall back to generic names
+            int[][] tempFloor = parseJsonTileLayer(content, "Floor", mapW, mapH);
+            if (countNonZero(tempFloor) == 0) {
+                tempFloor = parseJsonTileLayer(content, "Tile Layer 1", mapW, mapH);
+            }
+            floor = tempFloor;
+            
+            int[][] tempObjectsA = parseJsonTileLayer(content, "Objects", mapW, mapH);
+            if (countNonZero(tempObjectsA) == 0) {
+                tempObjectsA = parseJsonTileLayer(content, "Tile Layer 2", mapW, mapH);
+            }
+            objectsA = tempObjectsA;
+            
+            int[][] tempObjectsB = parseJsonTileLayer(content, "Objects1", mapW, mapH);
+            if (countNonZero(tempObjectsB) == 0) {
+                tempObjectsB = parseJsonTileLayer(content, "Tile Layer 3", mapW, mapH);
+            }
+            objectsB = tempObjectsB;
         }
         else
         {
@@ -62,6 +84,9 @@ public class TiledMap
         }
 
         loadTilesetImage();
+        if (isJson) {
+            loadMultipleTilesets(content);
+        }
 
         solid = new boolean[mapH][mapW];
         if (isJson)
@@ -234,6 +259,9 @@ public class TiledMap
         // Best guess: tileset image alongside images folder; fallback to floor.png style
         String[] candidatePaths = new String[] {
             "images/CoolSchool_tileset.png",
+            "images/48px/tilesFloor.png",
+            "images/48px/tilesWalls.png",
+            "images/48px/tilesStuff.png",
             "CoolSchool_tileset.png",
             "images/floor.png" // last resort
         };
@@ -275,17 +303,126 @@ public class TiledMap
             System.out.println("✗ WARNING: Tileset not found! Using fallback colors.");
         }
     }
+    
+    private void loadMultipleTilesets(String json) {
+        System.out.println("=== Loading Multiple Tilesets ===");
+        int tsPos = json.indexOf("\"tilesets\":[");
+        if (tsPos == -1) return;
+        
+        int endPos = json.indexOf("]", tsPos);
+        String tilesetsBlock = json.substring(tsPos, endPos);
+        
+        // Parse each tileset entry
+        int searchFrom = 0;
+        while (true) {
+            int nextTileset = tilesetsBlock.indexOf("\"firstgid\":", searchFrom);
+            if (nextTileset == -1) break;
+            
+            int gid = extractJsonInt(tilesetsBlock.substring(nextTileset), "\"firstgid\":");
+            int sourcePos = tilesetsBlock.indexOf("\"source\":", nextTileset);
+            if (sourcePos == -1 || sourcePos > nextTileset + 200) {
+                searchFrom = nextTileset + 10;
+                continue;
+            }
+            
+            String source = extractJsonString(tilesetsBlock.substring(sourcePos), "\"source\":");
+            if (source.isEmpty()) {
+                searchFrom = nextTileset + 10;
+                continue;
+            }
+            
+            // Extract filename from source path
+            String filename = source.replace("\\/", "/");
+            if (filename.contains("/")) {
+                filename = filename.substring(filename.lastIndexOf("/") + 1);
+            }
+            filename = filename.replace(".tsx", ".png");
+            
+            // Try to load the tileset image
+            String[] paths = new String[] {
+                "images/48px/" + filename,
+                "images/" + filename,
+                filename
+            };
+            
+            GreenfootImage tilesetImg = null;
+            for (String path : paths) {
+                try {
+                    tilesetImg = new GreenfootImage(path);
+                    System.out.println("✓ Loaded tileset gid=" + gid + " from: " + path);
+                    break;
+                } catch (Exception e) {
+                    // Try next path
+                }
+            }
+            
+            if (tilesetImg != null) {
+                List<GreenfootImage> tiles = new ArrayList<>();
+                int cols = tilesetImg.getWidth() / tileSize;
+                int rows = tilesetImg.getHeight() / tileSize;
+                int total = cols * rows;
+                
+                for (int i = 0; i < total; i++) {
+                    int sx = (i % cols) * tileSize;
+                    int sy = (i / cols) * tileSize;
+                    GreenfootImage tile = new GreenfootImage(tileSize, tileSize);
+                    tile.drawImage(tilesetImg, -sx, -sy);
+                    tiles.add(tile);
+                }
+                
+                tilesets.add(new TilesetInfo(gid, tiles));
+                System.out.println("  -> " + total + " tiles loaded");
+            } else {
+                System.out.println("✗ Failed to load tileset: " + filename);
+            }
+            
+            searchFrom = nextTileset + 10;
+        }
+        
+        System.out.println("Total tilesets loaded: " + tilesets.size());
+    }
+    
+    private String extractJsonString(String json, String key) {
+        int pos = json.indexOf(key);
+        if (pos == -1) return "";
+        int start = json.indexOf("\"", pos + key.length()) + 1;
+        int end = json.indexOf("\"", start);
+        if (start == 0 || end == -1) return "";
+        return json.substring(start, end);
+    }
 
     private GreenfootImage getTileFromGid(int gid)
     {
+        // Try multiple tilesets first
+        if (!tilesets.isEmpty()) {
+            TilesetInfo matchingTileset = null;
+            for (int i = tilesets.size() - 1; i >= 0; i--) {
+                if (gid >= tilesets.get(i).firstgid) {
+                    matchingTileset = tilesets.get(i);
+                    break;
+                }
+            }
+            
+            if (matchingTileset != null) {
+                int index = gid - matchingTileset.firstgid;
+                if (index >= 0 && index < matchingTileset.tiles.size()) {
+                    return new GreenfootImage(matchingTileset.tiles.get(index));
+                }
+            }
+        }
+        
+        // Fallback to single tileset
         int index = gid - tilesetFirstGid;
-
-        if (tileset != null && index >= 0 && index < tileCache.size())
+        if (tileset != null && !tileCache.isEmpty())
         {
-            return new GreenfootImage(tileCache.get(index)); // return a copy to avoid mutation
+            if (index >= 0)
+            {
+                int wrappedIndex = index % tileCache.size();
+                return new GreenfootImage(tileCache.get(wrappedIndex));
+            }
         }
 
-        // Fallback colored tile if tileset missing or index out of range
+        // Final fallback colored tile
         GreenfootImage fallback = new GreenfootImage(tileSize, tileSize);
         fallback.setColor(new Color(90, 140, 90));
         fallback.fillRect(0, 0, tileSize, tileSize);
@@ -299,11 +436,13 @@ public class TiledMap
             int tsPos = xmlOrJson.indexOf("<tileset ");
             if (tsPos == -1) return 1; // fallback
             int value = extractIntAttr(xmlOrJson.substring(tsPos), "firstgid=\"", "\"");
+            System.out.println("Extracted firstgid from XML: " + value);
             return value > 0 ? value : 1;
         }
         int pos = xmlOrJson.indexOf("\"firstgid\":");
         if (pos == -1) return 1;
         int value = extractJsonInt(xmlOrJson.substring(pos), "\"firstgid\":");
+        System.out.println("Extracted firstgid from JSON: " + value);
         return value > 0 ? value : 1;
     }
 

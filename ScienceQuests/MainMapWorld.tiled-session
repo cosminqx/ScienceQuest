@@ -1,4 +1,7 @@
 {
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
     "fileStates": {
         "": {
             "scaleInDock": 1
@@ -6,6 +9,50 @@
         "C:/Users/lenov/Documents/Github/ScienceQuest/CoolSchool_tileset.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1
+        },
+        "images/lab_noapte_2.tmx": {
+            "scale": 0.8595238095238095,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 431.6343490304709,
+                "y": 336.2326869806094
+            }
+        },
+        "spriteSheet_lightBulbSmallAnimation_48x48.tsx": {
+            "scaleInDock": 1
+        },
+        "spriteSheet_tiledLiquids_48x48.tsx": {
+            "scaleInDock": 1
+        },
+        "test-map-LayersFixed.tmj": {
+            "scale": 1,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 363,
+                "y": 263
+            }
+        },
+        "tilesFloor.tsx": {
+            "scaleInDock": 1
+        },
+        "tilesStuff.tsx": {
+            "scaleInDock": 1
+        },
+        "tilesWalls.tsx": {
+            "scaleInDock": 1
         }
+    },
+    "last.externalTilesetPath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
+    "last.imagePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
+    "map.lastUsedFormat": "json",
+    "openFiles": [
+    ],
+    "project": "MainMapWorld.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 48,
+        "width": 48
     }
 }
