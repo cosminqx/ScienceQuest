@@ -149,7 +149,7 @@ public class LabWorld extends World
                            "), map: (" + mapX + ", " + mapY + "), scroll: (" + scrollX + ", " + scrollY + ")");
         
         // Transition to MainMapWorld when inside the exit window (bottom-left area)
-        if (mapX >= 62 && mapX <= 74 && mapY >= 580 && mapY <= 600)
+        if (mapX >= 0 && mapX <= 72 && mapY >= 551 && mapY <= 599)
         {
             System.out.println("TRANSITION TRIGGERED!");
             Greenfoot.setWorld(new MainMapWorld());
