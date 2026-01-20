@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="48" tileheight="48" infinite="0" nextlayerid="11" nextobjectid="30">
- <tileset firstgid="1" source="../tilesFloor.tsx"/>
- <tileset firstgid="199" source="../tilesWalls.tsx"/>
- <tileset firstgid="391" source="../spriteSheet_tiledLiquids_48x48.tsx"/>
- <tileset firstgid="439" source="../tilesStuff.tsx"/>
- <tileset firstgid="1031" source="../spriteSheet_lightBulbSmallAnimation_48x48.tsx"/>
- <tileset firstgid="1039" source="../spriteSheet_lightingBulb02_204x219.tsx"/>
+ <tileset firstgid="1" source="48px/tilesFloor.tsx"/>
+ <tileset firstgid="199" source="48px/tilesWalls.tsx"/>
+ <tileset firstgid="391" source="48px/spriteSheet_tiledLiquids_48x48.tsx"/>
+ <tileset firstgid="439" source="48px/tilesStuff.tsx"/>
+ <tileset firstgid="1031" source="48px/spriteSheet_lightBulbSmallAnimation_48x48.tsx"/>
+ <tileset firstgid="1039" source="48px/spriteSheet_lightingBulb02_204x219.tsx"/>
  <layer id="1" name="Tile Layer 1" width="18" height="14">
   <data encoding="csv">
 228,229,230,246,270,228,229,230,246,270,228,229,230,246,270,228,229,230,
