@@ -17,7 +17,7 @@ public class LabWorld extends World
 
     public LabWorld()
     {
-        super(600, 400, 1);
+        super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
         setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
