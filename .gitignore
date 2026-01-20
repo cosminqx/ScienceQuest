@@ -1,5 +1,6 @@
 context.txt
 .DS_Store
+project.greenfoot
 
 # Java compiled files
 *.class
