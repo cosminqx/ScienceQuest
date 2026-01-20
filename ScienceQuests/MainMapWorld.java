@@ -19,7 +19,7 @@ public class MainMapWorld extends World
 
     public MainMapWorld()
     {
-        super(600, 400, 1);
+        super(768, 576, 1);
         
         FontManager.loadFonts();
         
