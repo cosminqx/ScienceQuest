@@ -14,14 +14,7 @@ public class DialogueManager
     private DialogueBox currentDialogue;
     private World currentWorld;
     private NPC currentNPC; // Reference to the NPC that triggered the dialogue
-    private boolean enterKeyPressed = false; // Track ENTER key state to prevent repeated advances
     private DialogueBox queuedDialogue; // Dialogue to show after the current one
-    private int inputCooldown = 0; // Small cooldown to avoid carrying key presses between dialogues
-    private boolean questionReady = true; // Wait until ENTER is released before accepting question input
-    private int questionReadyDelay = 0; // Additional frames to wait after release
-    private boolean waitingForEnterRelease = false; // After question answer, wait for ENTER to be released before accepting input
-    private boolean questionInputEnabled = false; // Only accept question input after ENTER is released at least once
-    private int questionInputClearFrames = 0; // Additional frames to wait after enabling input to clear key buffer
     
     /**
      * Private constructor (singleton pattern)
@@ -31,14 +24,7 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
-        enterKeyPressed = false;
         queuedDialogue = null;
-        inputCooldown = 0;
-        questionReady = true;
-        questionReadyDelay = 0;
-        waitingForEnterRelease = false;
-        questionInputEnabled = false;
-        questionInputClearFrames = 0;
     }
     
     /**
@@ -72,23 +58,6 @@ public class DialogueManager
         currentDialogue = dialogue;
         currentWorld = world;
         currentNPC = npc;
-        enterKeyPressed = false; // reset key state on new dialogue
-        
-        // For questions, use longer cooldown to prevent input carryover
-        if (dialogue.isQuestionMode())
-        {
-            inputCooldown = 15; // Longer cooldown for questions to prevent immediate advance
-        }
-        else
-        {
-            inputCooldown = 6; // Standard cooldown for normal dialogue
-        }
-        
-        questionReady = !dialogue.isQuestionMode(); // question input locked until released
-        questionReadyDelay = dialogue.isQuestionMode() ? 10 : 0; // wait a few frames after release
-        waitingForEnterRelease = false; // reset the enter release flag
-        questionInputEnabled = false; // No question input until ENTER is released
-        questionInputClearFrames = 0; // Clear any buffered keys
         
         // Position the dialogue box at the bottom center of the screen
         int worldWidth = world.getWidth();
@@ -123,12 +92,6 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
-        enterKeyPressed = false;
-        questionReady = true;
-        questionReadyDelay = 0;
-        waitingForEnterRelease = false;
-        questionInputEnabled = false;
-        questionInputClearFrames = 0;
     }
     
     /**
@@ -163,47 +126,10 @@ public class DialogueManager
     {
         if (currentDialogue != null)
         {
-            // Prevent immediate re-trigger right after showing dialogue
-            if (inputCooldown > 0)
-            {
-                inputCooldown--;
-                return;
-            }
-
             // Handle question-mode dialogues separately
             if (currentDialogue.isQuestionMode())
             {
-                boolean enterKeyDown = Greenfoot.isKeyDown("enter");
-                
-                // First, wait for ENTER to be released if it wasn't when question appeared
-                if (!questionInputEnabled)
-                {
-                    if (!enterKeyDown)
-                    {
-                        // ENTER is now released, enable question input
-                        questionInputEnabled = true;
-                        questionInputClearFrames = 5; // Wait 5 more frames to clear key buffer
-                        System.out.println("DEBUG: ENTER released - waiting 5 frames to clear buffer");
-                    }
-                    else
-                    {
-                        // Still holding ENTER, wait
-                        System.out.println("DEBUG: Waiting for ENTER release...");
-                    }
-                    return; // Don't process input yet
-                }
-                
-                // Wait for key buffer to clear after enabling input
-                if (questionInputClearFrames > 0)
-                {
-                    questionInputClearFrames--;
-                    System.out.println("DEBUG: Clearing key buffer... " + questionInputClearFrames + " frames remaining");
-                    // Clear any keys from the buffer
-                    Greenfoot.getKey(); // Consume and discard any buffered key
-                    return; // Don't process input yet
-                }
-                
-                // Now that input is enabled and buffer is clear, process question input
+                // Process question input directly
                 String key = Greenfoot.getKey();
                 if (key != null)
                 {
@@ -228,8 +154,6 @@ public class DialogueManager
                         DialogueBox response = new DialogueBox(responseText, iconPath, true);
                         response.setTypewriterSpeed(2);
                         showDialogue(response, w, npc);
-                        // Flag to wait for ENTER release before accepting input on response
-                        waitingForEnterRelease = true;
                         return;
                     }
                 }
@@ -237,7 +161,7 @@ public class DialogueManager
             }
             
             // Check for ENTER key
-            boolean enterKeyDown = Greenfoot.isKeyDown("enter");
+            String key = Greenfoot.getKey();
             
             // Safety check: if somehow we're still in question mode, don't process normal input
             if (currentDialogue.isQuestionMode())
@@ -246,68 +170,39 @@ public class DialogueManager
                 return;
             }
             
-            // If we're waiting for ENTER to be released (after question confirmation)
-            if (waitingForEnterRelease)
+            if ("enter".equals(key))
             {
-                if (!enterKeyDown)
-                {
-                    // ENTER has been released, now accept input normally
-                    waitingForEnterRelease = false;
-                    enterKeyPressed = false;
-                }
-                return; // Don't process input while waiting for release
-            }
-            
-            if (enterKeyDown && !enterKeyPressed)
-            {
-                // ENTER key just pressed (not held from previous frame)
-                
-                // Check if the dialogue is still animating
+                // Check if animation is still running
                 if (!currentDialogue.isFullyDisplayed())
                 {
-                    // Animation running: Skip the typewriter animation
-                    enterKeyPressed = true;
+                    // Skip animation and advance immediately
                     currentDialogue.skipTypewriter();
-                    System.out.println("DEBUG: Skipped typewriter animation");
+                    System.out.println("DEBUG: Skipped animation, advancing page");
                 }
-                else
+                
+                // Advance to the next page
+                if (!currentDialogue.nextPage())
                 {
-                    // Animation finished: Advance to the next page
-                    enterKeyPressed = true;
-                    System.out.println("DEBUG: Animation complete, advancing page");
-                    
-                    if (!currentDialogue.nextPage())
+                    DialogueBox next = queuedDialogue;
+                    World w = currentWorld;
+                    NPC npc = currentNPC;
+                    queuedDialogue = null;
+                    hideDialogue();
+                    if (next != null)
                     {
-                        DialogueBox next = queuedDialogue;
-                        World w = currentWorld;
-                        NPC npc = currentNPC;
-                        queuedDialogue = null;
-                        hideDialogue();
-                        if (next != null)
-                        {
-                            System.out.println("DEBUG: Showing queued dialogue");
-                            showDialogue(next, w, npc);
-                        }
-                        else
-                        {
-                            // No more pages, so dismiss the dialogue
-                            System.out.println("DEBUG: Last page reached, dismissing dialogue");
-                        }
+                        System.out.println("DEBUG: Showing queued dialogue");
+                        showDialogue(next, w, npc);
                     }
                     else
                     {
-                        System.out.println("DEBUG: Advanced dialogue page");
+                        // No more pages, so dismiss the dialogue
+                        System.out.println("DEBUG: Last page reached, dismissing dialogue");
                     }
                 }
-            }
-            else if (!enterKeyDown)
-            {
-                // Reset when ENTER key is released
-                if (enterKeyPressed)
+                else
                 {
-                    System.out.println("DEBUG: ENTER released, resetting enterKeyPressed");
+                    System.out.println("DEBUG: Advanced dialogue page");
                 }
-                enterKeyPressed = false;
             }
         }
     }
@@ -324,12 +219,5 @@ public class DialogueManager
         currentDialogue = null;
         currentWorld = null;
         currentNPC = null;
-        enterKeyPressed = false;
-        inputCooldown = 0;
-        questionReady = true;
-        questionReadyDelay = 0;
-        waitingForEnterRelease = false;
-        questionInputEnabled = false;
-        questionInputClearFrames = 0;
     }
 }

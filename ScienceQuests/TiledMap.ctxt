@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=TiledMap
-comment0.text=\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\n
+comment0.text=\r\n\ TiledMap\ -\ lightweight\ TMX/TMJ\ loader\ for\ CSV-encoded\ tile\ layers.\r\n\ Supports\ Floor,\ Objects,\ Objects1\ layers\ with\ 48x48\ tiles.\r\n\ For\ TMJ\:\ uses\ Collision\ object\ layer\ (rectangles)\ for\ collision\ detection.\r\n
 comment1.params=tmxPath
 comment1.target=TiledMap(java.lang.String)
 comment10.params=gid
@@ -13,14 +13,14 @@ comment13.params=
 comment13.target=greenfoot.GreenfootImage\ getFullMapImage()
 comment14.params=layerName
 comment14.target=greenfoot.GreenfootImage\ getLayerImage(java.lang.String)
-comment14.text=\n\ Build\ and\ return\ a\ single-layer\ image\ by\ layer\ name\ (e.g.\ "Over-Player").\n\ Returns\ null\ if\ the\ layer\ is\ not\ found.\n
+comment14.text=\r\n\ Build\ and\ return\ a\ single-layer\ image\ by\ layer\ name\ (e.g.\ "Over-Player").\r\n\ Returns\ null\ if\ the\ layer\ is\ not\ found.\r\n
 comment15.params=json\ key
 comment15.target=int\ extractJsonInt(java.lang.String,\ java.lang.String)
 comment16.params=json\ layerName\ w\ h
 comment16.target=int[][]\ parseJsonTileLayer(java.lang.String,\ java.lang.String,\ int,\ int)
 comment17.params=json\ w\ h
 comment17.target=void\ parseAllJsonTileLayers(java.lang.String,\ int,\ int)
-comment17.text=\n\ Parse\ every\ tilelayer\ in\ the\ TMJ/JSON\ file\ in\ the\ order\ they\ appear.\n\ Stores\ results\ in\ tileLayers\ /\ tileLayerNames\ for\ rendering\ all\ layers.\n
+comment17.text=\r\n\ Parse\ every\ tilelayer\ in\ the\ TMJ/JSON\ file\ in\ the\ order\ they\ appear.\r\n\ Stores\ results\ in\ tileLayers\ /\ tileLayerNames\ for\ rendering\ all\ layers.\r\n
 comment18.params=json
 comment18.target=void\ buildSolidFromObjectLayer(java.lang.String)
 comment19.params=json\ key

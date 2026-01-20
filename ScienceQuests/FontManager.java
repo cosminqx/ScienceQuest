@@ -15,9 +15,9 @@ public class FontManager {
 
     public static void loadFonts() {
         try {
-            // Create dummy Greenfoot font
-            pixeled = new greenfoot.Font("Arial", false, false, 20);
-            pixeledSmall = new greenfoot.Font("Arial", false, false, 14);
+            // Create dummy Greenfoot font (25% larger)
+            pixeled = new greenfoot.Font("Arial", false, false, 10);
+            pixeledSmall = new greenfoot.Font("Arial", false, false, 8);
 
             // Load TTF from project
             InputStream is = FontManager.class
@@ -26,8 +26,8 @@ public class FontManager {
 
             Font awtFont = Font.createFont(Font.TRUETYPE_FONT, is);
 
-            Font big = awtFont.deriveFont(16f);
-            Font small = awtFont.deriveFont(12f);
+            Font big = awtFont.deriveFont(10f);
+            Font small = awtFont.deriveFont(8f);
 
             // Access Greenfoot internal font field
             Field internalFont =
@@ -37,8 +37,6 @@ public class FontManager {
 
             internalFont.set(pixeled, big);
             internalFont.set(pixeledSmall, small);
-
-            System.out.println("Pixel font injected successfully");
 
         } catch (Exception e) {
             System.out.println("Pixel font injection failed — fallback used");

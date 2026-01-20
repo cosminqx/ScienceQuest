@@ -131,11 +131,11 @@ public class Teacher extends Actor implements NPC
 
     private DialogueQuestion buildScienceQuestion()
     {
-        String questionText = "Hai sa incepi cu o intrebare usoara de stiinta: Care este cea mai mica forma a universului?";
-        String[] answers = { "Atom", "Molecula", "Celula", "Galaxie" };
+        String questionText = "Hai să începi cu o întrebare ușoară de știință: Care este cea mai mică formă a universului?";
+        String[] answers = { "Atom", "Moleculă", "Celulă", "Galaxie" };
         int correctIndex = 0;
-        String correctResponse = "Corect! Tot in univers este construit din atomi. Bravo!";
-        String incorrectResponse = "Nu chiar. Raspunsul corect este atomul. Vom acoperi asta mai detaliat curand.";
+        String correctResponse = "Corect! Tot în univers este construit din atomi. Bravo!";
+        String incorrectResponse = "Nu chiar. Răspunsul corect este atomul. Vom acoperi asta mai detaliat curând.";
         return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
     }
     
@@ -195,7 +195,7 @@ public class Teacher extends Actor implements NPC
             "---\n" +
             "Bine ai venit la Science Quests!\n" +
             "---\n" +
-            "Simte-te liber sa explorezi si sa inveți.";
+            "Simte-te liber să explorezi și să înveți.";
     }
     
     /**
