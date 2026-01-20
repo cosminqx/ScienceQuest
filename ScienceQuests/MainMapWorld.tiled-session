@@ -70,8 +70,8 @@
             "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 363,
-                "y": 263
+                "x": 363.5,
+                "y": 263.5
             }
         },
         "tilesFloor.tsx": {
