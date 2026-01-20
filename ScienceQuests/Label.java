@@ -20,30 +20,30 @@ public class Label extends Actor
     }
 
     /**
-     * Custom font variant: draws text with a supplied font (e.g., 8-BIT WONDER).
+     * Custom font variant: draws text with a supplied Greenfoot font (e.g., Pixelated font from FontManager).
      */
-    public Label(String text, Font font, Color textColor)
+    public Label(String text, greenfoot.Font font, Color textColor)
     {
-        int size = font.getSize();
-
-        // Render text once to measure exact width/height
-        GreenfootImage textImg = new GreenfootImage(text, size, textColor, new Color(0, 0, 0, 0));
-
-        // Canvas wide enough for StartWorld (600px) plus padding
-        int padding = size; // simple padding around text
-        int width = Math.max(textImg.getWidth() + padding * 2, 600);
-        int height = Math.max(textImg.getHeight() + padding * 2, size * 2);
-
-        GreenfootImage img = new GreenfootImage(width, height);
+        // Create a temporary image to measure text size
+        GreenfootImage tempImg = new GreenfootImage(1, 1);
+        tempImg.setFont(font);
+        
+        // Estimate text dimensions (Greenfoot doesn't have direct text measurement)
+        // Use a scale factor based on font size - pixel fonts are roughly square
+        int fontSize = font.getSize();
+        int estimatedWidth = text.length() * fontSize + 20;
+        int estimatedHeight = fontSize * 3;
+        
+        // Create the actual image with proper size
+        GreenfootImage img = new GreenfootImage(estimatedWidth, estimatedHeight);
         img.setColor(new Color(0, 0, 0, 0));
         img.clear();
         img.setFont(font);
         img.setColor(textColor);
-
-        // Center text image precisely
-        int textX = (width - textImg.getWidth()) / 2;
-        int textY = (height - textImg.getHeight()) / 2;
-        img.drawImage(textImg, textX, textY);
+        
+        // Draw text at appropriate position
+        img.drawString(text, 10, fontSize + 5);
+        
         setImage(img);
     }
 }
