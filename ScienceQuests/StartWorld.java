@@ -89,10 +89,10 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 1;
 
-        Label title = new Label("Create Your Character", 36, Color.WHITE);
+        Label title = new Label("Create Your Character", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(title, getWidth()/2, 50);
 
-        Label nameLabel = new Label("Enter your name:", 24, Color.WHITE);
+        Label nameLabel = new Label("Enter your name:", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(nameLabel, getWidth()/2, 130);
 
         nameField = new InputField(300, 40, 20);
@@ -113,7 +113,7 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 2;
 
-        Label title = new Label("Select your gender:", 36, Color.WHITE);
+        Label title = new Label("Select your gender:", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(title, getWidth()/2, 30);
 
         maleButton = new GenderButton("", "spritesheet/boy/animated");
