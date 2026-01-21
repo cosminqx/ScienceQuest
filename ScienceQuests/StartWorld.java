@@ -89,10 +89,10 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 1;
 
-        Label title = new Label("Create Your Character", FontManager.getPixeledLarge(), Color.WHITE);
+        Label title = new Label("Creaţi-vă Personajul", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(title, getWidth()/2, 50);
 
-        Label nameLabel = new Label("Enter your name:", FontManager.getPixeledLarge(), Color.WHITE);
+        Label nameLabel = new Label("Introduceţi numele:", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(nameLabel, getWidth()/2, 130);
 
         nameField = new InputField(300, 40, 20);
@@ -113,13 +113,13 @@ public class StartWorld extends World
         removeAllObjects();
         currentScreen = 2;
 
-        Label title = new Label("Select your gender:", FontManager.getPixeledLarge(), Color.WHITE);
+        Label title = new Label("Selectaţi genul:", FontManager.getPixeledLarge(), Color.WHITE);
         addObject(title, getWidth()/2, 30);
 
-        maleButton = new GenderButton("", "spritesheet/boy/animated");
+        maleButton = new GenderButton("Băiat", "spritesheet/boy/animated");
         addObject(maleButton, 175, 180);
 
-        femaleButton = new GenderButton("", "spritesheet/girl/animated");
+        femaleButton = new GenderButton("Fată", "spritesheet/girl/animated");
         addObject(femaleButton, 425, 180);
         continueButton = new StartButton()
         {
@@ -143,9 +143,9 @@ public class StartWorld extends World
     private void proceedToGame()
     {
         if (maleButton.isSelected())
-            PlayerData.setPlayerGender("Male");
+            PlayerData.setPlayerGender("Băiat");
         else if (femaleButton.isSelected())
-            PlayerData.setPlayerGender("Female");
+            PlayerData.setPlayerGender("Fată");
         else
             return;
 

@@ -41,13 +41,13 @@ public class MainMapWorld extends World
         String playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender - added AFTER teacher to render on top
-        if ("Male".equals(playerGender))
+        if ("Băiat".equals(playerGender))
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Female".equals(playerGender))
+        else if ("Fată".equals(playerGender))
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -58,7 +58,7 @@ public class MainMapWorld extends World
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
         
         // Instructions
-        Label instructionsLabel = new Label("Use arrow keys to move", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
     }
     

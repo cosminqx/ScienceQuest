@@ -169,8 +169,8 @@ public class GenderButton extends Actor
         GreenfootImage image = new GreenfootImage(buttonWidth, buttonHeight);
 
         // Use custom color for Male button
-        boolean isMaleButton = gender.equals("Alex");
-        boolean isFemaleButton = gender.equals("Maria");
+        boolean isMaleButton = gender.equals("Băiat");
+        boolean isFemaleButton = gender.equals("Fată");
 
         if (isSelected)
         {
