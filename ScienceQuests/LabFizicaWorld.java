@@ -5,6 +5,9 @@ public class LabFizicaWorld extends World
 {
     private Actor character;
     private GreenfootImage backgroundImage;
+    private GreenfootImage onTopLayerImage;
+    private GreenfootImage onTopViewport;
+    private OverlayLayer overlayActor;
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -16,6 +19,9 @@ public class LabFizicaWorld extends World
     public LabFizicaWorld()
     {
         super(864, 672, 1); // 18x14 tiles at 48px
+        
+        // Draw UI on top, then overlay, then characters
+        setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
         
         // Load physics lab map
         loadMap("images/labfizica-normal.json");
@@ -38,10 +44,10 @@ public class LabFizicaWorld extends World
             character = girl;
         }
         
-        // Set character spawn position (top-center area)
+        // Set character spawn position 
         if (character != null)
         {
-            character.setLocation(432, 100);
+            character.setLocation(809, 185);
             // Force initial scroll calculation
             scrollX = character.getX() - getWidth() / 2;
             scrollY = character.getY() - getHeight() / 2;
@@ -63,6 +69,20 @@ public class LabFizicaWorld extends World
             backgroundImage = tiledMap.getFullMapImage();
             System.out.println("SUCCESS: Loaded " + mapPath + ", backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
+            
+            // Prepare optional overlay layer that should draw above the player
+            onTopLayerImage = tiledMap.getLayerImage("On-Top");
+            if (onTopLayerImage != null)
+            {
+                onTopViewport = new GreenfootImage(getWidth(), getHeight());
+                if (overlayActor == null)
+                {
+                    overlayActor = new OverlayLayer();
+                    overlayActor.setImage(onTopViewport);
+                    addObject(overlayActor, getWidth() / 2, getHeight() / 2);
+                }
+                System.out.println("On-Top overlay initialized");
+            }
         }
         catch (Exception e)
         {
@@ -107,6 +127,14 @@ public class LabFizicaWorld extends World
             if (backgroundImage != null)
             {
                 worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
+            }
+            
+            // Update overlay if present
+            if (onTopLayerImage != null && onTopViewport != null)
+            {
+                onTopViewport.setColor(new Color(0, 0, 0, 0));
+                onTopViewport.fillRect(0, 0, getWidth(), getHeight());
+                onTopViewport.drawImage(onTopLayerImage, -scrollX, -scrollY);
             }
             
             // Check for transition back to MainMapWorld

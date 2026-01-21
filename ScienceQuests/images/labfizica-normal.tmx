@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="48" tileheight="48" infinite="0" nextlayerid="11" nextobjectid="30">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="48" tileheight="48" infinite="0" nextlayerid="12" nextobjectid="30">
  <tileset firstgid="1" source="48px/tilesFloor.tsx"/>
  <tileset firstgid="199" source="48px/tilesWalls.tsx"/>
  <tileset firstgid="391" source="48px/spriteSheet_tiledLiquids_48x48.tsx"/>
@@ -132,6 +132,24 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <layer id="11" name="On-Top" width="18" height="14">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,761,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,798,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,835,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+761,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,761,0,
+798,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,798,0,
+835,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,835,0
+</data>
+ </layer>
  <objectgroup id="10" name="Object Layer 1">
   <object id="2" x="4" y="4" width="860" height="90.6667"/>
   <object id="3" x="12" y="97.3333" width="265.333" height="277.333"/>
@@ -142,10 +160,10 @@
   <object id="13" x="289.333" y="585.333" width="432" height="82.6667"/>
   <object id="15" x="241.333" y="61.3333" width="477.333" height="81.3333"/>
   <object id="22" x="-4" y="-4" width="77.3333" height="478.667"/>
-  <object id="24" x="777.333" y="536" width="30.6667" height="132"/>
-  <object id="25" x="16" y="546.667" width="16" height="120"/>
+  <object id="24" x="777.333" y="649.667" width="30.6667" height="18.3333"/>
+  <object id="25" x="16.3333" y="652" width="16" height="16.3333"/>
   <object id="26" x="834.667" y="17.3333" width="12" height="124"/>
-  <object id="28" x="542.667" y="160" width="20" height="121.333"/>
+  <object id="28" x="542.667" y="269.5" width="20" height="11.833"/>
   <object id="29" x="1053.33" y="78.6667"/>
  </objectgroup>
 </map>

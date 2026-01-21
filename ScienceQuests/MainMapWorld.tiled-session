@@ -48,8 +48,8 @@
             "scale": 0.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512,
-                "y": 342
+                "x": 513,
+                "y": 341
             }
         },
         "images/lab_noapte_2.tmx": {
@@ -61,11 +61,19 @@
             }
         },
         "images/labfizica-normal.json": {
-            "scale": 0.75,
+            "scale": 4,
+            "selectedLayer": 8,
+            "viewCenter": {
+                "x": 519.75,
+                "y": 186
+            }
+        },
+        "images/labfizica.tmx": {
+            "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 495.99999999999994,
-                "y": 504
+                "x": 1133.3333333333335,
+                "y": 1090.909090909091
             }
         },
         "spriteSheet_lightBulbSmallAnimation_48x48.tsx": {
