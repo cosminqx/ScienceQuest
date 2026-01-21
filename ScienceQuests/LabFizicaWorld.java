@@ -31,13 +31,16 @@ public class LabFizicaWorld extends World
         String playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        if ("Male".equals(playerGender))
+        boolean isBoy = "Male".equals(playerGender) || "Băiat".equals(playerGender);
+        boolean isGirl = "Female".equals(playerGender) || "Fată".equals(playerGender);
+
+        if (isBoy)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Female".equals(playerGender))
+        else if (isGirl)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
