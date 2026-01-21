@@ -47,13 +47,26 @@ public class LabFizicaWorld extends World
         // Set character spawn position 
         if (character != null)
         {
-            character.setLocation(809, 185);
-            // Force initial scroll calculation
-            scrollX = character.getX() - getWidth() / 2;
-            scrollY = character.getY() - getHeight() / 2;
+            // Spawn at right side of the map (entering from MainMapWorld left wall)
+            // Map is 864px wide, spawn at x=780 in map coords, center vertically
+            int targetMapX = 780;  // Near right edge of map
+            int targetMapY = backgroundImage.getHeight() / 2;  // Center of map height
+            
+            // Calculate screen position from map position
+            // We want to center the view on the character
+            scrollX = targetMapX - getWidth() / 2;
+            scrollY = targetMapY - getHeight() / 2;
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
+            
+            // Set character at center of screen (scroll will handle the offset)
+            int screenX = targetMapX - scrollX;
+            int screenY = targetMapY - scrollY;
+            character.setLocation(screenX, screenY);
         }
+        
+        // Draw initial background
+        drawBackground();
         
         // Instructions
         Label instructionsLabel = new Label("Press G to break/fix the lab", 16, Color.WHITE);
@@ -119,26 +132,35 @@ public class LabFizicaWorld extends World
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            // Draw the background image with scroll offset
-            GreenfootImage worldImage = getBackground();
-            worldImage.setColor(new Color(0, 0, 0));
-            worldImage.fillRect(0, 0, getWidth(), getHeight());
-            
-            if (backgroundImage != null)
-            {
-                worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
-            }
-            
-            // Update overlay if present
-            if (onTopLayerImage != null && onTopViewport != null)
-            {
-                onTopViewport.setColor(new Color(0, 0, 0, 0));
-                onTopViewport.fillRect(0, 0, getWidth(), getHeight());
-                onTopViewport.drawImage(onTopLayerImage, -scrollX, -scrollY);
-            }
+            // Draw the background
+            drawBackground();
             
             // Check for transition back to MainMapWorld
             checkWorldTransition();
+        }
+    }
+    
+    /**
+     * Draw the background and overlay layers
+     */
+    private void drawBackground()
+    {
+        // Draw the background image with scroll offset
+        GreenfootImage worldImage = getBackground();
+        worldImage.setColor(new Color(0, 0, 0));
+        worldImage.fillRect(0, 0, getWidth(), getHeight());
+        
+        if (backgroundImage != null)
+        {
+            worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
+        }
+        
+        // Update overlay if present
+        if (onTopLayerImage != null && onTopViewport != null)
+        {
+            onTopViewport.setColor(new Color(0, 0, 0, 0));
+            onTopViewport.fillRect(0, 0, getWidth(), getHeight());
+            onTopViewport.drawImage(onTopLayerImage, -scrollX, -scrollY);
         }
     }
     
