@@ -39,6 +39,9 @@ public class DialogueBox extends Actor {
     private DialogueQuestion question;
     private int selectedIndex = 0;
     private int boxHeight = BOX_HEIGHT;
+    
+    // Callback for correct answer
+    private Runnable onCorrectAnswerCallback;
 
     public DialogueBox(String text, String iconPath, boolean typewriter) {
         this.fullText = text != null ? text : "";
@@ -294,7 +297,14 @@ public class DialogueBox extends Actor {
     
     public boolean confirmSelection() {
         if (!questionMode || question == null) return false;
-        return selectedIndex == question.getCorrectAnswerIndex();
+        boolean isCorrect = selectedIndex == question.getCorrectAnswerIndex();
+        
+        // Trigger callback if answer is correct
+        if (isCorrect && onCorrectAnswerCallback != null) {
+            onCorrectAnswerCallback.run();
+        }
+        
+        return isCorrect;
     }
     
     public DialogueQuestion getQuestion() {
@@ -311,6 +321,10 @@ public class DialogueBox extends Actor {
     
     public void setTypewriterSpeed(int speed) {
         this.typewriterSpeed = Math.max(1, speed);
+    }
+    
+    public void setOnCorrectAnswerCallback(Runnable callback) {
+        this.onCorrectAnswerCallback = callback;
     }
 }
 
