@@ -194,7 +194,7 @@ public class Boy extends Actor
 
         // Check collision using feet rectangle with sliding collision
         World world = getWorld();
-        if (world != null && (world instanceof MainMapWorld || world instanceof LabWorld || world instanceof LabFizicaWorld))
+        if (world != null && (world instanceof MainMapWorld || world instanceof LabWorld || world instanceof LabFizicaWorld || world instanceof LabBiologyWorld))
         {
             int newMapX, newMapY, xOnlyMapX, xOnlyMapY, yOnlyMapX, yOnlyMapY;
             boolean fullMoveCollides, xMoveCollides, yMoveCollides;
@@ -209,6 +209,11 @@ public class Boy extends Actor
                 newMapX = labFizicaWorld.screenToMapX(newX);
                 newMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
                 fullMoveCollides = labFizicaWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
+            } else if (world instanceof LabBiologyWorld) {
+                LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
+                newMapX = labBiologyWorld.screenToMapX(newX);
+                newMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                fullMoveCollides = labBiologyWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
             } else {
                 LabWorld labWorld = (LabWorld) world;
                 newMapX = labWorld.screenToMapX(newX);
@@ -231,6 +236,11 @@ public class Boy extends Actor
                     xOnlyMapX = labFizicaWorld.screenToMapX(newX);
                     xOnlyMapY = labFizicaWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
                     xMoveCollides = labFizicaWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
+                } else if (world instanceof LabBiologyWorld) {
+                    LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
+                    xOnlyMapX = labBiologyWorld.screenToMapX(newX);
+                    xOnlyMapY = labBiologyWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
+                    xMoveCollides = labBiologyWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
                 } else {
                     LabWorld labWorld = (LabWorld) world;
                     xOnlyMapX = labWorld.screenToMapX(newX);
@@ -257,6 +267,11 @@ public class Boy extends Actor
                     yOnlyMapX = labFizicaWorld.screenToMapX(startX);
                     yOnlyMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
                     yMoveCollides = labFizicaWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
+                } else if (world instanceof LabBiologyWorld) {
+                    LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
+                    yOnlyMapX = labBiologyWorld.screenToMapX(startX);
+                    yOnlyMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
+                    yMoveCollides = labBiologyWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
                 } else {
                     LabWorld labWorld = (LabWorld) world;
                     yOnlyMapX = labWorld.screenToMapX(startX);

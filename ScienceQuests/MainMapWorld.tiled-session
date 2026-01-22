@@ -44,12 +44,28 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "images/LabBiologyWorld-Normal.json": {
+            "scale": 1,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 452.5,
+                "y": 355
+            }
+        },
+        "images/LabBiologyWorld.json": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 667,
+                "y": 174
+            }
+        },
         "images/lab_noapte_2.json": {
             "scale": 0.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 513,
-                "y": 341
+                "x": 433,
+                "y": 619
             }
         },
         "images/lab_noapte_2.tmx": {
@@ -75,6 +91,9 @@
                 "x": 1133.3333333333335,
                 "y": 1090.909090909091
             }
+        },
+        "spriteSheet_fireEffect03_63x78.tsx": {
+            "scaleInDock": 1
         },
         "spriteSheet_lightBulbSmallAnimation_48x48.tsx": {
             "scaleInDock": 1

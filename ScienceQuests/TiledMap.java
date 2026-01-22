@@ -179,7 +179,8 @@ public class TiledMap
             System.out.println("Layers parsed: " + tileLayers.size());
             for (int i = 0; i < tileLayers.size(); i++)
             {
-                System.out.println("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero=" + countNonZero(tileLayers.get(i)));
+                int nonZero = countNonZero(tileLayers.get(i));
+                System.out.println("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero tiles=" + nonZero);
             }
             System.out.println("Starting to draw layers in order...");
 
@@ -210,6 +211,8 @@ public class TiledMap
         int skipped = 0;
         int minGid = Integer.MAX_VALUE;
         int maxGid = 0;
+        int failedCount = 0;
+        int maxFailsToReport = 5; // Only report first 5 failures per layer
         
         for (int y = 0; y < mapH; y++)
         {
@@ -229,6 +232,10 @@ public class TiledMap
                 if (tile == null)
                 {
                     failed++;
+                    if (failedCount < maxFailsToReport) {
+                        System.out.println("    FAILED: GID " + gid + " at (" + x + ", " + y + ")");
+                        failedCount++;
+                    }
                 }
                 else
                 {
@@ -241,6 +248,16 @@ public class TiledMap
         if (minGid != Integer.MAX_VALUE)
         {
             System.out.println("    GID range: " + minGid + " - " + maxGid);
+        }
+        
+        // Report available tilesets
+        if (!tilesets.isEmpty()) {
+            System.out.print("    Available tilesets: ");
+            for (int i = 0; i < tilesets.size(); i++) {
+                System.out.print("gid=" + tilesets.get(i).firstgid + 
+                    " (tiles=" + tilesets.get(i).tiles.size() + ") ");
+            }
+            System.out.println();
         }
     }
     
@@ -396,12 +413,18 @@ public class TiledMap
 
     private GreenfootImage getTileFromGid(int gid)
     {
+        if (gid == 0) return null;
+        
         // Try multiple tilesets first
         if (!tilesets.isEmpty()) {
             TilesetInfo matchingTileset = null;
+            int matchedGid = -1;
+            
+            // Find the tileset with the highest firstgid that is <= gid
             for (int i = tilesets.size() - 1; i >= 0; i--) {
                 if (gid >= tilesets.get(i).firstgid) {
                     matchingTileset = tilesets.get(i);
+                    matchedGid = tilesets.get(i).firstgid;
                     break;
                 }
             }
@@ -411,23 +434,30 @@ public class TiledMap
                 if (index >= 0 && index < matchingTileset.tiles.size()) {
                     return new GreenfootImage(matchingTileset.tiles.get(index));
                 }
+                // Gid is in this tileset's range, but index is out of bounds - return blank
+                GreenfootImage blank = new GreenfootImage(tileSize, tileSize);
+                blank.setColor(new Color(0, 0, 0, 0)); // Transparent
+                return blank;
             }
+            
+            // No matching tileset found - this shouldn't happen if tilesets are loaded correctly
+            System.out.println("WARNING: GID " + gid + " doesn't match any tileset (available: " + 
+                tilesets.get(0).firstgid + "-" + (tilesets.get(tilesets.size()-1).firstgid + tilesets.get(tilesets.size()-1).tiles.size()) + ")");
         }
         
         // Fallback to single tileset
         int index = gid - tilesetFirstGid;
         if (tileset != null && !tileCache.isEmpty())
         {
-            if (index >= 0)
+            if (index >= 0 && index < tileCache.size())
             {
-                int wrappedIndex = index % tileCache.size();
-                return new GreenfootImage(tileCache.get(wrappedIndex));
+                return new GreenfootImage(tileCache.get(index));
             }
         }
 
-        // Final fallback colored tile
+        // Final fallback - transparent tile
         GreenfootImage fallback = new GreenfootImage(tileSize, tileSize);
-        fallback.setColor(new Color(90, 140, 90));
+        fallback.setColor(new Color(0, 0, 0, 0));
         fallback.fillRect(0, 0, tileSize, tileSize);
         return fallback;
     }
@@ -516,29 +546,45 @@ public class TiledMap
         int namePos = json.indexOf("\"name\":\"" + layerName + "\"");
         if (namePos == -1)
         {
-            System.out.println("TMJ layer not found: " + layerName + ", returning empty layer");
+            System.out.println("  TMJ layer not found: " + layerName + ", returning empty layer");
             return new int[h][w];
         }
         
-        // In TMJ, "data" comes BEFORE "name" in each layer object, so search backwards
-        int searchStart = Math.max(0, namePos - 2000); // Search back up to 2000 chars
-        int dataStart = json.lastIndexOf("\"data\":[", namePos);
-        if (dataStart == -1 || dataStart < searchStart)
+        // Find the opening brace of this layer object (search backward for {)
+        int layerStart = json.lastIndexOf("{", namePos);
+        if (layerStart == -1) {
+            System.out.println("  TMJ layer object start not found: " + layerName);
+            return new int[h][w];
+        }
+        
+        // Find the closing brace of this layer object (search forward for })
+        int layerEnd = json.indexOf("}", namePos);
+        if (layerEnd == -1) {
+            System.out.println("  TMJ layer object end not found: " + layerName);
+            return new int[h][w];
+        }
+        
+        // Extract just this layer's JSON object
+        String layerJson = json.substring(layerStart, layerEnd + 1);
+        
+        // Now find "data" within this layer
+        int dataStart = layerJson.indexOf("\"data\":[");
+        if (dataStart == -1)
         {
-            System.out.println("TMJ data array not found in layer: " + layerName);
+            System.out.println("  TMJ data array not found in layer: " + layerName);
             return new int[h][w];
         }
         dataStart += 8; // Skip past "data":[
         
         // Find the end of the data array by looking for ],
-        int dataEnd = json.indexOf("],", dataStart);
+        int dataEnd = layerJson.indexOf("],", dataStart);
         if (dataEnd == -1)
         {
-            System.out.println("TMJ data array end not found in layer: " + layerName);
+            System.out.println("  TMJ data array end not found in layer: " + layerName);
             return new int[h][w];
         }
         
-        String data = json.substring(dataStart, dataEnd);
+        String data = layerJson.substring(dataStart, dataEnd);
         String[] ids = data.split(",");
         int[][] layer = new int[h][w];
         int idx = 0;
@@ -561,7 +607,7 @@ public class TiledMap
         }
         catch (Exception ex)
         {
-            System.out.println("TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
+            System.out.println("  TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
     }
@@ -579,6 +625,7 @@ public class TiledMap
             return;
         }
 
+        int layerCount = 0;
         while (true)
         {
             // Find next tilelayer
@@ -598,6 +645,8 @@ public class TiledMap
             int[][] layerData = parseJsonTileLayer(json, layerName, w, h);
             tileLayers.add(layerData);
             tileLayerNames.add(layerName);
+            
+            System.out.println("  Parsed tilelayer #" + (++layerCount) + ": " + layerName);
 
             searchPos = tilePos + 1;
         }
@@ -608,6 +657,7 @@ public class TiledMap
             tileLayers.add(new int[h][w]);
             tileLayerNames.add("Floor");
         }
+        System.out.println("Total tilelayers found: " + layerCount);
     }
 
     private void buildSolidFromObjectLayer(String json)

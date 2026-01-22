@@ -197,7 +197,7 @@ public class MainMapWorld extends World
     }
     
     /**
-     * Check if player should transition to LabWorld or LabFizicaWorld
+     * Check if player should transition to LabWorld, LabFizicaWorld, or LabBiologyWorld
      */
     private void checkWorldTransition()
     {
@@ -205,6 +205,7 @@ public class MainMapWorld extends World
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
+        int mapY = screenToMapY(character.getY());
         
         // Transition to LabWorld when reaching right edge
         if (mapX >= backgroundImage.getWidth() - 5)
@@ -216,6 +217,12 @@ public class MainMapWorld extends World
         if (mapX <= 5)
         {
             Greenfoot.setWorld(new LabFizicaWorld());
+        }
+        
+        // Transition to LabBiologyWorld when reaching bottom edge
+        if (mapY >= backgroundImage.getHeight() - 5)
+        {
+            Greenfoot.setWorld(new LabBiologyWorld());
         }
     }
 }
