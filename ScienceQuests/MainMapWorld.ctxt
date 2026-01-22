@@ -19,5 +19,5 @@ comment7.target=boolean\ isCollisionAt(int,\ int,\ int,\ int)
 comment7.text=\r\n\ Check\ if\ a\ rectangle\ (character's\ feet\ area)\ collides\ with\ any\ collision\ rectangle\r\n\ @param\ mapX\ center\ X\ position\ in\ map\ coordinates\r\n\ @param\ mapY\ center\ Y\ position\ in\ map\ coordinates\ \ \r\n\ @param\ width\ width\ of\ the\ feet\ hitbox\r\n\ @param\ height\ height\ of\ the\ feet\ hitbox\ (should\ be\ small,\ like\ 10-15px)\r\n
 comment8.params=
 comment8.target=void\ checkWorldTransition()
-comment8.text=\r\n\ Check\ if\ player\ should\ transition\ to\ LabWorld\r\n
+comment8.text=\r\n\ Check\ if\ player\ should\ transition\ to\ LabWorld\ or\ LabFizicaWorld\r\n
 numComments=9

@@ -6,5 +6,5 @@ comment2.params=text\ fontSize\ textColor
 comment2.target=Label(java.lang.String,\ int,\ greenfoot.Color)
 comment3.params=text\ font\ textColor
 comment3.target=Label(java.lang.String,\ greenfoot.Font,\ greenfoot.Color)
-comment3.text=\n\ Custom\ font\ variant\:\ draws\ text\ with\ a\ supplied\ font\ (e.g.,\ 8-BIT\ WONDER).\n
+comment3.text=\r\n\ Custom\ font\ variant\:\ draws\ text\ with\ a\ supplied\ Greenfoot\ font\ (e.g.,\ Pixelated\ font\ from\ FontManager).\r\n
 numComments=4
