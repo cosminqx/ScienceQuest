@@ -16,6 +16,7 @@ public class MainMapWorld extends World
     private int teacherMapX = 339; // Fixed position on map
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
+    private SettingsButton settingsButton; // Settings icon in top-right
 
     public MainMapWorld()
     {
@@ -60,6 +61,10 @@ public class MainMapWorld extends World
         // Instructions
         Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add settings button in top-right corner
+        settingsButton = new SettingsButton();
+        addObject(settingsButton, getWidth() - 20, 20);
     }
     
     private void loadMap()
