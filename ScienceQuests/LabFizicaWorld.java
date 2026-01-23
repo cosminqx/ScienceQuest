@@ -31,6 +31,8 @@ public class LabFizicaWorld extends World
     public LabFizicaWorld()
     {
         super(864, 672, 1); // 18x14 tiles at 48px
+        // Ensure any lingering dialogue state is cleared on world init
+        DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
         setPaintOrder(Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
@@ -144,6 +146,9 @@ public class LabFizicaWorld extends World
 
     public void act()
     {
+        // Process dialogue input so dialogues can advance/close
+        DialogueManager.getInstance().processInput();
+
         // Trigger break sequence after 60 frames (1 second)
         if (!hasTriggeredBreakSequence)
         {
@@ -157,8 +162,8 @@ public class LabFizicaWorld extends World
         // Handle waiting for dialogue to finish before starting animation
         if (waitingForDialogue)
         {
-            dialogueWaitCounter++;
-            if (dialogueWaitCounter >= 90)
+            // Start flicker once the dialogue is actually closed
+            if (!DialogueManager.getInstance().isDialogueActive())
             {
                 waitingForDialogue = false;
                 dialogueWaitCounter = 0;

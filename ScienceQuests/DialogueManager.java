@@ -126,11 +126,21 @@ public class DialogueManager
     {
         if (currentDialogue != null)
         {
+            // Read key once and handle global shortcuts like ESC
+            String key = Greenfoot.getKey();
+
+            // ESC closes any dialogue immediately and clears queue
+            if (key != null && "escape".equals(key))
+            {
+                System.out.println("DEBUG: ESC pressed, closing dialogue");
+                queuedDialogue = null;
+                hideDialogue();
+                return;
+            }
+
             // Handle question-mode dialogues separately
             if (currentDialogue.isQuestionMode())
             {
-                // Process question input directly
-                String key = Greenfoot.getKey();
                 if (key != null)
                 {
                     System.out.println("DEBUG: Question key pressed: " + key);
@@ -160,9 +170,6 @@ public class DialogueManager
                 return; // Do not process normal ENTER while question active
             }
             
-            // Check for ENTER key
-            String key = Greenfoot.getKey();
-            
             // Safety check: if somehow we're still in question mode, don't process normal input
             if (currentDialogue.isQuestionMode())
             {
@@ -170,7 +177,7 @@ public class DialogueManager
                 return;
             }
             
-            if ("enter".equals(key))
+            if (key != null && "enter".equals(key))
             {
                 // Check if animation is still running
                 if (!currentDialogue.isFullyDisplayed())

@@ -227,8 +227,10 @@ public class DialogueBox extends Actor {
 
         img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(150,150,150));
-        String promptText = questionMode ? "Alege cu 1-4 sau săgeți, ENTER pentru a confirma" : "Apasă ENTER pentru a continua...";
-        img.drawString(promptText, BOX_WIDTH - 220, boxHeight - 10);
+        String promptText = questionMode
+                ? "1-4/↑↓: alege | ENTER: confirmă | ESC: închide"
+                : "ENTER: continuă | ESC: închide";
+        img.drawString(promptText, BOX_WIDTH - 260, boxHeight - 10);
 
         setImage(img);
     }
@@ -327,4 +329,3 @@ public class DialogueBox extends Actor {
         this.onCorrectAnswerCallback = callback;
     }
 }
-

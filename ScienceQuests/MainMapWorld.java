@@ -21,6 +21,8 @@ public class MainMapWorld extends World
     public MainMapWorld()
     {
         super(768, 576, 1);
+        // Ensure any lingering dialogue state is cleared on world init
+        DialogueManager.getInstance().reset();
         
         FontManager.loadFonts();
         
