@@ -1,8 +1,8 @@
 {
     "activeFile": "images/LabBiologyWorld-Normal.json",
     "expandedProjectPaths": [
-        ".",
-        "images"
+        "images",
+        "."
     ],
     "fileStates": {
         "": {
@@ -45,11 +45,11 @@
             "scaleInEditor": 1
         },
         "images/LabBiologyWorld-Normal.json": {
-            "scale": 1,
-            "selectedLayer": 5,
+            "scale": 0.5,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 452.5,
-                "y": 355
+                "x": 424,
+                "y": 277
             }
         },
         "images/LabBiologyWorld.json": {
@@ -64,8 +64,8 @@
             "scale": 0.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 433,
-                "y": 619
+                "x": 432,
+                "y": 335
             }
         },
         "images/lab_noapte_2.tmx": {
@@ -108,8 +108,8 @@
             "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 363.5,
-                "y": 263.5
+                "x": 402,
+                "y": 323.5
             }
         },
         "tilesFloor.tsx": {
@@ -122,8 +122,10 @@
             "scaleInDock": 1
         }
     },
+    "last.exportedFilePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images",
     "last.externalTilesetPath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
     "last.imagePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "json",
     "openFiles": [
         "test-map-LayersFixed.tmj",

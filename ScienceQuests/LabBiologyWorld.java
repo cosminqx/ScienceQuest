@@ -5,6 +5,7 @@ public class LabBiologyWorld extends World
 {
     private Actor character;
     private BiologyTeacher teacher;
+    private BiologyAssistant assistant;
     private GreenfootImage backgroundImage;
     private GreenfootImage onTopLayerImage;
     private GreenfootImage onTopViewport;
@@ -35,7 +36,7 @@ public class LabBiologyWorld extends World
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class);
+        setPaintOrder(Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
         
         // Load biology lab map
         loadMap("images/LabBiologyWorld-Normal.json");
@@ -99,6 +100,20 @@ public class LabBiologyWorld extends World
         System.out.println("Biology Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
         System.out.println("Biology Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
         System.out.println("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
+        
+        // Add biology assistant at MAP coordinates (opposite side of the lab)
+        // Assistant position in map: x=720, y=266
+        int assistantMapX = 720;
+        int assistantMapY = 266;
+        assistant = new BiologyAssistant();
+        
+        // Calculate screen position from map position
+        int assistantScreenX = assistantMapX - scrollX;
+        int assistantScreenY = assistantMapY - scrollY;
+        addObject(assistant, assistantScreenX, assistantScreenY);
+        
+        System.out.println("Biology Assistant added at screen position: (" + assistantScreenX + ", " + assistantScreenY + ")");
+        System.out.println("Biology Assistant map position: (" + assistantMapX + ", " + assistantMapY + ")");
         
         // Instructions
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
@@ -205,6 +220,16 @@ public class LabBiologyWorld extends World
                 int teacherScreenX = teacherMapX - scrollX;
                 int teacherScreenY = teacherMapY - scrollY;
                 teacher.setLocation(teacherScreenX, teacherScreenY);
+            }
+            
+            // Update assistant position based on scroll (assistant at map coords 720, 266)
+            if (assistant != null && assistant.getWorld() != null)
+            {
+                int assistantMapX = 720;
+                int assistantMapY = 266;
+                int assistantScreenX = assistantMapX - scrollX;
+                int assistantScreenY = assistantMapY - scrollY;
+                assistant.setLocation(assistantScreenX, assistantScreenY);
             }
             
             // Draw the background (or black during flicker)
@@ -422,11 +447,12 @@ public class LabBiologyWorld extends World
         }
         
         // Update overlay if present
-        if (onTopLayerImage != null && onTopViewport != null)
+        if (onTopLayerImage != null && onTopViewport != null && overlayActor != null)
         {
-            onTopViewport.setColor(new Color(0, 0, 0, 0));
-            onTopViewport.fillRect(0, 0, getWidth(), getHeight());
+            onTopViewport.clear();
             onTopViewport.drawImage(onTopLayerImage, -scrollX, -scrollY);
+            overlayActor.setImage(onTopViewport);
+            overlayActor.setLocation(getWidth() / 2, getHeight() / 2);
         }
     }
     

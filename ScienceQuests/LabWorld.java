@@ -14,13 +14,17 @@ public class LabWorld extends World
     private int maxScrollY;
     private int tileSize = 48;
     private TiledMap tiledMap;
+    private List<QuestBlock> questBlocks;
 
     public LabWorld()
     {
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-        setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
+        setPaintOrder(Label.class, TimingQuestUI.class, QuestBlock.class, OverlayLayer.class, Boy.class, Girl.class);
+        
+        // Initialize quest blocks list
+        questBlocks = new ArrayList<QuestBlock>();
         
         // Load lab map FIRST
         loadMap();
@@ -60,6 +64,9 @@ public class LabWorld extends World
         // Instructions
         Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add quest block at x=236, y=358 (map coordinates)
+        addQuestBlock(236, 358);
     }
     
     private void loadMap()
@@ -128,6 +135,9 @@ public class LabWorld extends World
             }
 
             updateOverlayImage();
+            
+            // Update quest block positions
+            updateQuestBlockPositions();
             
             // Check for transition back to MainMapWorld
             checkWorldTransition();
@@ -218,5 +228,72 @@ public class LabWorld extends World
             }
         }
         return false;
+    }
+    
+    /**
+     * Add a quest block at map coordinates that creates a collision until quest is completed
+     */
+    private void addQuestBlock(int mapX, int mapY)
+    {
+        QuestBlock block = new QuestBlock(mapX, mapY);
+        questBlocks.add(block);
+        
+        // Add collision rectangle for this block
+        if (tiledMap != null)
+        {
+            TiledMap.CollisionRect questCollision = new TiledMap.CollisionRect(
+                mapX - 24,  // x - Center the collision (48px block)
+                mapY - 24,  // y
+                48,         // width
+                48          // height
+            );
+            tiledMap.collisionRects.add(questCollision);
+        }
+        
+        // Add the block to world at screen position
+        // We'll update its position in act() based on scroll
+        addObject(block, 0, 0);
+        updateQuestBlockPositions();
+    }
+    
+    /**
+     * Remove the quest block collision when quest is completed
+     */
+    public void removeQuestBlockCollision(int mapX, int mapY)
+    {
+        if (tiledMap == null) return;
+        
+        // Find and remove the collision rectangle for this quest block
+        Iterator<TiledMap.CollisionRect> iterator = tiledMap.collisionRects.iterator();
+        while (iterator.hasNext())
+        {
+            TiledMap.CollisionRect rect = iterator.next();
+            // Check if this collision rect matches the quest block position
+            if (Math.abs(rect.x - (mapX - 24)) < 5 && 
+                Math.abs(rect.y - (mapY - 24)) < 5 &&
+                rect.w == 48 && rect.h == 48)
+            {
+                iterator.remove();
+                System.out.println("Removed quest block collision at map: (" + mapX + ", " + mapY + ")");
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Update quest block positions based on current scroll
+     */
+    private void updateQuestBlockPositions()
+    {
+        for (QuestBlock block : questBlocks)
+        {
+            if (block.getWorld() != null && block.isActive())
+            {
+                // Convert map coordinates to screen coordinates
+                int screenX = block.getMapX() - scrollX;
+                int screenY = block.getMapY() - scrollY;
+                block.setLocation(screenX, screenY);
+            }
+        }
     }
 }

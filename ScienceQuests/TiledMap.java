@@ -21,6 +21,7 @@ public class TiledMap
     public final int[][] objectsB;
     private final List<int[][]> tileLayers = new ArrayList<>();
     private final List<String> tileLayerNames = new ArrayList<>();
+    private final List<Float> tileLayerOpacity = new ArrayList<>();
     public final boolean[][] solid;
     public final List<CollisionRect> collisionRects = new ArrayList<>();
     private GreenfootImage fullMapImage;
@@ -144,8 +145,8 @@ public class TiledMap
                 for (int x = 0; x < w && x < ids.length; x++)
                 {
                     int raw = Integer.parseInt(ids[x].trim());
-                    int masked = raw & 0x1FFFFFFF; // strip Tiled flip/rotation flags
-                    layer[rowIndex][x] = masked;
+                    // Keep the raw value with flip flags - they'll be processed during rendering
+                    layer[rowIndex][x] = raw;
                 }
                 rowIndex++;
                 if (rowIndex >= h) break;
@@ -188,7 +189,8 @@ public class TiledMap
             for (int i = 0; i < tileLayers.size(); i++)
             {
                 String name = i < tileLayerNames.size() ? tileLayerNames.get(i) : ("Layer " + i);
-                drawLayerOnto(fullMapImage, tileLayers.get(i), name);
+                float opacity = i < tileLayerOpacity.size() ? tileLayerOpacity.get(i) : 1.0f;
+                drawLayerOnto(fullMapImage, tileLayers.get(i), name, opacity);
             }
             
             System.out.println("===== Map building complete =====");
@@ -204,7 +206,7 @@ public class TiledMap
         }
     }
 
-    private void drawLayerOnto(GreenfootImage target, int[][] layer, String layerName)
+    private void drawLayerOnto(GreenfootImage target, int[][] layer, String layerName, float opacity)
     {
         int drawn = 0;
         int failed = 0;
@@ -218,12 +220,18 @@ public class TiledMap
         {
             for (int x = 0; x < mapW; x++)
             {
-                int gid = layer[y][x];
-                if (gid == 0) 
+                int rawGid = layer[y][x];
+                if (rawGid == 0) 
                 { 
                     skipped++;
                     continue;
                 }
+                
+                // Extract flip flags and actual GID
+                boolean flipH = (rawGid & 0x80000000) != 0;
+                boolean flipV = (rawGid & 0x40000000) != 0;
+                boolean flipD = (rawGid & 0x20000000) != 0;
+                int gid = rawGid & 0x1FFFFFFF; // Remove flip flags
                 
                 if (gid < minGid) minGid = gid;
                 if (gid > maxGid) maxGid = gid;
@@ -239,6 +247,18 @@ public class TiledMap
                 }
                 else
                 {
+                    // Apply transformations if needed
+                    if (flipH || flipV || flipD)
+                    {
+                        tile = applyTileTransform(tile, flipH, flipV, flipD);
+                    }
+                    
+                    // Apply opacity if not fully opaque
+                    if (opacity < 1.0f)
+                    {
+                        tile = applyOpacity(tile, opacity);
+                    }
+                    
                     target.drawImage(tile, x * tileSize, y * tileSize);
                     drawn++;
                 }
@@ -461,6 +481,78 @@ public class TiledMap
         fallback.fillRect(0, 0, tileSize, tileSize);
         return fallback;
     }
+    
+    /**
+     * Apply flip/rotation transformations to a tile according to Tiled's specification
+     * flipD (diagonal) is applied first as a transpose, then flipH and flipV
+     */
+    private GreenfootImage applyTileTransform(GreenfootImage original, boolean flipH, boolean flipV, boolean flipD)
+    {
+        GreenfootImage transformed = new GreenfootImage(original);
+        
+        // Step 1: Apply diagonal flip (transpose) if set
+        if (flipD)
+        {
+            transformed = transposeTile(transformed);
+        }
+        
+        // Step 2: Apply horizontal flip if set
+        if (flipH)
+        {
+            transformed.mirrorHorizontally();
+        }
+        
+        // Step 3: Apply vertical flip if set
+        if (flipV)
+        {
+            transformed.mirrorVertically();
+        }
+        
+        return transformed;
+    }
+    
+    /**
+     * Transpose a tile (swap x and y coordinates) - this is the diagonal flip in Tiled
+     */
+    private GreenfootImage transposeTile(GreenfootImage original)
+    {
+        int size = original.getWidth(); // Assuming square tiles
+        GreenfootImage transposed = new GreenfootImage(size, size);
+        
+        // Transpose by swapping x and y
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Color pixel = original.getColorAt(x, y);
+                transposed.setColorAt(y, x, pixel);
+            }
+        }
+        
+        return transposed;
+    }
+    
+    /**
+     * Apply opacity to a tile by adjusting alpha channel
+     */
+    private GreenfootImage applyOpacity(GreenfootImage original, float opacity)
+    {
+        int size = original.getWidth();
+        GreenfootImage result = new GreenfootImage(size, size);
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Color pixel = original.getColorAt(x, y);
+                int alpha = (int)(pixel.getAlpha() * opacity);
+                Color newPixel = new Color(pixel.getRed(), pixel.getGreen(), pixel.getBlue(), alpha);
+                result.setColorAt(x, y, newPixel);
+            }
+        }
+        
+        return result;
+    }
 
     private int extractTilesetFirstGid(String xmlOrJson)
     {
@@ -525,7 +617,8 @@ public class TiledMap
         }
 
         GreenfootImage img = new GreenfootImage(mapW * tileSize, mapH * tileSize);
-        drawLayerOnto(img, tileLayers.get(idx), tileLayerNames.get(idx));
+        float opacity = idx < tileLayerOpacity.size() ? tileLayerOpacity.get(idx) : 1.0f;
+        drawLayerOnto(img, tileLayers.get(idx), tileLayerNames.get(idx), opacity);
         return img;
     }
 
@@ -598,8 +691,8 @@ public class TiledMap
                     else
                     {
                         int raw = Integer.parseInt(ids[idx].trim());
-                        int masked = raw & 0x1FFFFFFF; // strip flip flags
-                        layer[y][x] = masked;
+                        // Keep the raw value with flip flags - they'll be processed during rendering
+                        layer[y][x] = raw;
                     }
                     idx++;
                 }
@@ -641,12 +734,28 @@ public class TiledMap
                 int nameEnd = json.indexOf('"', nameStart);
                 if (nameEnd > nameStart) layerName = json.substring(nameStart, nameEnd);
             }
+            
+            // Extract opacity (search forward from namePos)
+            float opacity = 1.0f;
+            int opacityPos = json.indexOf("\"opacity\":", namePos);
+            if (opacityPos != -1 && opacityPos < tilePos + 500)
+            {
+                int opacityStart = opacityPos + "\"opacity\":".length();
+                int opacityEnd = json.indexOf(",", opacityStart);
+                if (opacityEnd == -1) opacityEnd = json.indexOf("}", opacityStart);
+                try {
+                    opacity = Float.parseFloat(json.substring(opacityStart, opacityEnd).trim());
+                } catch (Exception e) {
+                    opacity = 1.0f;
+                }
+            }
 
             int[][] layerData = parseJsonTileLayer(json, layerName, w, h);
             tileLayers.add(layerData);
             tileLayerNames.add(layerName);
+            tileLayerOpacity.add(opacity);
             
-            System.out.println("  Parsed tilelayer #" + (++layerCount) + ": " + layerName);
+            System.out.println("  Parsed tilelayer #" + (++layerCount) + ": " + layerName + " (opacity: " + opacity + ")");
 
             searchPos = tilePos + 1;
         }
