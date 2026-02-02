@@ -69,7 +69,7 @@ public class AnimatedCharacter extends Actor
         }
         catch (Exception e)
         {
-            System.out.println("Error loading character spritesheet: " + e.getMessage());
+            DebugLog.log("Error loading character spritesheet: " + e.getMessage());
             createFallbackImage();
         }
     }

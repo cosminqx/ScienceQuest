@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class LabWorld extends World
+public class LabWorld extends World implements CollisionWorld
 {
     private Actor character;
     private GreenfootImage backgroundImage;
@@ -30,17 +30,16 @@ public class LabWorld extends World
         loadMap();
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        if ("Băiat".equals(playerGender))
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Fată".equals(playerGender))
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -57,8 +56,8 @@ public class LabWorld extends World
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            System.out.println("Character spawned at: " + character.getX() + ", " + character.getY());
-            System.out.println("Initial scroll: " + scrollX + ", " + scrollY);
+            DebugLog.log("Character spawned at: " + character.getX() + ", " + character.getY());
+            DebugLog.log("Initial scroll: " + scrollX + ", " + scrollY);
         }
         
         // Instructions
@@ -77,7 +76,7 @@ public class LabWorld extends World
             tiledMap = new TiledMap("images/lab_noapte_2.json");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded lab map, backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded lab map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
 
             // Prepare optional overlay layer that should draw above the player
@@ -88,13 +87,13 @@ public class LabWorld extends World
                 overlayActor = new OverlayLayer();
                 overlayActor.setImage(overPlayerViewport);
                 addObject(overlayActor, getWidth() / 2, getHeight() / 2);
-                System.out.println("Over-Player overlay initialized");
+                DebugLog.log("Over-Player overlay initialized");
             }
         }
         catch (Exception e)
         {
             // Fallback: create a simple background if image not found
-            System.out.println("ERROR loading lab map: " + e.getMessage());
+            DebugLog.log("ERROR loading lab map: " + e.getMessage());
             e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50)); // Dark blue-gray
@@ -131,7 +130,7 @@ public class LabWorld extends World
             }
             else
             {
-                System.out.println("WARNING: backgroundImage is null!");
+                DebugLog.log("WARNING: backgroundImage is null!");
             }
 
             updateOverlayImage();
@@ -155,14 +154,14 @@ public class LabWorld extends World
         int mapX = character.getX() + scrollX;
         int mapY = character.getY() + scrollY;
         
-        System.out.println("Character screen: (" + character.getX() + ", " + character.getY() + 
+        DebugLog.log("Character screen: (" + character.getX() + ", " + character.getY() + 
                            "), map: (" + mapX + ", " + mapY + "), scroll: (" + scrollX + ", " + scrollY + ")");
         
         // Transition to MainMapWorld when inside the exit window (bottom-left area)
         if (mapX >= 0 && mapX <= 72 && mapY >= 551 && mapY <= 599)
         {
-            System.out.println("TRANSITION TRIGGERED!");
-            Greenfoot.setWorld(new MainMapWorld());
+            DebugLog.log("TRANSITION TRIGGERED!");
+            WorldNavigator.goToMainMap();
         }
     }
     
@@ -274,7 +273,7 @@ public class LabWorld extends World
                 rect.w == 48 && rect.h == 48)
             {
                 iterator.remove();
-                System.out.println("Removed quest block collision at map: (" + mapX + ", " + mapY + ")");
+                DebugLog.log("Removed quest block collision at map: (" + mapX + ", " + mapY + ")");
                 break;
             }
         }

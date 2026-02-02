@@ -43,7 +43,7 @@ public class FontManager {
             internalFont.set(pixeledLarge, large);
 
         } catch (Exception e) {
-            System.out.println("Pixel font injection failed — fallback used");
+            DebugLog.log("Pixel font injection failed — fallback used");
         }
     }
 

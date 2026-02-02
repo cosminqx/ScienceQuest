@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class MainMapWorld extends World
+public class MainMapWorld extends World implements CollisionWorld
 {
     private Actor character;
     private GreenfootImage backgroundImage;
@@ -40,17 +40,16 @@ public class MainMapWorld extends World
         addObject(teacherDisplay, teacherMapX, teacherMapY);
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender - added AFTER teacher to render on top
-        if ("Băiat".equals(playerGender))
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Fată".equals(playerGender))
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -76,13 +75,13 @@ public class MainMapWorld extends World
             tiledMap = new TiledMap("test-map-LayersFixed.tmj");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
         catch (Exception e)
         {
             // Fallback: create a simple green background if image not found
-            System.out.println("ERROR loading TMJ: " + e.getMessage());
+            DebugLog.log("ERROR loading TMJ: " + e.getMessage());
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 139, 34)); // Forest green
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
@@ -122,7 +121,7 @@ public class MainMapWorld extends World
             }
             else
             {
-                System.out.println("WARNING: backgroundImage is null!");
+                DebugLog.log("WARNING: backgroundImage is null!");
             }
             
             // Update teacher position to stay static on map
@@ -214,22 +213,22 @@ public class MainMapWorld extends World
         int mapX = screenToMapX(character.getX());
         int mapY = screenToMapY(character.getY());
         
-        // Transition to LabWorld when reaching right edge
+        // Transition to LabWorld (Chemistry) when reaching right edge
         if (mapX >= backgroundImage.getWidth() - 5)
         {
-            Greenfoot.setWorld(new LabWorld());
+            WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
         }
         
         // Transition to LabFizicaWorld when reaching left edge
         if (mapX <= 5)
         {
-            Greenfoot.setWorld(new LabFizicaWorld());
+            WorldNavigator.tryEnterLab(LabType.PHYSICS);
         }
         
         // Transition to LabBiologyWorld when reaching bottom edge
         if (mapY >= backgroundImage.getHeight() - 5)
         {
-            Greenfoot.setWorld(new LabBiologyWorld());
+            WorldNavigator.tryEnterLab(LabType.BIOLOGY);
         }
     }
 }

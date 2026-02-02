@@ -86,7 +86,7 @@ public class QuestBlock extends Actor
         questStarted = true;
         questUI = new TimingQuestUI(this);
         getWorld().addObject(questUI, getWorld().getWidth() / 2, getWorld().getHeight() / 2);
-        System.out.println("Quest started! Press SPACE when the indicator is in the green zone!");
+        DebugLog.log("Quest started! Press SPACE when the indicator is in the green zone!");
     }
     
     private void completeQuest()
@@ -109,7 +109,7 @@ public class QuestBlock extends Actor
         // Remove this actor
         getWorld().removeObject(this);
         
-        System.out.println("Quest completed! Block removed.");
+        DebugLog.log("Quest completed! Block removed.");
     }
     
     public boolean isActive()

@@ -104,6 +104,15 @@ public class BiologyAssistant extends Actor implements NPC
             if (labWorld != null)
             {
                 labWorld.repairLab();
+                
+                // Mark biology lab as completed and award badge (if not already done)
+                GameState state = GameState.getInstance();
+                if (!state.isLabCompleted(LabType.BIOLOGY))
+                {
+                    state.completeLab(LabType.BIOLOGY);
+                    state.awardBadge("biology_master");
+                    state.addXp(50); // Bonus XP for completing the lab
+                }
             }
         });
         
@@ -113,12 +122,7 @@ public class BiologyAssistant extends Actor implements NPC
     
     private DialogueQuestion buildBiologyQuestion()
     {
-        String questionText = "Care este unitatea de bază a vieții?";
-        String[] answers = { "Celula", "Atomul", "Molecula", "Țesutul" };
-        int correctIndex = 0;
-        String correctResponse = "Excelent! Celula este unitatea fundamentală a vieții. Laboratorul este restaurat!";
-        String incorrectResponse = "Nu e corect. Răspunsul este Celula. Încearcă din nou!";
-        return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
+        return GameState.getInstance().getRandomQuestion("biology", QuestionPools.getBiologyQuestions());
     }
     
     /**

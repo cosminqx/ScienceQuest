@@ -301,9 +301,20 @@ public class DialogueBox extends Actor {
         if (!questionMode || question == null) return false;
         boolean isCorrect = selectedIndex == question.getCorrectAnswerIndex();
         
-        // Trigger callback if answer is correct
-        if (isCorrect && onCorrectAnswerCallback != null) {
-            onCorrectAnswerCallback.run();
+        // Record quiz result in GameState
+        GameState state = GameState.getInstance();
+        state.recordQuizResult(question.getTopic(), isCorrect);
+        
+        if (isCorrect)
+        {
+            // Award XP for correct answer
+            state.addXp(10);
+            
+            // Trigger callback if answer is correct
+            if (onCorrectAnswerCallback != null)
+            {
+                onCorrectAnswerCallback.run();
+            }
         }
         
         return isCorrect;

@@ -38,7 +38,7 @@ public class SpriteAnimator
         }
         catch (Exception e)
         {
-            System.out.println("Error loading spritesheet: " + e.getMessage());
+            DebugLog.log("Error loading spritesheet: " + e.getMessage());
         }
     }
 
@@ -92,11 +92,11 @@ public class SpriteAnimator
                 index = frameStart + 1;
             }
             
-            System.out.println("Loaded " + frames.size() + " frames from spritesheet");
+            DebugLog.log("Loaded " + frames.size() + " frames from spritesheet");
         }
         catch (Exception e)
         {
-            System.out.println("Error parsing JSON: " + e.getMessage());
+            DebugLog.log("Error parsing JSON: " + e.getMessage());
         }
     }
 

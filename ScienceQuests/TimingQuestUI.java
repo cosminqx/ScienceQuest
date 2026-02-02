@@ -76,13 +76,13 @@ public class TimingQuestUI extends Actor
             indicatorPos <= successZoneStart + successZoneWidth)
         {
             completed = true;
-            System.out.println("SUCCESS! Perfect timing!");
+            DebugLog.log("SUCCESS! Perfect timing!");
         }
         else
         {
             failed = true;
             failCooldown = 30; // 0.5 second cooldown before trying again
-            System.out.println("FAILED! Try again!");
+            DebugLog.log("FAILED! Try again!");
         }
     }
     

@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class LabBiologyWorld extends World
+public class LabBiologyWorld extends World implements CollisionWorld
 {
     private Actor character;
     private BiologyTeacher teacher;
@@ -42,20 +42,16 @@ public class LabBiologyWorld extends World
         loadMap("images/LabBiologyWorld-Normal.json");
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        boolean isBoy = "Male".equals(playerGender) || "Băiat".equals(playerGender);
-        boolean isGirl = "Female".equals(playerGender) || "Fată".equals(playerGender);
-
-        if (isBoy)
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if (isGirl)
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -97,9 +93,9 @@ public class LabBiologyWorld extends World
         int teacherScreenY = teacherMapY - scrollY;
         addObject(teacher, teacherScreenX, teacherScreenY);
         
-        System.out.println("Biology Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
-        System.out.println("Biology Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
-        System.out.println("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
+        DebugLog.log("Biology Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
+        DebugLog.log("Biology Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
+        DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
         
         // Add biology assistant at MAP coordinates (opposite side of the lab)
         // Assistant position in map: x=720, y=266
@@ -112,8 +108,8 @@ public class LabBiologyWorld extends World
         int assistantScreenY = assistantMapY - scrollY;
         addObject(assistant, assistantScreenX, assistantScreenY);
         
-        System.out.println("Biology Assistant added at screen position: (" + assistantScreenX + ", " + assistantScreenY + ")");
-        System.out.println("Biology Assistant map position: (" + assistantMapX + ", " + assistantMapY + ")");
+        DebugLog.log("Biology Assistant added at screen position: (" + assistantScreenX + ", " + assistantScreenY + ")");
+        DebugLog.log("Biology Assistant map position: (" + assistantMapX + ", " + assistantMapY + ")");
         
         // Instructions
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
@@ -124,7 +120,7 @@ public class LabBiologyWorld extends World
     {
         try
         {
-            System.out.println("====== Loading Biology Lab Map: " + mapPath + " ======");
+            DebugLog.log("====== Loading Biology Lab Map: " + mapPath + " ======");
             tiledMap = new TiledMap(mapPath);
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
@@ -133,15 +129,15 @@ public class LabBiologyWorld extends World
             maxScrollX = Math.max(0, backgroundImage.getWidth() - getWidth());
             maxScrollY = Math.max(0, backgroundImage.getHeight() - getHeight());
             
-            System.out.println("Loaded biology lab map: " + backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
-            System.out.println("Max scroll: " + maxScrollX + ", " + maxScrollY);
-            System.out.println("====== Biology Lab Map Loading Complete ======");
+            DebugLog.log("Loaded biology lab map: " + backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
+            DebugLog.log("Max scroll: " + maxScrollX + ", " + maxScrollY);
+            DebugLog.log("====== Biology Lab Map Loading Complete ======");
             
             // Check for "On-Top" layer
             onTopLayerImage = tiledMap.getLayerImage("On-Top");
             if (onTopLayerImage != null)
             {
-                System.out.println("Found On-Top layer: " + onTopLayerImage.getWidth() + "x" + onTopLayerImage.getHeight());
+                DebugLog.log("Found On-Top layer: " + onTopLayerImage.getWidth() + "x" + onTopLayerImage.getHeight());
                 onTopViewport = new GreenfootImage(getWidth(), getHeight());
                 
                 // Add overlay actor if not present
@@ -156,7 +152,7 @@ public class LabBiologyWorld extends World
         }
         catch (Exception e)
         {
-            System.out.println("Error loading biology lab map: " + e.getMessage());
+            DebugLog.log("Error loading biology lab map: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -258,7 +254,7 @@ public class LabBiologyWorld extends World
         if (hasTriggeredDestroySequence) return;
         hasTriggeredDestroySequence = true;
         
-        System.out.println("Triggering biology lab destruction sequence...");
+        DebugLog.log("Triggering biology lab destruction sequence...");
         
         // Show panic dialogue through teacher
         if (teacher != null)
@@ -394,14 +390,14 @@ public class LabBiologyWorld extends World
             // Switch back to normal
             loadMap("images/LabBiologyWorld-Normal.json");
             isDestroyed = false;
-            System.out.println("Biology lab restored to normal state");
+            DebugLog.log("Biology lab restored to normal state");
         }
         else
         {
             // Switch to destroyed
             loadMap("images/LabBiologyWorld-destroyed.json");
             isDestroyed = true;
-            System.out.println("Biology lab changed to destroyed state");
+            DebugLog.log("Biology lab changed to destroyed state");
         }
         
         // Draw the new map
@@ -470,8 +466,8 @@ public class LabBiologyWorld extends World
         // Transition to MainMapWorld when reaching top edge
         if (mapY <= 5)
         {
-            System.out.println("TRANSITION TRIGGERED - Returning to MainMapWorld from Biology Lab!");
-            Greenfoot.setWorld(new MainMapWorld());
+            DebugLog.log("TRANSITION TRIGGERED - Returning to MainMapWorld from Biology Lab!");
+            WorldNavigator.goToMainMap();
         }
     }
     

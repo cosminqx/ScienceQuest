@@ -65,7 +65,7 @@ public class Girl extends Actor
         }
         catch (Exception e)
         {
-            System.out.println("Error loading girl sprites: " + e.getMessage());
+            DebugLog.log("Error loading girl sprites: " + e.getMessage());
             createFallbackImage();
         }
     }

@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class LabFizicaWorld extends World
+public class LabFizicaWorld extends World implements CollisionWorld
 {
     private Actor character;
     private PhysicsTeacher teacher;
@@ -41,20 +41,16 @@ public class LabFizicaWorld extends World
         loadMap("images/labfizica-normal.json");
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        boolean isBoy = "Male".equals(playerGender) || "Băiat".equals(playerGender);
-        boolean isGirl = "Female".equals(playerGender) || "Fată".equals(playerGender);
-
-        if (isBoy)
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if (isGirl)
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -96,9 +92,9 @@ public class LabFizicaWorld extends World
         int teacherScreenY = teacherMapY - scrollY;
         addObject(teacher, teacherScreenX, teacherScreenY);
         
-        System.out.println("Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
-        System.out.println("Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
-        System.out.println("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
+        DebugLog.log("Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
+        DebugLog.log("Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
+        DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
         
         // Instructions
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
@@ -112,7 +108,7 @@ public class LabFizicaWorld extends World
             tiledMap = new TiledMap(mapPath);
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded " + mapPath + ", backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded " + mapPath + ", backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
             
             // Prepare optional overlay layer that should draw above the player
@@ -126,12 +122,12 @@ public class LabFizicaWorld extends World
                     overlayActor.setImage(onTopViewport);
                     addObject(overlayActor, getWidth() / 2, getHeight() / 2);
                 }
-                System.out.println("On-Top overlay initialized");
+                DebugLog.log("On-Top overlay initialized");
             }
         }
         catch (Exception e)
         {
-            System.out.println("ERROR loading map: " + e.getMessage());
+            DebugLog.log("ERROR loading map: " + e.getMessage());
             e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50));
@@ -368,14 +364,14 @@ public class LabFizicaWorld extends World
             // Switch back to normal
             loadMap("images/labfizica-normal.json");
             isBroken = false;
-            System.out.println("Lab restored to normal state");
+            DebugLog.log("Lab restored to normal state");
         }
         else
         {
             // Switch to broken
             loadMap("images/labfizica-broken.json");
             isBroken = true;
-            System.out.println("Lab changed to broken state");
+            DebugLog.log("Lab changed to broken state");
         }
         
         // Draw the new map
@@ -446,8 +442,8 @@ public class LabFizicaWorld extends World
         // Transition to MainMapWorld when reaching left edge
         if (mapX <= 5)
         {
-            System.out.println("TRANSITION TRIGGERED - Returning to MainMapWorld!");
-            Greenfoot.setWorld(new MainMapWorld());
+            DebugLog.log("TRANSITION TRIGGERED - Returning to MainMapWorld!");
+            WorldNavigator.goToMainMap();
         }
     }
     

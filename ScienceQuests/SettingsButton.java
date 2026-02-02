@@ -28,7 +28,7 @@ public class SettingsButton extends Actor
     private void openSettings()
     {
         // TODO: Implement settings page transition
-        System.out.println("Settings button clicked!");
+        DebugLog.log("Settings button clicked!");
         // Greenfoot.setWorld(new SettingsWorld());
     }
 }

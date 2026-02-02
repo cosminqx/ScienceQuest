@@ -124,6 +124,12 @@ public class PhysicsTeacher extends Actor implements NPC
             if (labWorld != null)
             {
                 labWorld.repairLab();
+                
+                // Mark physics lab as completed and award badge
+                GameState state = GameState.getInstance();
+                state.completeLab(LabType.PHYSICS);
+                state.awardBadge("physics_expert");
+                state.addXp(50); // Bonus XP for completing the lab
             }
         });
         
@@ -133,12 +139,7 @@ public class PhysicsTeacher extends Actor implements NPC
     
     private DialogueQuestion buildPhysicsQuestion()
     {
-        String questionText = "Care este unitatea de măsură pentru forță în sistemul internațional?";
-        String[] answers = { "Newton", "Joule", "Watt", "Pascal" };
-        int correctIndex = 0;
-        String correctResponse = "Corect! Newton este unitatea pentru forță. Echipamentul este reparat!";
-        String incorrectResponse = "Greșit. Răspunsul corect este Newton (N). Mai încearcă!";
-        return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
+        return GameState.getInstance().getRandomQuestion("physics", QuestionPools.getPhysicsQuestions());
     }
     
     /**

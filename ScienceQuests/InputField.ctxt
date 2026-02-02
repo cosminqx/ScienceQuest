@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=InputField
-comment0.text=\r\n\ InputField\ -\ Text\ input\ field\ for\ player\ name\ entry\r\n
+comment0.text=\n\ InputField\ -\ Text\ input\ field\ for\ player\ name\ entry\n
 comment1.params=width\ height\ maxLength
 comment1.target=InputField(int,\ int,\ int)
 comment2.params=

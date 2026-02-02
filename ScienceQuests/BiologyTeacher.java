@@ -124,6 +124,12 @@ public class BiologyTeacher extends Actor implements NPC
             if (labWorld != null)
             {
                 labWorld.repairLab();
+                
+                // Mark biology lab as completed and award badge
+                GameState state = GameState.getInstance();
+                state.completeLab(LabType.BIOLOGY);
+                state.awardBadge("biology_master");
+                state.addXp(50); // Bonus XP for completing the lab
             }
         });
         
@@ -133,12 +139,7 @@ public class BiologyTeacher extends Actor implements NPC
     
     private DialogueQuestion buildBiologyQuestion()
     {
-        String questionText = "Care este procesul prin care plantele produc hrană folosind lumina soarelui?";
-        String[] answers = { "Fotosinteza", "Respirația", "Fermentația", "Digestia" };
-        int correctIndex = 0;
-        String correctResponse = "Corect! Fotosinteza este procesul vital pentru plante. Laboratorul este restaurat!";
-        String incorrectResponse = "Greșit. Răspunsul corect este Fotosinteza. Mai încearcă!";
-        return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
+        return GameState.getInstance().getRandomQuestion("biology", QuestionPools.getBiologyQuestions());
     }
     
     /**

@@ -123,7 +123,7 @@ public class TiledMap
         int layerPos = xml.indexOf("name=\"" + layerName + "\"");
         if (layerPos == -1)
         {
-            System.out.println("TMX layer not found: " + layerName + ", returning empty layer");
+            DebugLog.log("TMX layer not found: " + layerName + ", returning empty layer");
             return new int[h][w];
         }
 
@@ -154,7 +154,7 @@ public class TiledMap
         }
         catch (Exception ex)
         {
-            System.out.println("TMX parse error in layer: " + layerName + ": " + ex.getMessage());
+            DebugLog.log("TMX parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
     }
@@ -167,23 +167,23 @@ public class TiledMap
             int heightPx = mapH * tileSize;
             fullMapImage = new GreenfootImage(widthPx, heightPx);
             
-            System.out.println("===== Building map image =====");
-            System.out.println("Map dimensions: " + mapW + "x" + mapH + " tiles");
-            System.out.println("Tile size: " + tileSize + "px");
-            System.out.println("Full image: " + widthPx + "x" + heightPx + " pixels");
-            System.out.println("Tileset loaded: " + (tileset != null));
+            DebugLog.log("===== Building map image =====");
+            DebugLog.log("Map dimensions: " + mapW + "x" + mapH + " tiles");
+            DebugLog.log("Tile size: " + tileSize + "px");
+            DebugLog.log("Full image: " + widthPx + "x" + heightPx + " pixels");
+            DebugLog.log("Tileset loaded: " + (tileset != null));
             if (tileset != null)
             {
-                System.out.println("Tileset size: " + tileset.getWidth() + "x" + tileset.getHeight());
-                System.out.println("Tile cache size: " + tileCache.size());
+                DebugLog.log("Tileset size: " + tileset.getWidth() + "x" + tileset.getHeight());
+                DebugLog.log("Tile cache size: " + tileCache.size());
             }
-            System.out.println("Layers parsed: " + tileLayers.size());
+            DebugLog.log("Layers parsed: " + tileLayers.size());
             for (int i = 0; i < tileLayers.size(); i++)
             {
                 int nonZero = countNonZero(tileLayers.get(i));
-                System.out.println("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero tiles=" + nonZero);
+                DebugLog.log("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero tiles=" + nonZero);
             }
-            System.out.println("Starting to draw layers in order...");
+            DebugLog.log("Starting to draw layers in order...");
 
             // Draw every tile layer in the order they appear in TMJ
             for (int i = 0; i < tileLayers.size(); i++)
@@ -193,11 +193,11 @@ public class TiledMap
                 drawLayerOnto(fullMapImage, tileLayers.get(i), name, opacity);
             }
             
-            System.out.println("===== Map building complete =====");
+            DebugLog.log("===== Map building complete =====");
         }
         catch (Exception e)
         {
-            System.out.println("ERROR building map image: " + e.getMessage());
+            DebugLog.log("ERROR building map image: " + e.getMessage());
             e.printStackTrace();
             // Create fallback empty image
             fullMapImage = new GreenfootImage(mapW * tileSize, mapH * tileSize);
@@ -241,7 +241,7 @@ public class TiledMap
                 {
                     failed++;
                     if (failedCount < maxFailsToReport) {
-                        System.out.println("    FAILED: GID " + gid + " at (" + x + ", " + y + ")");
+                        DebugLog.log("    FAILED: GID " + gid + " at (" + x + ", " + y + ")");
                         failedCount++;
                     }
                 }
@@ -264,10 +264,10 @@ public class TiledMap
                 }
             }
         }
-        System.out.println("  " + layerName + ": Drew " + drawn + " tiles (skipped " + skipped + ", failed " + failed + ")");
+        DebugLog.log("  " + layerName + ": Drew " + drawn + " tiles (skipped " + skipped + ", failed " + failed + ")");
         if (minGid != Integer.MAX_VALUE)
         {
-            System.out.println("    GID range: " + minGid + " - " + maxGid);
+            DebugLog.log("    GID range: " + minGid + " - " + maxGid);
         }
         
         // Report available tilesets
@@ -277,7 +277,7 @@ public class TiledMap
                 System.out.print("gid=" + tilesets.get(i).firstgid + 
                     " (tiles=" + tilesets.get(i).tiles.size() + ") ");
             }
-            System.out.println();
+            DebugLog.log("");
         }
     }
     
@@ -306,18 +306,18 @@ public class TiledMap
             "images/floor.png" // last resort
         };
 
-        System.out.println("=== Tileset Loading ===");
+        DebugLog.log("=== Tileset Loading ===");
         for (String path : candidatePaths)
         {
             try
             {
                 tileset = new GreenfootImage(path);
-                System.out.println("✓ Tileset loaded from: " + path);
+                DebugLog.log("✓ Tileset loaded from: " + path);
                 break;
             }
             catch (Exception e)
             {
-                System.out.println("✗ Failed to load: " + path);
+                DebugLog.log("✗ Failed to load: " + path);
                 tileset = null;
             }
         }
@@ -328,7 +328,7 @@ public class TiledMap
             int cols = tileset.getWidth() / tileSize;
             int rows = tileset.getHeight() / tileSize;
             int total = cols * rows;
-            System.out.println("✓ Tileset dimensions: " + cols + " cols x " + rows + " rows = " + total + " tiles");
+            DebugLog.log("✓ Tileset dimensions: " + cols + " cols x " + rows + " rows = " + total + " tiles");
             for (int i = 0; i < total; i++)
             {
                 int sx = (i % cols) * tileSize;
@@ -340,12 +340,12 @@ public class TiledMap
         }
         else
         {
-            System.out.println("✗ WARNING: Tileset not found! Using fallback colors.");
+            DebugLog.log("✗ WARNING: Tileset not found! Using fallback colors.");
         }
     }
     
     private void loadMultipleTilesets(String json) {
-        System.out.println("=== Loading Multiple Tilesets ===");
+        DebugLog.log("=== Loading Multiple Tilesets ===");
         int tsPos = json.indexOf("\"tilesets\":[");
         if (tsPos == -1) return;
         
@@ -389,7 +389,7 @@ public class TiledMap
             for (String path : paths) {
                 try {
                     tilesetImg = new GreenfootImage(path);
-                    System.out.println("✓ Loaded tileset gid=" + gid + " from: " + path);
+                    DebugLog.log("✓ Loaded tileset gid=" + gid + " from: " + path);
                     break;
                 } catch (Exception e) {
                     // Try next path
@@ -411,15 +411,15 @@ public class TiledMap
                 }
                 
                 tilesets.add(new TilesetInfo(gid, tiles));
-                System.out.println("  -> " + total + " tiles loaded");
+                DebugLog.log("  -> " + total + " tiles loaded");
             } else {
-                System.out.println("✗ Failed to load tileset: " + filename);
+                DebugLog.log("✗ Failed to load tileset: " + filename);
             }
             
             searchFrom = nextTileset + 10;
         }
         
-        System.out.println("Total tilesets loaded: " + tilesets.size());
+        DebugLog.log("Total tilesets loaded: " + tilesets.size());
     }
     
     private String extractJsonString(String json, String key) {
@@ -461,7 +461,7 @@ public class TiledMap
             }
             
             // No matching tileset found - this shouldn't happen if tilesets are loaded correctly
-            System.out.println("WARNING: GID " + gid + " doesn't match any tileset (available: " + 
+            DebugLog.log("WARNING: GID " + gid + " doesn't match any tileset (available: " + 
                 tilesets.get(0).firstgid + "-" + (tilesets.get(tilesets.size()-1).firstgid + tilesets.get(tilesets.size()-1).tiles.size()) + ")");
         }
         
@@ -561,13 +561,13 @@ public class TiledMap
             int tsPos = xmlOrJson.indexOf("<tileset ");
             if (tsPos == -1) return 1; // fallback
             int value = extractIntAttr(xmlOrJson.substring(tsPos), "firstgid=\"", "\"");
-            System.out.println("Extracted firstgid from XML: " + value);
+            DebugLog.log("Extracted firstgid from XML: " + value);
             return value > 0 ? value : 1;
         }
         int pos = xmlOrJson.indexOf("\"firstgid\":");
         if (pos == -1) return 1;
         int value = extractJsonInt(xmlOrJson.substring(pos), "\"firstgid\":");
-        System.out.println("Extracted firstgid from JSON: " + value);
+        DebugLog.log("Extracted firstgid from JSON: " + value);
         return value > 0 ? value : 1;
     }
 
@@ -575,13 +575,13 @@ public class TiledMap
     {
         if (isJson)
         {
-            System.out.println("TMJ layers: Floor non-zero=" + countNonZero(floor) +
+            DebugLog.log("TMJ layers: Floor non-zero=" + countNonZero(floor) +
                                " Objects=" + countNonZero(objectsA) +
                                " Objects1=" + countNonZero(objectsB));
         }
         else
         {
-            System.out.println("TMX layers: Floor non-zero=" + countNonZero(floor) +
+            DebugLog.log("TMX layers: Floor non-zero=" + countNonZero(floor) +
                                " Collision=" + countNonZero(objectsA) +
                                " Collision1=" + countNonZero(objectsB));
         }
@@ -612,7 +612,7 @@ public class TiledMap
 
         if (idx == -1)
         {
-            System.out.println("Layer not found: " + layerName);
+            DebugLog.log("Layer not found: " + layerName);
             return null;
         }
 
@@ -639,21 +639,21 @@ public class TiledMap
         int namePos = json.indexOf("\"name\":\"" + layerName + "\"");
         if (namePos == -1)
         {
-            System.out.println("  TMJ layer not found: " + layerName + ", returning empty layer");
+            DebugLog.log("  TMJ layer not found: " + layerName + ", returning empty layer");
             return new int[h][w];
         }
         
         // Find the opening brace of this layer object (search backward for {)
         int layerStart = json.lastIndexOf("{", namePos);
         if (layerStart == -1) {
-            System.out.println("  TMJ layer object start not found: " + layerName);
+            DebugLog.log("  TMJ layer object start not found: " + layerName);
             return new int[h][w];
         }
         
         // Find the closing brace of this layer object (search forward for })
         int layerEnd = json.indexOf("}", namePos);
         if (layerEnd == -1) {
-            System.out.println("  TMJ layer object end not found: " + layerName);
+            DebugLog.log("  TMJ layer object end not found: " + layerName);
             return new int[h][w];
         }
         
@@ -664,7 +664,7 @@ public class TiledMap
         int dataStart = layerJson.indexOf("\"data\":[");
         if (dataStart == -1)
         {
-            System.out.println("  TMJ data array not found in layer: " + layerName);
+            DebugLog.log("  TMJ data array not found in layer: " + layerName);
             return new int[h][w];
         }
         dataStart += 8; // Skip past "data":[
@@ -673,7 +673,7 @@ public class TiledMap
         int dataEnd = layerJson.indexOf("],", dataStart);
         if (dataEnd == -1)
         {
-            System.out.println("  TMJ data array end not found in layer: " + layerName);
+            DebugLog.log("  TMJ data array end not found in layer: " + layerName);
             return new int[h][w];
         }
         
@@ -700,7 +700,7 @@ public class TiledMap
         }
         catch (Exception ex)
         {
-            System.out.println("  TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
+            DebugLog.log("  TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
     }
@@ -714,7 +714,7 @@ public class TiledMap
         int searchPos = json.indexOf("\"layers\":[");
         if (searchPos == -1)
         {
-            System.out.println("No layers array found in TMJ");
+            DebugLog.log("No layers array found in TMJ");
             return;
         }
 
@@ -755,25 +755,25 @@ public class TiledMap
             tileLayerNames.add(layerName);
             tileLayerOpacity.add(opacity);
             
-            System.out.println("  Parsed tilelayer #" + (++layerCount) + ": " + layerName + " (opacity: " + opacity + ")");
+            DebugLog.log("  Parsed tilelayer #" + (++layerCount) + ": " + layerName + " (opacity: " + opacity + ")");
 
             searchPos = tilePos + 1;
         }
 
         if (tileLayers.isEmpty())
         {
-            System.out.println("Warning: no tile layers parsed; creating empty floor");
+            DebugLog.log("Warning: no tile layers parsed; creating empty floor");
             tileLayers.add(new int[h][w]);
             tileLayerNames.add("Floor");
         }
-        System.out.println("Total tilelayers found: " + layerCount);
+        DebugLog.log("Total tilelayers found: " + layerCount);
     }
 
     private void buildSolidFromObjectLayer(String json)
     {
         int layerPos = json.indexOf("\"name\":\"Collision\"");
         if (layerPos == -1) {
-            System.out.println("No Collision object layer found in TMJ");
+            DebugLog.log("No Collision object layer found in TMJ");
             return;
         }
         int objsStart = json.indexOf("\"objects\":[", layerPos);
@@ -782,7 +782,7 @@ public class TiledMap
         String objs = json.substring(objsStart + 10, objsEnd);
         String[] entries = objs.split("\\},\\s*\\{");
         
-        System.out.println("Parsing Collision object layer with " + entries.length + " objects...");
+        DebugLog.log("Parsing Collision object layer with " + entries.length + " objects...");
         
         for (String e : entries)
         {
@@ -800,7 +800,7 @@ public class TiledMap
             int rectH = (int)Math.round(h);
             collisionRects.add(new CollisionRect(rectX, rectY, rectW, rectH));
             
-            System.out.println("  Collision rect " + collisionRects.size() + ": x=" + rectX + " y=" + rectY + 
+            DebugLog.log("  Collision rect " + collisionRects.size() + ": x=" + rectX + " y=" + rectY + 
                                " w=" + rectW + " h=" + rectH);
             
             // Also mark solid grid for reference
@@ -816,7 +816,7 @@ public class TiledMap
                 }
             }
         }
-        System.out.println("Loaded " + collisionRects.size() + " collision rectangles from Collision layer");
+        DebugLog.log("Loaded " + collisionRects.size() + " collision rectangles from Collision layer");
     }
 
     private double extractJsonDouble(String json, String key)
