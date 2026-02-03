@@ -1,0 +1,182 @@
+import greenfoot.*;
+
+/**
+ * KeySequenceQuest - Press arrow keys in a random sequence (3 keys)
+ */
+public class KeySequenceQuest extends Actor
+{
+    private int mapX, mapY;
+    private int sequenceIndex = 0;
+    private int targetSequences = 3;
+    private int completedSequences = 0;
+    private String[] sequence = new String[3];
+    private boolean questActive = false;
+    private boolean completed = false;
+    private int interactionCooldown = 0;
+    private int resetCooldown = 0;
+    private int animTick = 0;
+    
+    public KeySequenceQuest(int mapX, int mapY)
+    {
+        this.mapX = mapX;
+        this.mapY = mapY;
+        generateSequence();
+        createImage();
+    }
+    
+    private void generateSequence()
+    {
+        String[] keys = {"up", "down", "left", "right"};
+        for (int i = 0; i < 3; i++)
+        {
+            sequence[i] = keys[Greenfoot.getRandomNumber(4)];
+        }
+    }
+    
+    private void createImage()
+    {
+        GreenfootImage img = new GreenfootImage(48, 48);
+        img.setColor(new Color(0, 0, 0, 0));
+        img.fillRect(0, 0, 48, 48);
+        setImage(img);
+    }
+    
+    public void act()
+    {
+        if (completed) return;
+        
+        // Check for player proximity and SPACE key to start
+        Actor player = getPlayer();
+        if (player != null && !questActive)
+        {
+            int dx = Math.abs(player.getX() - getX());
+            int dy = Math.abs(player.getY() - getY());
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 100 && interactionCooldown == 0 && Greenfoot.isKeyDown("space"))
+            {
+                questActive = true;
+                sequenceIndex = 0;
+                completedSequences = 0;
+                animTick = 0;
+                GameState.getInstance().setMiniQuestActive(true);
+                interactionCooldown = 10;
+            }
+        }
+        
+        if (interactionCooldown > 0) interactionCooldown--;
+        if (resetCooldown > 0) resetCooldown--;
+        
+        if (questActive)
+        {
+            animTick++;
+            checkInput();
+            updateDisplay();
+        }
+    }
+    
+    private void checkInput()
+    {
+        String currentKey = sequence[sequenceIndex];
+        boolean keyPressed = false;
+        
+        if (Greenfoot.isKeyDown(currentKey))
+        {
+            keyPressed = true;
+        }
+        
+        if (keyPressed && resetCooldown == 0)
+        {
+            sequenceIndex++;
+            resetCooldown = 10;
+            
+            if (sequenceIndex >= sequence.length)
+            {
+                // Sequence complete
+                completedSequences++;
+                if (completedSequences >= targetSequences)
+                {
+                    finishQuest(true);
+                }
+                else
+                {
+                    generateSequence();
+                    sequenceIndex = 0;
+                }
+            }
+        }
+    }
+    
+    private void updateDisplay()
+    {
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+        GreenfootImage img = new GreenfootImage(w, h);
+
+        int pulse = 120 + (int)(40 * Math.sin(animTick * 0.2));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, w, h);
+
+        int panelW = 420;
+        int panelH = 220;
+        int px = (w - panelW) / 2;
+        int py = (h - panelH) / 2;
+
+        img.setColor(new Color(20, 20, 20, 220));
+        img.fillRect(px, py, panelW, panelH);
+        img.setColor(new Color(255, 255, 255, 180));
+        img.drawRect(px, py, panelW, panelH);
+
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 22));
+        img.drawString("SEQUENCE", px + 140, py + 45);
+        img.setFont(new greenfoot.Font("Arial", true, false, 18));
+        img.drawString("Press: " + sequence[sequenceIndex].toUpperCase(), px + 130, py + 95);
+        img.drawString("Seq: " + completedSequences + "/" + targetSequences, px + 140, py + 135);
+        img.drawString("Step: " + (sequenceIndex + 1) + "/3", px + 140, py + 170);
+
+        setImage(img);
+    }
+    
+    private void finishQuest(boolean success)
+    {
+        questActive = false;
+        completed = true;
+        GameState.getInstance().setMiniQuestActive(false);
+
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(success ? new Color(0, 255, 0, 180) : new Color(255, 0, 0, 180));
+        img.fillRect(0, 0, w, h);
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        img.drawString(success ? "SUCCESS!" : "FAILED!", w / 2 - 70, h / 2);
+        setImage(img);
+    }
+    
+    private Actor getPlayer()
+    {
+        World world = getWorld();
+        if (world == null) return null;
+        
+        java.util.List<Boy> boys = world.getObjects(Boy.class);
+        if (!boys.isEmpty()) return boys.get(0);
+        
+        java.util.List<Girl> girls = world.getObjects(Girl.class);
+        if (!girls.isEmpty()) return girls.get(0);
+        
+        return null;
+    }
+    
+    public int getMapX() { return mapX; }
+    public int getMapY() { return mapY; }
+    
+    public java.util.List<TiledMap.CollisionRect> getCollisionRects()
+    {
+        return java.util.Collections.emptyList();
+    }
+}

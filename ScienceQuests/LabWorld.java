@@ -21,7 +21,7 @@ public class LabWorld extends World implements CollisionWorld
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-        setPaintOrder(Label.class, TimingQuestUI.class, QuestBlock.class, OverlayLayer.class, Boy.class, Girl.class);
+        setPaintOrder(Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
         
         // Initialize quest blocks list
         questBlocks = new ArrayList<QuestBlock>();
@@ -66,6 +66,25 @@ public class LabWorld extends World implements CollisionWorld
         
         // Add quest block at x=236, y=358 (map coordinates)
         addQuestBlock(236, 358);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+    }
+    
+    /**
+     * Add all mini-quest blocks scattered across the map
+     */
+    private void addMiniQuests()
+    {
+        addObject(new RapidFireQuest(100, 100), 100, 100);
+        addObject(new KeySequenceQuest(300, 100), 300, 100);
+        addObject(new AlternatingKeysQuest(500, 100), 500, 100);
+        addObject(new DoubleTapSprintQuest(100, 300), 100, 300);
+        addObject(new DirectionDodgeQuest(300, 300), 300, 300);
+        addObject(new ComboChainQuest(500, 300), 500, 300);
+        addObject(new RhythmReleaseQuest(100, 500), 100, 500);
+        addObject(new PrecisionHoldQuest(300, 500), 300, 500);
+        addObject(new KeyRainfallQuest(500, 500), 500, 500);
     }
     
     private void loadMap()

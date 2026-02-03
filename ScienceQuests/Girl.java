@@ -119,7 +119,7 @@ public class Girl extends Actor
     public void act()
     {
         // Only allow movement if no dialogue is active
-        if (!DialogueManager.getInstance().isDialogueActive())
+        if (!DialogueManager.getInstance().isDialogueActive() && !GameState.getInstance().isMiniQuestActive())
         {
             handleMovement();
         }

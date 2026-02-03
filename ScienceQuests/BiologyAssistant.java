@@ -14,8 +14,8 @@ public class BiologyAssistant extends Actor implements NPC
     {
         try
         {
-            // Use the same teacher image for now (or you can use a different one)
-            GreenfootImage image = new GreenfootImage("images/woman_teacher.png");
+            // Load man_teacher.png image
+            GreenfootImage image = new GreenfootImage("images/man_teacher.png");
             // Scale it slightly smaller to differentiate
             image.scale((int)(image.getWidth() * 0.9), (int)(image.getHeight() * 0.9));
             setImage(image);
@@ -190,7 +190,7 @@ public class BiologyAssistant extends Actor implements NPC
     // NPC interface methods
     public String getIconPath()
     {
-        return "images/woman_teacher.png";
+        return "images/man_teacher.png";
     }
     
     public String getDialogueText(String playerName)

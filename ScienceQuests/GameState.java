@@ -20,6 +20,7 @@ public class GameState
     private final Map<String, Integer> quizTotalCount;
     private final Random rng;
     private int xp;
+    private boolean miniQuestActive;
 
     private GameState()
     {
@@ -30,6 +31,7 @@ public class GameState
         quizTotalCount = new HashMap<>();
         rng = new Random();
         xp = 0;
+        miniQuestActive = false;
     }
 
     public static GameState getInstance()
@@ -49,6 +51,17 @@ public class GameState
         quizCorrectCount.clear();
         quizTotalCount.clear();
         xp = 0;
+        miniQuestActive = false;
+    }
+
+    public boolean isMiniQuestActive()
+    {
+        return miniQuestActive;
+    }
+
+    public void setMiniQuestActive(boolean active)
+    {
+        this.miniQuestActive = active;
     }
 
     public boolean isLabCompleted(LabType lab)

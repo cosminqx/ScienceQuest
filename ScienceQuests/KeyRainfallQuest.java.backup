@@ -1,0 +1,204 @@
+import greenfoot.*;
+import java.util.*;
+
+/**
+ * KeyRainfallQuest - Press keys as they fall from top (8 total)
+ */
+public class KeyRainfallQuest extends Actor
+{
+    private int mapX, mapY;
+    private int catchCount = 0;
+    private int targetCount = 8;
+    private List<FallingKey> fallingKeys = new ArrayList<>();
+    private int spawnTimer = 0;
+    private boolean questActive = false;
+    private boolean completed = false;
+    private int interactionCooldown = 0;
+    private int animTick = 0;
+    
+    public KeyRainfallQuest(int mapX, int mapY)
+    {
+        this.mapX = mapX;
+        this.mapY = mapY;
+        createImage();
+    }
+    
+    private void createImage()
+    {
+        GreenfootImage img = new GreenfootImage(48, 48);
+            img.setColor(new Color(0, 0, 0, 0));
+            img.fillRect(0, 0, 48, 48);
+        setImage(img);
+    }
+    
+    public void act()
+    {
+        if (completed) return;
+        
+        Actor player = getPlayer();
+        if (player != null && !questActive)
+        {
+            int dx = Math.abs(player.getX() - getX());
+            int dy = Math.abs(player.getY() - getY());
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 100 && interactionCooldown == 0 && Greenfoot.isKeyDown("space"))
+            {
+                questActive = true;
+                catchCount = 0;
+                fallingKeys.clear();
+                spawnTimer = 0;
+                animTick = 0;
+                GameState.getInstance().setMiniQuestActive(true);
+                interactionCooldown = 10;
+            }
+        }
+        
+        if (interactionCooldown > 0) interactionCooldown--;
+        
+        if (questActive)
+        {
+            animTick++;
+            // Spawn new keys
+            spawnTimer++;
+            if (spawnTimer > 30 && catchCount < targetCount)
+            {
+                spawnKey();
+                spawnTimer = 0;
+            }
+            
+            // Update falling keys
+            for (int i = fallingKeys.size() - 1; i >= 0; i--)
+            {
+                FallingKey key = fallingKeys.get(i);
+                key.fall();
+                
+                // Check if key was caught
+                if (Greenfoot.isKeyDown(key.keyName))
+                {
+                    catchCount++;
+                    fallingKeys.remove(i);
+                    
+                    if (catchCount >= targetCount)
+                    {
+                        finishQuest(true);
+                    }
+                }
+                // Check if key reached bottom (missed)
+                else if (key.y > 200)
+                {
+                    finishQuest(false);
+                }
+            }
+            
+            updateDisplay();
+        }
+    }
+    
+    private void spawnKey()
+    {
+        String[] keys = {"up", "down", "left", "right"};
+        String key = keys[Greenfoot.getRandomNumber(4)];
+        fallingKeys.add(new FallingKey(key, 50 + Greenfoot.getRandomNumber(200)));
+    }
+    
+    private void updateDisplay()
+    {
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+        GreenfootImage img = new GreenfootImage(w, h);
+
+        int pulse = 120 + (int)(40 * Math.sin(animTick * 0.2));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, w, h);
+
+        int panelW = 300;
+        int panelH = 260;
+        int px = (w - panelW) / 2;
+        int py = (h - panelH) / 2;
+
+        img.setColor(new Color(20, 20, 20, 220));
+        img.fillRect(px, py, panelW, panelH);
+        img.setColor(new Color(255, 255, 255, 180));
+        img.drawRect(px, py, panelW, panelH);
+
+        // Draw falling keys
+        for (FallingKey key : fallingKeys)
+        {
+            img.setColor(new Color(255, 200, 0));
+            String arrow = key.keyName.equals("up") ? "▲" :
+                          key.keyName.equals("down") ? "▼" :
+                          key.keyName.equals("left") ? "◀" : "▶";
+            img.setFont(new greenfoot.Font("Arial", true, false, 20));
+            img.drawString(arrow, px + key.x, py + key.y + 40);
+        }
+
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 18));
+        img.drawString("RAINFALL", px + 90, py + 35);
+        img.setFont(new greenfoot.Font("Arial", true, false, 16));
+        img.drawString(catchCount + "/" + targetCount, px + 120, py + 230);
+
+        setImage(img);
+    }
+    
+    private void finishQuest(boolean success)
+    {
+        questActive = false;
+        completed = true;
+        GameState.getInstance().setMiniQuestActive(false);
+
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(success ? new Color(0, 255, 0, 180) : new Color(255, 0, 0, 180));
+        img.fillRect(0, 0, w, h);
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        img.drawString(success ? "SUCCESS!" : "FAILED!", w / 2 - 70, h / 2);
+        setImage(img);
+    }
+    
+    private Actor getPlayer()
+    {
+        World world = getWorld();
+        if (world == null) return null;
+        
+        java.util.List<Boy> boys = world.getObjects(Boy.class);
+        if (!boys.isEmpty()) return boys.get(0);
+        
+        java.util.List<Girl> girls = world.getObjects(Girl.class);
+        if (!girls.isEmpty()) return girls.get(0);
+        
+        return null;
+    }
+    
+    private class FallingKey
+    {
+        String keyName;
+        int x;
+        int y = 0;
+        
+        FallingKey(String key, int xPos)
+        {
+            this.keyName = key;
+            this.x = xPos;
+        }
+        
+        void fall()
+        {
+            y += 2;
+        }
+    }
+    
+    public int getMapX() { return mapX; }
+    public int getMapY() { return mapY; }
+    
+        public java.util.List<TiledMap.CollisionRect> getCollisionRects()
+        {
+            return java.util.Collections.emptyList();
+        }
+}

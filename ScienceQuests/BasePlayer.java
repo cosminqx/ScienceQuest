@@ -22,7 +22,7 @@ public abstract class BasePlayer extends Actor
 
     public void act()
     {
-        if (!DialogueManager.getInstance().isDialogueActive())
+        if (!DialogueManager.getInstance().isDialogueActive() && !GameState.getInstance().isMiniQuestActive())
         {
             handleMovement();
         }

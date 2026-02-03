@@ -36,7 +36,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+        setPaintOrder(Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
         
         // Load biology lab map
         loadMap("images/LabBiologyWorld-Normal.json");
@@ -114,6 +114,25 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Instructions
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+    }
+    
+    /**
+     * Add all mini-quest blocks scattered across the map
+     */
+    private void addMiniQuests()
+    {
+        addObject(new RapidFireQuest(100, 100), 100, 100);
+        addObject(new KeySequenceQuest(300, 100), 300, 100);
+        addObject(new AlternatingKeysQuest(500, 100), 500, 100);
+        addObject(new DoubleTapSprintQuest(100, 300), 100, 300);
+        addObject(new DirectionDodgeQuest(300, 300), 300, 300);
+        addObject(new ComboChainQuest(500, 300), 500, 300);
+        addObject(new RhythmReleaseQuest(100, 500), 100, 500);
+        addObject(new PrecisionHoldQuest(300, 500), 300, 500);
+        addObject(new KeyRainfallQuest(500, 500), 500, 500);
     }
     
     private void loadMap(String mapPath)

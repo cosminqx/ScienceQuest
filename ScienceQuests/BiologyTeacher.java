@@ -15,8 +15,8 @@ public class BiologyTeacher extends Actor implements NPC
     {
         try
         {
-            // Load woman_teacher.png image
-            GreenfootImage image = new GreenfootImage("images/woman_teacher.png");
+            // Load man_teacher.png image
+            GreenfootImage image = new GreenfootImage("images/man_teacher.png");
             setImage(image);
         }
         catch (Exception e)
@@ -207,7 +207,7 @@ public class BiologyTeacher extends Actor implements NPC
     // NPC interface methods
     public String getIconPath()
     {
-        return "images/woman_teacher.png";
+        return "images/man_teacher.png";
     }
     
     public String getDialogueText(String playerName)
