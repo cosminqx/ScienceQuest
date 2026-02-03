@@ -19,6 +19,11 @@ public class RapidFireQuest extends Actor
     private int maxCombo = 0;
     private OverlayLayer myOverlay = null;
     private int resultDisplayTicks = 0;
+    private int baseY = 0;
+    private boolean baseYSet = false;
+    private int floatTick = 0;
+    private boolean promptActive = false;
+    private boolean startKeyDown = false;
     
     public RapidFireQuest(int mapX, int mapY)
     {
@@ -29,10 +34,16 @@ public class RapidFireQuest extends Actor
     
     private void createImage()
     {
-        GreenfootImage img = new GreenfootImage(48, 48);
-        img.setColor(new Color(0, 0, 0, 0));
-        img.fillRect(0, 0, 48, 48);
-        setImage(img);
+        GreenfootImage img = new GreenfootImage("exclamation-mark.png");
+        img.scale(32, 32);
+        GreenfootImage marker = new GreenfootImage(48, 48);
+        marker.setColor(new Color(0, 0, 0, 0));
+        marker.fillRect(0, 0, 48, 48);
+        marker.drawImage(img, 8, 0);
+        marker.setColor(new Color(255, 255, 255));
+        marker.setFont(new greenfoot.Font("Arial", true, false, 10));
+        marker.drawString("SPACE", 6, 46);
+        setImage(marker);
     }
     
     public void act()
@@ -49,6 +60,12 @@ public class RapidFireQuest extends Actor
             }
             return;
         }
+
+        initBasePosition();
+        if (!questActive)
+        {
+            updateFloating();
+        }
         
         Actor player = getPlayer();
         if (player != null && !questActive)
@@ -56,18 +73,30 @@ public class RapidFireQuest extends Actor
             int dx = Math.abs(player.getX() - getX());
             int dy = Math.abs(player.getY() - getY());
             double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < 100 && interactionCooldown == 0 && Greenfoot.isKeyDown("space"))
+
+            boolean startPressed = Greenfoot.isKeyDown("space");
+            if (distance < 100)
             {
-                questActive = true;
-                animTick = 0;
-                spaceCount = 0;
-                combo = 0;
-                maxCombo = 0;
-                timeRemaining = timeMax;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                showStartPrompt("RAPID FIRE");
+                if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                {
+                    promptActive = false;
+                    questActive = true;
+                    animTick = 0;
+                    spaceCount = 0;
+                    combo = 0;
+                    maxCombo = 0;
+                    timeRemaining = timeMax;
+                    GameState.getInstance().setMiniQuestActive(true);
+                    interactionCooldown = 10;
+                }
             }
+            else if (promptActive)
+            {
+                promptActive = false;
+                clearOverlay();
+            }
+            startKeyDown = startPressed;
         }
         
         if (interactionCooldown > 0) interactionCooldown--;
@@ -263,6 +292,52 @@ public class RapidFireQuest extends Actor
             getWorld().removeObject(myOverlay);
             myOverlay = null;
         }
+    }
+
+    private void initBasePosition()
+    {
+        if (!baseYSet && getWorld() != null)
+        {
+            baseY = getY();
+            baseYSet = true;
+        }
+    }
+
+    private void updateFloating()
+    {
+        if (!baseYSet) return;
+        floatTick++;
+        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
+        setLocation(getX(), baseY + offset);
+    }
+
+    private void showStartPrompt(String title)
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 320;
+        int h = 90;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 170));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 255, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 18));
+        img.setColor(Color.WHITE);
+        img.drawString(title, 20, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(200, 200, 200));
+        img.drawString("Press SPACE to start", 70, 60);
+
+        myOverlay.setImage(img);
+        promptActive = true;
     }
     
     private Actor getPlayer()

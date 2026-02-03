@@ -24,6 +24,14 @@ public class MainMapWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
+        // Set paint order for all quests and UI elements
+        setPaintOrder(Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
+                     RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
+                     DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
+                     RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
+                     ChemicalBondQuest.class, DnaReplicationQuest.class, PendulumTimingQuest.class,
+                     Boy.class, Girl.class, Teacher.class);
+        
         FontManager.loadFonts();
         
         // Initialize dialogue manager
@@ -66,6 +74,29 @@ public class MainMapWorld extends World implements CollisionWorld
         // Add settings button in top-right corner
         settingsButton = new SettingsButton();
         addObject(settingsButton, getWidth() - 20, 20);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+    }
+    
+    /**
+     * Add various mini-quests scattered across the main map world
+     */
+    private void addMiniQuests()
+    {
+        // Arcade-style quests scattered around the map
+        addObject(new RapidFireQuest(150, 200), 150, 200);           // Near spawn area
+        addObject(new KeySequenceQuest(400, 180), 400, 180);         // Right side
+        addObject(new AlternatingKeysQuest(600, 250), 600, 250);     // Far right
+        addObject(new DoubleTapSprintQuest(200, 400), 200, 400);     // Bottom left
+        addObject(new DirectionDodgeQuest(450, 420), 450, 420);      // Bottom center
+        addObject(new ComboChainQuest(650, 400), 650, 400);          // Bottom right
+        addObject(new RhythmReleaseQuest(100, 600), 100, 600);       // Far bottom left
+        addObject(new PrecisionHoldQuest(350, 650), 350, 650);       // Far bottom center
+        addObject(new KeyRainfallQuest(600, 600), 600, 600);         // Far bottom right
+        
+        // Chemistry-themed quest
+        addObject(new ChemicalBondQuest(500, 300), 500, 300);        // Center-right area
     }
     
     private void loadMap()

@@ -36,7 +36,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+        setPaintOrder(Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
         
         // Load biology lab map
         loadMap("images/LabBiologyWorld-Normal.json");
@@ -120,19 +120,13 @@ public class LabBiologyWorld extends World implements CollisionWorld
     }
     
     /**
-     * Add all mini-quest blocks scattered across the map
+     * Add biology-specific mini-quest to the lab
      */
     private void addMiniQuests()
     {
-        addObject(new RapidFireQuest(100, 100), 100, 100);
-        addObject(new KeySequenceQuest(300, 100), 300, 100);
-        addObject(new AlternatingKeysQuest(500, 100), 500, 100);
-        addObject(new DoubleTapSprintQuest(100, 300), 100, 300);
-        addObject(new DirectionDodgeQuest(300, 300), 300, 300);
-        addObject(new ComboChainQuest(500, 300), 500, 300);
-        addObject(new RhythmReleaseQuest(100, 500), 100, 500);
-        addObject(new PrecisionHoldQuest(300, 500), 300, 500);
-        addObject(new KeyRainfallQuest(500, 500), 500, 500);
+        // DNA Replication Quest - biology-themed challenge
+        // Place it in the center of the lab for easy access
+        addObject(new DnaReplicationQuest(432, 336), 432, 336);
     }
     
     private void loadMap(String mapPath)

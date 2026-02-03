@@ -18,6 +18,12 @@ public class PrecisionHoldQuest extends Actor
     private int interactionCooldown = 0;
     private int animTick = 0;
     private int successFlash = 0;
+    private OverlayLayer myOverlay = null;
+    private int resultDisplayTicks = 0;
+    private int baseY = 0;
+    private boolean baseYSet = false;
+    private int floatTick = 0;
+    private boolean startKeyDown = false;
     
     public PrecisionHoldQuest(int mapX, int mapY)
     {
@@ -28,17 +34,38 @@ public class PrecisionHoldQuest extends Actor
     
     private void createImage()
     {
-        GreenfootImage img = new GreenfootImage(48, 48);
-        img.setColor(new Color(0, 0, 0, 0));
-        img.fillRect(0, 0, 48, 48);
-        img.setColor(new Color(200, 100, 220));
-        img.drawString("◀", 15, 30);
-        setImage(img);
+        GreenfootImage img = new GreenfootImage("exclamation-mark.png");
+        img.scale(32, 32);
+        GreenfootImage marker = new GreenfootImage(48, 48);
+        marker.setColor(new Color(0, 0, 0, 0));
+        marker.fillRect(0, 0, 48, 48);
+        marker.drawImage(img, 8, 0);
+        marker.setColor(new Color(255, 255, 255));
+        marker.setFont(new greenfoot.Font("Arial", true, false, 10));
+        marker.drawString("SPACE", 6, 46);
+        setImage(marker);
     }
     
     public void act()
     {
-        if (completed) return;
+        if (completed)
+        {
+            if (resultDisplayTicks > 0)
+            {
+                resultDisplayTicks--;
+                if (resultDisplayTicks == 0)
+                {
+                    clearOverlay();
+                }
+            }
+            return;
+        }
+
+        initBasePosition();
+        if (!questActive)
+        {
+            updateFloating();
+        }
         
         // Check for player proximity and SPACE key to start
         Actor player = getPlayer();
@@ -48,7 +75,8 @@ public class PrecisionHoldQuest extends Actor
             int dy = Math.abs(player.getY() - getY());
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < 100 && interactionCooldown == 0 && Greenfoot.isKeyDown("space"))
+            boolean startPressed = Greenfoot.isKeyDown("space");
+            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
             {
                 questActive = true;
                 holdTime = 0;
@@ -57,6 +85,7 @@ public class PrecisionHoldQuest extends Actor
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
+            startKeyDown = startPressed;
         }
         
         if (interactionCooldown > 0) interactionCooldown--;
@@ -129,6 +158,16 @@ public class PrecisionHoldQuest extends Actor
         World world = getWorld();
         int w = world != null ? world.getWidth() : 800;
         int h = world != null ? world.getHeight() : 600;
+        
+        if (world != null)
+        {
+            if (myOverlay == null || myOverlay.getWorld() == null)
+            {
+                myOverlay = new OverlayLayer();
+                world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+            }
+        }
+        
         GreenfootImage img = new GreenfootImage(w, h);
 
         // Animated pulsing background
@@ -237,12 +276,9 @@ public class PrecisionHoldQuest extends Actor
     private void finishQuest(boolean success)
     {
         World world = getWorld();
-        if (world == null) return;
+        if (world == null || myOverlay == null) return;
         
-        // Get overlay layer
-        java.util.List<OverlayLayer> overlays = world.getObjects(OverlayLayer.class);
-        if (overlays.isEmpty()) return;
-        OverlayLayer overlay = overlays.get(0);
+        resultDisplayTicks = 120;
         
         int panelW = 460;
         int panelH = 280;
@@ -296,7 +332,33 @@ public class PrecisionHoldQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        overlay.setImage(img);
+        myOverlay.setImage(img);
+    }
+    
+    private void clearOverlay()
+    {
+        if (myOverlay != null && myOverlay.getWorld() != null)
+        {
+            getWorld().removeObject(myOverlay);
+            myOverlay = null;
+        }
+    }
+
+    private void initBasePosition()
+    {
+        if (!baseYSet && getWorld() != null)
+        {
+            baseY = getY();
+            baseYSet = true;
+        }
+    }
+
+    private void updateFloating()
+    {
+        if (!baseYSet) return;
+        floatTick++;
+        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
+        setLocation(getX(), baseY + offset);
     }
     
     private Actor getPlayer()

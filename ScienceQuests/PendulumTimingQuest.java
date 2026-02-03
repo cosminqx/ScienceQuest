@@ -1,30 +1,29 @@
 import greenfoot.*;
 
 /**
- * ComboChainQuest - Complete key combinations (SPACE+arrow) with stylish UI
+ * PendulumTimingQuest - PHYSICS: Release SPACE when pendulum reaches center
  */
-public class ComboChainQuest extends Actor
+public class PendulumTimingQuest extends Actor
 {
     private int mapX, mapY;
-    private int comboStep = 0;
-    private String[] combos = {"up", "down", "left", "right"};
-    private String[] comboArrows = {"▲", "▼", "◀", "▶"};
-    private boolean spaceHeld = false;
-    private int timeRemaining = 300;
+    private int successfulReleases = 0;
+    private int targetReleases = 3;
+    private int timeRemaining = 900; // 15 seconds
     private boolean questActive = false;
     private boolean completed = false;
     private int interactionCooldown = 0;
     private int animTick = 0;
-    private int successTick = 0;
-    private int failTick = 0;
+    private OverlayLayer myOverlay = null;
+    private int resultDisplayTicks = 0;
+    private boolean wasSpacePressed = false;
+    private double pendulumAngle = -45; // -45 to 45 degrees
+    private double pendulumVelocity = 1.5;
     private int baseY = 0;
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     
-    public ComboChainQuest(int mapX, int mapY)
+    public PendulumTimingQuest(int mapX, int mapY)
     {
         this.mapX = mapX;
         this.mapY = mapY;
@@ -77,10 +76,11 @@ public class ComboChainQuest extends Actor
             if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
             {
                 questActive = true;
-                comboStep = 0;
                 animTick = 0;
-                successTick = 0;
-                failTick = 0;
+                successfulReleases = 0;
+                pendulumAngle = -45;
+                pendulumVelocity = 1.5;
+                timeRemaining = 900;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -92,17 +92,32 @@ public class ComboChainQuest extends Actor
         if (questActive)
         {
             animTick++;
-            spaceHeld = Greenfoot.isKeyDown("space");
             
-            if (spaceHeld && Greenfoot.isKeyDown(combos[comboStep]))
+            // Update pendulum physics
+            pendulumAngle += pendulumVelocity;
+            if (pendulumAngle > 45) {
+                pendulumAngle = 45;
+                pendulumVelocity = -pendulumVelocity;
+            } else if (pendulumAngle < -45) {
+                pendulumAngle = -45;
+                pendulumVelocity = -pendulumVelocity;
+            }
+            
+            // Check for release timing
+            boolean spacePressed = Greenfoot.isKeyDown("space");
+            if (!spacePressed && wasSpacePressed)
             {
-                successTick = 20;
-                comboStep++;
-                if (comboStep >= combos.length)
+                // Player released space - check timing
+                if (Math.abs(pendulumAngle) < 5) // Within 5 degrees of center
                 {
-                    finishQuest(true);
+                    successfulReleases++;
+                    if (successfulReleases >= targetReleases)
+                    {
+                        finishQuest(true);
+                    }
                 }
             }
+            wasSpacePressed = spacePressed;
             
             timeRemaining--;
             updateDisplay();
@@ -119,7 +134,6 @@ public class ComboChainQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        // Get or create overlay layer
         if (myOverlay == null || myOverlay.getWorld() == null)
         {
             myOverlay = new OverlayLayer();
@@ -127,91 +141,76 @@ public class ComboChainQuest extends Actor
         }
         
         int panelW = 460;
-        int panelH = 280;
+        int panelH = 300;
         GreenfootImage img = new GreenfootImage(panelW, panelH);
 
         int pulse = 90 + (int)(70 * Math.sin(animTick * 0.12));
         img.setColor(new Color(0, 0, 0, pulse));
         img.fillRect(0, 0, panelW, panelH);
 
-        int px = 0;
-        int py = 0;
+        // Blue physics theme glow
+        img.setColor(new Color(80, 150, 255, 60));
+        img.fillRect(-8, -8, panelW + 16, panelH + 16);
 
-        // Glowing aura effect
-        img.setColor(new Color(100, 200, 255, 60));
-        img.fillRect(px - 8, py - 8, panelW + 16, panelH + 16);
-
-        // Panel background
         img.setColor(new Color(10, 10, 30, 245));
-        img.fillRect(px, py, panelW, panelH);
+        img.fillRect(0, 0, panelW, panelH);
 
-        // Fancy double border with glow
-        img.setColor(new Color(100, 200, 255, 220));
-        img.drawRect(px, py, panelW, panelH);
-        img.setColor(new Color(120, 220, 255, 120));
-        img.drawRect(px + 1, py + 1, panelW - 2, panelH - 2);
+        img.setColor(new Color(80, 150, 255, 220));
+        img.drawRect(0, 0, panelW, panelH);
+        img.setColor(new Color(100, 170, 255, 120));
+        img.drawRect(1, 1, panelW - 2, panelH - 2);
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("COMBO CHAIN", px + 110, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 26));
+        img.drawString("PENDULUM TIMING", 100, 40);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(150, 200, 255));
+        img.drawString("PHYSICS: Release SPACE at center position", 60, 65);
 
-        // Instruction
-        img.setFont(new greenfoot.Font("Arial", true, false, 16));
-        img.setColor(new Color(200, 200, 255));
-        img.drawString("Press SPACE + Direction Arrow", px + 95, py + 80);
+        // Draw pendulum
+        int pivotX = panelW / 2;
+        int pivotY = 100;
+        int pendulumLength = 80;
+        double radians = Math.toRadians(pendulumAngle);
+        int bobX = pivotX + (int)(pendulumLength * Math.sin(radians));
+        int bobY = pivotY + (int)(pendulumLength * Math.cos(radians));
+        
+        // Pivot point
+        img.setColor(new Color(200, 200, 200));
+        img.fillOval(pivotX - 5, pivotY - 5, 10, 10);
+        
+        // Pendulum string
+        img.setColor(new Color(150, 150, 150));
+        img.drawLine(pivotX, pivotY, bobX, bobY);
+        
+        // Center zone (green = perfect timing)
+        boolean inCenterZone = Math.abs(pendulumAngle) < 5;
+        img.setColor(inCenterZone ? new Color(100, 255, 100, 100) : new Color(100, 255, 100, 30));
+        img.fillRect(pivotX - 15, pivotY, 30, pendulumLength + 20);
+        img.setColor(new Color(100, 255, 100));
+        img.drawRect(pivotX - 15, pivotY, 30, pendulumLength + 20);
+        
+        // Pendulum bob
+        img.setColor(inCenterZone ? new Color(100, 255, 100) : new Color(255, 200, 100));
+        img.fillOval(bobX - 12, bobY - 12, 24, 24);
+        img.setColor(Color.WHITE);
+        img.drawOval(bobX - 12, bobY - 12, 24, 24);
 
-        // Current combo instruction
-        img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        Color instrColor = spaceHeld ? new Color(100, 255, 100) : new Color(255, 200, 100);
-        img.setColor(instrColor);
-        img.drawString("SPACE + " + comboArrows[comboStep], px + 130, py + 130);
-
-        // Combo step indicators with glow
-        for (int i = 0; i < combos.length; i++)
-        {
-            int boxX = px + 100 + i * 90;
-            int boxY = py + 170;
-            
-            if (i < comboStep)
-            {
-                // Completed step - green glow
-                img.setColor(new Color(100, 255, 100, 80));
-                img.fillRect(boxX - 2, boxY - 2, 64, 34);
-                img.setColor(new Color(100, 255, 100, 200));
-            }
-            else if (i == comboStep)
-            {
-                // Current step - blue pulse glow
-                int glow = 100 + (int)(50 * Math.sin(animTick * 0.15));
-                img.setColor(new Color(100, 200, 255, glow));
-                img.fillRect(boxX - 2, boxY - 2, 64, 34);
-                img.setColor(new Color(100, 220, 255, 220));
-            }
-            else
-            {
-                // Future step - dim gray
-                img.setColor(new Color(80, 80, 100, 80));
-                img.fillRect(boxX - 2, boxY - 2, 64, 34);
-                img.setColor(new Color(100, 100, 120, 120));
-            }
-            
-            img.drawRect(boxX - 2, boxY - 2, 64, 34);
-            img.setColor(Color.WHITE);
-            img.setFont(new greenfoot.Font("Arial", true, false, 20));
-            img.drawString(comboArrows[i], boxX + 18, boxY + 18);
-        }
-
-        // Progress text
+        // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
-        img.setColor(new Color(255, 200, 100));
-        img.drawString("Step: " + comboStep + " / " + combos.length, px + 155, py + 240);
+        img.setColor(new Color(255, 255, 255));
+        img.drawString("Successful Releases: " + successfulReleases + " / " + targetReleases, 90, 220);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(150, 200, 255));
+        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 245);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 12));
+        img.setColor(inCenterZone ? new Color(100, 255, 100) : new Color(255, 200, 100));
+        img.drawString(inCenterZone ? "RELEASE NOW!" : "Wait for center...", 165, 270);
 
-        // Time remaining
-        img.setColor(new Color(100, 200, 255));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
-
-        setImage(img);
         myOverlay.setImage(img);
     }
     
@@ -228,7 +227,6 @@ public class ComboChainQuest extends Actor
         int panelW = 460;
         int panelH = 280;
         GreenfootImage img = new GreenfootImage(panelW, panelH);
-        int score = comboStep * 150;
         
         if (success)
         {
@@ -236,13 +234,14 @@ public class ComboChainQuest extends Actor
             img.fillRect(0, 0, panelW, panelH);
             img.setColor(new Color(100, 255, 150, 100));
             img.fillRect(-8, -8, panelW + 16, panelH + 16);
-            
+
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
             img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
-            img.setFont(new greenfoot.Font("Arial", true, false, 18));
-            img.drawString("All combos completed!", panelW / 2 - 110, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+            
+            img.setFont(new greenfoot.Font("Arial", false, false, 16));
+            img.drawString("Perfect timing! Understanding of", panelW / 2 - 140, panelH / 2 + 30);
+            img.drawString("periodic motion demonstrated.", panelW / 2 - 125, panelH / 2 + 55);
         }
         else
         {
@@ -250,20 +249,15 @@ public class ComboChainQuest extends Actor
             img.fillRect(0, 0, panelW, panelH);
             img.setColor(new Color(255, 100, 100, 100));
             img.fillRect(-8, -8, panelW + 16, panelH + 16);
-            
+
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
             img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
-            img.setFont(new greenfoot.Font("Arial", true, false, 16));
-            img.drawString("Completed " + comboStep + "/" + combos.length, panelW / 2 - 90, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+            
+            img.setFont(new greenfoot.Font("Arial", false, false, 16));
+            img.drawString("Mistimed release. Study harmonic", panelW / 2 - 140, panelH / 2 + 30);
+            img.drawString("motion principles. " + successfulReleases + "/" + targetReleases + " completed.", panelW / 2 - 140, panelH / 2 + 55);
         }
-        
-        // Set transparent actor image
-        GreenfootImage transparent = new GreenfootImage(48, 48);
-        transparent.setColor(new Color(0, 0, 0, 0));
-        transparent.fillRect(0, 0, 48, 48);
-        setImage(transparent);
         
         myOverlay.setImage(img);
     }
@@ -311,8 +305,8 @@ public class ComboChainQuest extends Actor
     public int getMapX() { return mapX; }
     public int getMapY() { return mapY; }
     
-        public java.util.List<TiledMap.CollisionRect> getCollisionRects()
-        {
-            return java.util.Collections.emptyList();
-        }
+    public java.util.List<TiledMap.CollisionRect> getCollisionRects()
+    {
+        return java.util.Collections.emptyList();
+    }
 }
