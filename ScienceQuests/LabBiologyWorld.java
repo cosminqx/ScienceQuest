@@ -39,7 +39,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Draw UI on top, then overlay, then characters and teacher
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         setPaintOrder(Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+=======
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+>>>>>>> Stashed changes
 =======
         setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
 >>>>>>> Stashed changes
@@ -126,6 +130,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         // Add mini-quests scattered across the map
         addMiniQuests();
     }
@@ -144,6 +149,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         addObject(new RhythmReleaseQuest(100, 500), 100, 500);
         addObject(new PrecisionHoldQuest(300, 500), 300, 500);
         addObject(new KeyRainfallQuest(500, 500), 500, 500);
+=======
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
+>>>>>>> Stashed changes
 =======
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
