@@ -129,6 +129,7 @@ public class PhysicsTeacher extends Actor implements NPC
                 GameState state = GameState.getInstance();
                 state.completeLab(LabType.PHYSICS);
                 state.awardBadge("physics_expert");
+                state.addXp(25); // XP for lab repair
                 state.addXp(50); // Bonus XP for completing the lab
             }
         });

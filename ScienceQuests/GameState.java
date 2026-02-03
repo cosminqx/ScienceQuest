@@ -20,7 +20,11 @@ public class GameState
     private final Map<String, Integer> quizTotalCount;
     private final Random rng;
     private int xp;
+<<<<<<< Updated upstream
     private boolean miniQuestActive;
+=======
+    private static final int MAX_XP = 100; // Max XP before leveling (future feature)
+>>>>>>> Stashed changes
 
     private GameState()
     {
@@ -111,12 +115,28 @@ public class GameState
         return xp;
     }
 
+    public int getMaxXP()
+    {
+        return MAX_XP;
+    }
+
     public void addXp(int amount)
     {
         if (amount > 0)
         {
-            xp += amount;
+            xp = Math.min(xp + amount, MAX_XP); // Cap at MAX_XP
+            DebugLog.log("XP gained: +" + amount + " (Total: " + xp + "/" + MAX_XP + ")");
         }
+    }
+
+    public void resetXP()
+    {
+        xp = 0;
+    }
+
+    public float getXPPercent()
+    {
+        return (float) xp / MAX_XP;
     }
 
     public Set<String> getBadges()

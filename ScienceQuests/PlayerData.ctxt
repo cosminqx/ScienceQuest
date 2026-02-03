@@ -1,19 +1,19 @@
 #BlueJ class context
 comment0.target=PlayerData
-comment0.text=\n\ PlayerData\ -\ Stores\ global\ player\ information\n\ Accessible\ throughout\ the\ game\ to\ retrieve\ player\ name\ and\ gender\n
+comment0.text=\r\n\ PlayerData\ -\ Stores\ global\ player\ information\r\n\ Accessible\ throughout\ the\ game\ to\ retrieve\ player\ name\ and\ gender\r\n
 comment1.params=name
 comment1.target=void\ setPlayerName(java.lang.String)
-comment1.text=\n\ Set\ player\ name\n
+comment1.text=\r\n\ Set\ player\ name\r\n
 comment2.params=
 comment2.target=java.lang.String\ getPlayerName()
-comment2.text=\n\ Get\ player\ name\n
+comment2.text=\r\n\ Get\ player\ name\r\n
 comment3.params=gender
 comment3.target=void\ setPlayerGender(Gender)
-comment3.text=\n\ Set\ player\ gender\n
+comment3.text=\r\n\ Set\ player\ gender\r\n
 comment4.params=
 comment4.target=Gender\ getPlayerGender()
-comment4.text=\n\ Get\ player\ gender\n
+comment4.text=\r\n\ Get\ player\ gender\r\n
 comment5.params=
 comment5.target=void\ reset()
-comment5.text=\n\ Reset\ player\ data\n
+comment5.text=\r\n\ Reset\ player\ data\r\n
 numComments=6

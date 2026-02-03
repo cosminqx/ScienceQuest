@@ -17,6 +17,7 @@ public class MainMapWorld extends World implements CollisionWorld
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
     private SettingsButton settingsButton; // Settings icon in top-right
+    private ExperienceBar experienceBar; // XP bar in top-left
 
     public MainMapWorld()
     {
@@ -66,6 +67,10 @@ public class MainMapWorld extends World implements CollisionWorld
         // Add settings button in top-right corner
         settingsButton = new SettingsButton();
         addObject(settingsButton, getWidth() - 20, 20);
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     private void loadMap()

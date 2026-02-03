@@ -10,6 +10,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private GreenfootImage onTopLayerImage;
     private GreenfootImage onTopViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -36,7 +37,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
+<<<<<<< Updated upstream
         setPaintOrder(Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+=======
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+>>>>>>> Stashed changes
         
         // Load biology lab map
         loadMap("images/LabBiologyWorld-Normal.json");
@@ -115,6 +120,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
+<<<<<<< Updated upstream
         // Add mini-quests scattered across the map
         addMiniQuests();
     }
@@ -133,6 +139,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         addObject(new RhythmReleaseQuest(100, 500), 100, 500);
         addObject(new PrecisionHoldQuest(300, 500), 300, 500);
         addObject(new KeyRainfallQuest(500, 500), 500, 500);
+=======
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
+>>>>>>> Stashed changes
     }
     
     private void loadMap(String mapPath)
