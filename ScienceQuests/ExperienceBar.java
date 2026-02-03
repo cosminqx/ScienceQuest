@@ -14,6 +14,7 @@ public class ExperienceBar extends Actor
     private static final Color FILL_COLOR = new Color(50, 200, 50); // Green
     
     private int lastXP = -1; // Track last XP to avoid unnecessary redraws
+    private int lastLevel = -1; // Track last level to detect level-ups
     
     public ExperienceBar()
     {
@@ -22,25 +23,29 @@ public class ExperienceBar extends Actor
     
     public void act()
     {
-        // Get current XP from GameState
+        // Get current XP and level from GameState
         GameState state = GameState.getInstance();
         int currentXP = state.getXp();
+        int currentLevel = state.getLevel();
         
-        // Only redraw if XP changed
-        if (currentXP != lastXP)
+        // Only redraw if XP or level changed
+        if (currentXP != lastXP || currentLevel != lastLevel)
         {
             lastXP = currentXP;
+            lastLevel = currentLevel;
             updateImage();
         }
     }
     
     /**
      * Redraw the XP bar based on current XP percentage
+     * Displays level in top-left corner of the bar
      */
     private void updateImage()
     {
         GameState state = GameState.getInstance();
         float xpPercent = state.getXPPercent();
+        int level = state.getLevel();
         
         GreenfootImage img = new GreenfootImage(BAR_WIDTH, BAR_HEIGHT);
         
@@ -58,10 +63,14 @@ public class ExperienceBar extends Actor
         img.drawRect(0, 0, BAR_WIDTH - 1, BAR_HEIGHT - 1);
         img.drawRect(1, 1, BAR_WIDTH - 3, BAR_HEIGHT - 3);
         
-        // Draw XP text
+        // Draw level text in top-left corner of bar
         img.setFont(FontManager.getPixeledSmall());
         img.setColor(Color.WHITE);
-        String xpText = state.getXp() + " / " + state.getMaxXP() + " XP";
+        String levelText = "LVL " + level;
+        img.drawString(levelText, 4, 10);
+        
+        // Draw XP text in center
+        String xpText = state.getXp() + "/" + state.getMaxXP();
         int textX = (BAR_WIDTH - (xpText.length() * 6)) / 2;
         img.drawString(xpText, textX, BAR_HEIGHT - 5);
         

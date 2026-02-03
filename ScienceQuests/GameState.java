@@ -20,8 +20,9 @@ public class GameState
     private final Map<String, Integer> quizTotalCount;
     private final Random rng;
     private int xp;
+    private int level;
     private boolean miniQuestActive;
-    private static final int MAX_XP = 100; // Max XP before leveling (future feature)
+    private static final int MAX_XP = 100; // Max XP before leveling up
 
     private GameState()
     {
@@ -32,6 +33,7 @@ public class GameState
         quizTotalCount = new HashMap<>();
         rng = new Random();
         xp = 0;
+        level = 1;
         miniQuestActive = false;
     }
 
@@ -52,6 +54,7 @@ public class GameState
         quizCorrectCount.clear();
         quizTotalCount.clear();
         xp = 0;
+        level = 1;
         miniQuestActive = false;
     }
 
@@ -121,8 +124,16 @@ public class GameState
     {
         if (amount > 0)
         {
-            xp = Math.min(xp + amount, MAX_XP); // Cap at MAX_XP
+            xp += amount;
             DebugLog.log("XP gained: +" + amount + " (Total: " + xp + "/" + MAX_XP + ")");
+            
+            // Handle level-ups with XP rollover
+            while (xp >= MAX_XP)
+            {
+                xp -= MAX_XP;
+                level++;
+                DebugLog.log("LEVEL UP! Now level: " + level + " (XP: " + xp + "/" + MAX_XP + ")");
+            }
         }
     }
 
@@ -134,6 +145,11 @@ public class GameState
     public float getXPPercent()
     {
         return (float) xp / MAX_XP;
+    }
+
+    public int getLevel()
+    {
+        return level;
     }
 
     public Set<String> getBadges()
