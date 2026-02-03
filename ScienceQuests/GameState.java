@@ -20,19 +20,8 @@ public class GameState
     private final Map<String, Integer> quizTotalCount;
     private final Random rng;
     private int xp;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     private boolean miniQuestActive;
-=======
     private static final int MAX_XP = 100; // Max XP before leveling (future feature)
->>>>>>> Stashed changes
-=======
-    private static final int MAX_XP = 100; // Max XP before leveling (future feature)
->>>>>>> Stashed changes
-=======
-    private static final int MAX_XP = 100; // Max XP before leveling (future feature)
->>>>>>> Stashed changes
 
     private GameState()
     {

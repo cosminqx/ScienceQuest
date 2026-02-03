@@ -22,19 +22,7 @@ public class LabWorld extends World implements CollisionWorld
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        setPaintOrder(Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, OverlayLayer.class, Boy.class, Girl.class);
->>>>>>> Stashed changes
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, OverlayLayer.class, Boy.class, Girl.class);
->>>>>>> Stashed changes
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, OverlayLayer.class, Boy.class, Girl.class);
->>>>>>> Stashed changes
+        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
         
         // Initialize quest blocks list
         questBlocks = new ArrayList<QuestBlock>();

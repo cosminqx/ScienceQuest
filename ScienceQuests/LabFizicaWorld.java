@@ -36,19 +36,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
->>>>>>> Stashed changes
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
->>>>>>> Stashed changes
-=======
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
->>>>>>> Stashed changes
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
         
         // Load physics lab map
         loadMap("images/labfizica-normal.json");
@@ -113,11 +101,12 @@ public class LabFizicaWorld extends World implements CollisionWorld
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         // Add mini-quests scattered across the map
         addMiniQuests();
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     /**
@@ -134,21 +123,6 @@ public class LabFizicaWorld extends World implements CollisionWorld
         addObject(new RhythmReleaseQuest(100, 500), 100, 500);
         addObject(new PrecisionHoldQuest(300, 500), 300, 500);
         addObject(new KeyRainfallQuest(500, 500), 500, 500);
-=======
-        // Add XP bar in top-left corner
-        experienceBar = new ExperienceBar();
-        addObject(experienceBar, 110, 20);
->>>>>>> Stashed changes
-=======
-        // Add XP bar in top-left corner
-        experienceBar = new ExperienceBar();
-        addObject(experienceBar, 110, 20);
->>>>>>> Stashed changes
-=======
-        // Add XP bar in top-left corner
-        experienceBar = new ExperienceBar();
-        addObject(experienceBar, 110, 20);
->>>>>>> Stashed changes
     }
     
     private void loadMap(String mapPath)
