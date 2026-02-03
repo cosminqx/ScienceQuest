@@ -129,6 +129,7 @@ public class BiologyTeacher extends Actor implements NPC
                 GameState state = GameState.getInstance();
                 state.completeLab(LabType.BIOLOGY);
                 state.awardBadge("biology_master");
+                state.addXp(25); // XP for lab repair
                 state.addXp(50); // Bonus XP for completing the lab
             }
         });

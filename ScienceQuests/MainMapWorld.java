@@ -17,6 +17,7 @@ public class MainMapWorld extends World implements CollisionWorld
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
     private SettingsButton settingsButton; // Settings icon in top-right
+    private ExperienceBar experienceBar; // XP bar in top-left
 
     public MainMapWorld()
     {
@@ -25,7 +26,7 @@ public class MainMapWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Set paint order for all quests and UI elements
-        setPaintOrder(Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
+        setPaintOrder(ExperienceBar.class, Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
                      RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
                      DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
                      RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
@@ -97,6 +98,10 @@ public class MainMapWorld extends World implements CollisionWorld
         
         // Chemistry-themed quest
         addObject(new ChemicalBondQuest(500, 300), 500, 300);        // Center-right area
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     private void loadMap()

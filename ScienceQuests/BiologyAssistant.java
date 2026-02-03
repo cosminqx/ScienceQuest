@@ -107,6 +107,7 @@ public class BiologyAssistant extends Actor implements NPC
                 
                 // Mark biology lab as completed and award badge (if not already done)
                 GameState state = GameState.getInstance();
+                state.addXp(25); // XP for lab repair
                 if (!state.isLabCompleted(LabType.BIOLOGY))
                 {
                     state.completeLab(LabType.BIOLOGY);

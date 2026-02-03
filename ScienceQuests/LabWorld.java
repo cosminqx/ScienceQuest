@@ -8,6 +8,7 @@ public class LabWorld extends World implements CollisionWorld
     private GreenfootImage overPlayerLayerImage;
     private GreenfootImage overPlayerViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -21,7 +22,7 @@ public class LabWorld extends World implements CollisionWorld
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-        setPaintOrder(Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
+        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
         
         // Initialize quest blocks list
         questBlocks = new ArrayList<QuestBlock>();
@@ -63,6 +64,10 @@ public class LabWorld extends World implements CollisionWorld
         // Instructions
         Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
         
         // Add quest block at x=236, y=358 (map coordinates)
         addQuestBlock(236, 358);

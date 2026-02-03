@@ -9,6 +9,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
     private GreenfootImage onTopLayerImage;
     private GreenfootImage onTopViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -35,7 +36,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, PendulumTimingQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, PendulumTimingQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
         
         // Load physics lab map
         loadMap("images/labfizica-normal.json");
@@ -102,6 +103,10 @@ public class LabFizicaWorld extends World implements CollisionWorld
         
         // Add mini-quests scattered across the map
         addMiniQuests();
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     /**

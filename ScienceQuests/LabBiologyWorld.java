@@ -10,6 +10,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private GreenfootImage onTopLayerImage;
     private GreenfootImage onTopViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -36,7 +37,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
         
         // Load biology lab map
         loadMap("images/LabBiologyWorld-Normal.json");
@@ -117,6 +118,10 @@ public class LabBiologyWorld extends World implements CollisionWorld
         
         // Add mini-quests scattered across the map
         addMiniQuests();
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     /**
