@@ -39,6 +39,9 @@ public class DialogueBox extends Actor {
     private DialogueQuestion question;
     private int selectedIndex = 0;
     private int boxHeight = BOX_HEIGHT;
+    
+    // Callback for correct answer
+    private Runnable onCorrectAnswerCallback;
 
     public DialogueBox(String text, String iconPath, boolean typewriter) {
         this.fullText = text != null ? text : "";
@@ -224,8 +227,10 @@ public class DialogueBox extends Actor {
 
         img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(150,150,150));
-        String promptText = questionMode ? "Alege cu 1-4 sau săgeți, ENTER pentru a confirma" : "Apasă ENTER pentru a continua...";
-        img.drawString(promptText, BOX_WIDTH - 220, boxHeight - 10);
+        String promptText = questionMode
+                ? "1-4/↑↓: alege | ENTER: confirmă | ESC: închide"
+                : "ENTER: continuă | ESC: închide";
+        img.drawString(promptText, BOX_WIDTH - 260, boxHeight - 10);
 
         setImage(img);
     }
@@ -294,7 +299,25 @@ public class DialogueBox extends Actor {
     
     public boolean confirmSelection() {
         if (!questionMode || question == null) return false;
-        return selectedIndex == question.getCorrectAnswerIndex();
+        boolean isCorrect = selectedIndex == question.getCorrectAnswerIndex();
+        
+        // Record quiz result in GameState
+        GameState state = GameState.getInstance();
+        state.recordQuizResult(question.getTopic(), isCorrect);
+        
+        if (isCorrect)
+        {
+            // Award XP for correct answer
+            state.addXp(10);
+            
+            // Trigger callback if answer is correct
+            if (onCorrectAnswerCallback != null)
+            {
+                onCorrectAnswerCallback.run();
+            }
+        }
+        
+        return isCorrect;
     }
     
     public DialogueQuestion getQuestion() {
@@ -312,5 +335,8 @@ public class DialogueBox extends Actor {
     public void setTypewriterSpeed(int speed) {
         this.typewriterSpeed = Math.max(1, speed);
     }
+    
+    public void setOnCorrectAnswerCallback(Runnable callback) {
+        this.onCorrectAnswerCallback = callback;
+    }
 }
-

@@ -143,11 +143,17 @@ public class StartWorld extends World
     private void proceedToGame()
     {
         if (maleButton.isSelected())
-            PlayerData.setPlayerGender("Băiat");
+        {
+            PlayerData.setPlayerGender(Gender.BOY);
+        }
         else if (femaleButton.isSelected())
-            PlayerData.setPlayerGender("Fată");
+        {
+            PlayerData.setPlayerGender(Gender.GIRL);
+        }
         else
+        {
             return;
+        }
 
         // Stop the background music before transitioning
         if (backgroundMusic != null)
@@ -155,7 +161,7 @@ public class StartWorld extends World
             backgroundMusic.stop();
         }
         
-        Greenfoot.setWorld(new MainMapWorld());
+        WorldNavigator.goToMainMap();
     }
 
     public void showNameScreen()

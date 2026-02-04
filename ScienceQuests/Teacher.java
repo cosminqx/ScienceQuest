@@ -72,7 +72,7 @@ public class Teacher extends Actor implements NPC
             boolean fKeyDown = Greenfoot.isKeyDown("f");
             if (distance < INTERACTION_DISTANCE)
             {
-                System.out.println("DEBUG: Player in range. Distance: " + distance + ", F key: " + fKeyDown);
+                DebugLog.log("DEBUG: Player in range. Distance: " + distance + ", F key: " + fKeyDown);
             }
             
             // Check if player is close enough and F key is pressed
@@ -81,7 +81,7 @@ public class Teacher extends Actor implements NPC
                 // Prevent repeated dialogue triggers from holding F key
                 if (!fKeyPressed)
                 {
-                    System.out.println("DEBUG: F key pressed, initiating dialogue");
+                    DebugLog.log("DEBUG: F key pressed, initiating dialogue");
                     fKeyPressed = true;
                     initiateDialogue();
                 }
@@ -131,12 +131,7 @@ public class Teacher extends Actor implements NPC
 
     private DialogueQuestion buildScienceQuestion()
     {
-        String questionText = "Hai să începi cu o întrebare ușoară de știință: Care este cea mai mică formă a universului?";
-        String[] answers = { "Atom", "Moleculă", "Celulă", "Galaxie" };
-        int correctIndex = 0;
-        String correctResponse = "Corect! Tot în univers este construit din atomi. Bravo!";
-        String incorrectResponse = "Nu chiar. Răspunsul corect este atomul. Vom acoperi asta mai detaliat curând.";
-        return new DialogueQuestion(questionText, answers, correctIndex, correctResponse, incorrectResponse);
+        return GameState.getInstance().getRandomQuestion("general", QuestionPools.getGeneralScienceQuestions());
     }
     
     /**

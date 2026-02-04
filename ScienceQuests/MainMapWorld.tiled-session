@@ -1,8 +1,8 @@
 {
-    "activeFile": "images/lab_noapte_2.json",
+    "activeFile": "images/LabBiologyWorld-Normal.json",
     "expandedProjectPaths": [
-        ".",
-        "images"
+        "images",
+        "."
     ],
     "fileStates": {
         "": {
@@ -44,12 +44,28 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "images/LabBiologyWorld-Normal.json": {
+            "scale": 0.5,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 424,
+                "y": 277
+            }
+        },
+        "images/LabBiologyWorld.json": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 667,
+                "y": 174
+            }
+        },
         "images/lab_noapte_2.json": {
             "scale": 0.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 513,
-                "y": 341
+                "x": 432,
+                "y": 335
             }
         },
         "images/lab_noapte_2.tmx": {
@@ -76,6 +92,9 @@
                 "y": 1090.909090909091
             }
         },
+        "spriteSheet_fireEffect03_63x78.tsx": {
+            "scaleInDock": 1
+        },
         "spriteSheet_lightBulbSmallAnimation_48x48.tsx": {
             "scaleInDock": 1
         },
@@ -89,8 +108,8 @@
             "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 363.5,
-                "y": 263.5
+                "x": 402,
+                "y": 323.5
             }
         },
         "tilesFloor.tsx": {
@@ -103,12 +122,13 @@
             "scaleInDock": 1
         }
     },
+    "last.exportedFilePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images",
     "last.externalTilesetPath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
     "last.imagePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "json",
     "openFiles": [
         "test-map-LayersFixed.tmj",
-        "School-Tileset.tsx",
         "images/lab_noapte_2.json",
         "images/48px/tilesWalls.tsx",
         "images/48px/tilesStuff.tsx",
@@ -116,20 +136,23 @@
         "images/48px/spriteSheet_lightingBulb02_204x219.tsx",
         "images/48px/spriteSheet_lightBulbSmallAnimation_48x48.tsx",
         "images/48px/spriteSheet_fireEffect03_63x78.tsx",
-        "images/48px/spriteSheet_tiledLiquids_48x48.tsx"
+        "images/48px/spriteSheet_tiledLiquids_48x48.tsx",
+        "images/LabBiologyWorld-Normal.json"
     ],
     "project": "MainMapWorld.tiled-project",
     "recentFiles": [
         "test-map-LayersFixed.tmj",
-        "School-Tileset.tsx",
-        "images/48px/spriteSheet_tiledLiquids_48x48.tsx",
-        "images/48px/spriteSheet_fireEffect03_63x78.tsx",
-        "images/48px/spriteSheet_lightBulbSmallAnimation_48x48.tsx",
-        "images/48px/spriteSheet_lightingBulb02_204x219.tsx",
-        "images/48px/tilesFloor.tsx",
-        "images/48px/tilesStuff.tsx",
+        "images/lab_noapte_2.json",
         "images/48px/tilesWalls.tsx",
-        "images/lab_noapte_2.json"
+        "images/48px/tilesStuff.tsx",
+        "images/48px/tilesFloor.tsx",
+        "images/48px/spriteSheet_lightingBulb02_204x219.tsx",
+        "images/48px/spriteSheet_lightBulbSmallAnimation_48x48.tsx",
+        "images/48px/spriteSheet_fireEffect03_63x78.tsx",
+        "images/48px/spriteSheet_tiledLiquids_48x48.tsx",
+        "images/LabBiologyWorld-Normal.json",
+        "images/LabBiologyWorld.json",
+        "School-Tileset.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

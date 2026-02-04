@@ -51,7 +51,7 @@ public class DialogueManager
         // If already showing dialogue, don't add another
         if (currentDialogue != null)
         {
-            System.out.println("DEBUG: Dialogue already active, ignoring new dialogue");
+            DebugLog.log("DEBUG: Dialogue already active, ignoring new dialogue");
             return false;
         }
         
@@ -66,7 +66,7 @@ public class DialogueManager
         
         world.addObject(dialogue, centeredX, positionedY);
         
-        System.out.println("DEBUG: Dialogue shown at (" + centeredX + ", " + positionedY + "): " + dialogue.getFullText());
+        DebugLog.log("DEBUG: Dialogue shown at (" + centeredX + ", " + positionedY + "): " + dialogue.getFullText());
         return true;
     }
 
@@ -86,7 +86,7 @@ public class DialogueManager
         if (currentDialogue != null && currentWorld != null)
         {
             currentWorld.removeObject(currentDialogue);
-            System.out.println("Dialogue hidden");
+            DebugLog.log("Dialogue hidden");
         }
         
         currentDialogue = null;
@@ -126,14 +126,24 @@ public class DialogueManager
     {
         if (currentDialogue != null)
         {
+            // Read key once and handle global shortcuts like ESC
+            String key = Greenfoot.getKey();
+
+            // ESC closes any dialogue immediately and clears queue
+            if (key != null && "escape".equals(key))
+            {
+                DebugLog.log("DEBUG: ESC pressed, closing dialogue");
+                queuedDialogue = null;
+                hideDialogue();
+                return;
+            }
+
             // Handle question-mode dialogues separately
             if (currentDialogue.isQuestionMode())
             {
-                // Process question input directly
-                String key = Greenfoot.getKey();
                 if (key != null)
                 {
-                    System.out.println("DEBUG: Question key pressed: " + key);
+                    DebugLog.log("DEBUG: Question key pressed: " + key);
                     if ("1".equals(key)) currentDialogue.selectIndex(0);
                     else if ("2".equals(key)) currentDialogue.selectIndex(1);
                     else if ("3".equals(key)) currentDialogue.selectIndex(2);
@@ -142,10 +152,14 @@ public class DialogueManager
                     else if ("down".equals(key) || "s".equals(key)) currentDialogue.moveSelection(1);
                     else if ("enter".equals(key))
                     {
-                        System.out.println("DEBUG: Confirming answer...");
+                        DebugLog.log("DEBUG: Confirming answer...");
                         // Confirm answer and show follow-up response
                         boolean correct = currentDialogue.confirmSelection();
                         DialogueQuestion q = currentDialogue.getQuestion();
+                        if (q != null)
+                        {
+                            GameState.getInstance().recordQuizResult(q.getTopic(), correct);
+                        }
                         String responseText = correct ? q.getCorrectResponse() : q.getIncorrectResponse();
                         String iconPath = currentDialogue.getIconPath();
                         World w = currentWorld;
@@ -160,24 +174,21 @@ public class DialogueManager
                 return; // Do not process normal ENTER while question active
             }
             
-            // Check for ENTER key
-            String key = Greenfoot.getKey();
-            
             // Safety check: if somehow we're still in question mode, don't process normal input
             if (currentDialogue.isQuestionMode())
             {
-                System.out.println("ERROR: Question mode handling fell through to normal input processing!");
+                DebugLog.log("ERROR: Question mode handling fell through to normal input processing!");
                 return;
             }
             
-            if ("enter".equals(key))
+            if (key != null && "enter".equals(key))
             {
                 // Check if animation is still running
                 if (!currentDialogue.isFullyDisplayed())
                 {
                     // Skip animation and advance immediately
                     currentDialogue.skipTypewriter();
-                    System.out.println("DEBUG: Skipped animation, advancing page");
+                    DebugLog.log("DEBUG: Skipped animation, advancing page");
                 }
                 
                 // Advance to the next page
@@ -190,18 +201,18 @@ public class DialogueManager
                     hideDialogue();
                     if (next != null)
                     {
-                        System.out.println("DEBUG: Showing queued dialogue");
+                        DebugLog.log("DEBUG: Showing queued dialogue");
                         showDialogue(next, w, npc);
                     }
                     else
                     {
                         // No more pages, so dismiss the dialogue
-                        System.out.println("DEBUG: Last page reached, dismissing dialogue");
+                        DebugLog.log("DEBUG: Last page reached, dismissing dialogue");
                     }
                 }
                 else
                 {
-                    System.out.println("DEBUG: Advanced dialogue page");
+                    DebugLog.log("DEBUG: Advanced dialogue page");
                 }
             }
         }

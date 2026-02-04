@@ -1,0 +1,433 @@
+import greenfoot.*;
+
+/**
+ * AlternatingKeysQuest - Rapidly alternate LEFT/RIGHT with glowing UI, pulse animations, and combo tracking
+ */
+public class AlternatingKeysQuest extends Actor
+{
+    private int mapX, mapY;
+    private int score = 0;
+    private int combo = 0;
+    private int maxCombo = 0;
+    private int targetScore = 20;
+    private boolean questActive = false;
+    private boolean completed = false;
+    private boolean success = false;
+    private int interactionCooldown = 0;
+    private int animTick = 0;
+    private int correctFeedbackTick = 0;
+    private String lastCorrectKey = "";
+    private String expectedKey = "left";
+    private int timeSinceLastPress = 0;
+    private int feedbackDuration = 15;
+    private int resultScreenTick = 0;
+    private OverlayLayer myOverlay = null;
+    private int resultDisplayTicks = 0;
+    private int baseY = 0;
+    private boolean baseYSet = false;
+    private int floatTick = 0;
+    private boolean startKeyDown = false;
+    
+    public AlternatingKeysQuest(int mapX, int mapY)
+    {
+        this.mapX = mapX;
+        this.mapY = mapY;
+        createImage();
+    }
+    
+    private void createImage()
+    {
+        GreenfootImage img = new GreenfootImage("exclamation-mark.png");
+        img.scale(32, 32);
+        GreenfootImage marker = new GreenfootImage(48, 48);
+        marker.setColor(new Color(0, 0, 0, 0));
+        marker.fillRect(0, 0, 48, 48);
+        marker.drawImage(img, 8, 0);
+        marker.setColor(new Color(255, 255, 255));
+        marker.setFont(new greenfoot.Font("Arial", true, false, 10));
+        marker.drawString("SPACE", 6, 46);
+        setImage(marker);
+    }
+    
+    public void act()
+    {
+        if (completed)
+        {
+            if (resultDisplayTicks > 0)
+            {
+                resultDisplayTicks--;
+                if (resultDisplayTicks == 0)
+                {
+                    clearOverlay();
+                }
+            }
+            return;
+        }
+
+        initBasePosition();
+        if (!questActive)
+        {
+            updateFloating();
+        }
+        
+        Actor player = getPlayer();
+        if (player != null && !questActive)
+        {
+            int dx = Math.abs(player.getX() - getX());
+            int dy = Math.abs(player.getY() - getY());
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            boolean startPressed = Greenfoot.isKeyDown("space");
+            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            {
+                questActive = true;
+                score = 0;
+                combo = 0;
+                maxCombo = 0;
+                expectedKey = "left";
+                timeSinceLastPress = 0;
+                animTick = 0;
+                GameState.getInstance().setMiniQuestActive(true);
+                interactionCooldown = 10;
+            }
+            startKeyDown = startPressed;
+        }
+        
+        if (interactionCooldown > 0) interactionCooldown--;
+        if (correctFeedbackTick > 0) correctFeedbackTick--;
+        
+        if (questActive && !completed)
+        {
+            animTick++;
+            timeSinceLastPress++;
+            checkInput();
+            
+            if (timeSinceLastPress > 45)
+            {
+                combo = 0;
+            }
+            
+            if (score >= targetScore)
+            {
+                finishQuest(true);
+            }
+            
+            updateDisplay();
+        }
+        else if (completed)
+        {
+            resultScreenTick++;
+            updateDisplay();
+            if (resultScreenTick > 120)
+            {
+                GameState.getInstance().setMiniQuestActive(false);
+            }
+        }
+    }
+    
+    private void checkInput()
+    {
+        boolean leftPressed = Greenfoot.isKeyDown("left");
+        boolean rightPressed = Greenfoot.isKeyDown("right");
+        
+        if ((leftPressed || rightPressed) && timeSinceLastPress > 8)
+        {
+            String pressedKey = leftPressed ? "left" : "right";
+            
+            if (pressedKey.equals(expectedKey))
+            {
+                score++;
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                correctFeedbackTick = feedbackDuration;
+                lastCorrectKey = pressedKey;
+                expectedKey = pressedKey.equals("left") ? "right" : "left";
+                timeSinceLastPress = 0;
+            }
+            else
+            {
+                combo = 0;
+                timeSinceLastPress = 0;
+            }
+        }
+    }
+    
+    private void updateDisplay()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        
+        // Get or create overlay layer
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+        
+        int panelW = 460;
+        int panelH = 280;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        
+        int pulse = 80 + (int)(50 * Math.sin(animTick * 0.08));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        if (completed)
+        {
+            drawResultScreen(img, panelW, panelH);
+        }
+        else
+        {
+            drawQuestScreen(img, panelW, panelH);
+        }
+        
+        setImage(img);
+        myOverlay.setImage(img);
+    }
+    
+    private void drawQuestScreen(GreenfootImage img, int w, int h)
+    {
+        int panelW = w;
+        int panelH = h;
+        int px = 0;
+        int py = 0;
+        
+        // Glow effect
+        int glowAlpha = 50 + (int)(30 * Math.sin(animTick * 0.1));
+        img.setColor(new Color(255, 120, 100, glowAlpha));
+        img.fillRect(px - 10, py - 10, panelW + 20, panelH + 20);
+        
+        // Panel background
+        img.setColor(new Color(15, 15, 30, 250));
+        img.fillRect(px, py, panelW, panelH);
+        
+        // Border with glow
+        img.setColor(new Color(255, 120, 100, 200));
+        img.drawRect(px, py, panelW, panelH);
+        img.setColor(new Color(255, 140, 120, 100));
+        img.drawRect(px + 1, py + 1, panelW - 2, panelH - 2);
+        img.drawRect(px + 2, py + 2, panelW - 4, panelH - 4);
+        
+        // Title
+        img.setColor(new Color(255, 200, 100));
+        img.setFont(new greenfoot.Font("Arial", true, false, 32));
+        img.drawString("ALTERNATING KEYS", px + 60, py + 45);
+        
+        // Score and combo display
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(new Color(100, 255, 150));
+        img.drawString("Score: " + score + "/" + targetScore, px + 30, py + 100);
+        
+        img.setColor(new Color(255, 200, 100));
+        img.drawString("Combo: " + combo, px + 30, py + 130);
+        
+        img.setColor(new Color(150, 150, 255));
+        img.drawString("Best: " + maxCombo, px + 320, py + 130);
+        
+        // Progress bar with gradient
+        int barW = 400;
+        int barH = 30;
+        int barX = px + 50;
+        int barY = py + 170;
+        
+        img.setColor(new Color(40, 40, 60));
+        img.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
+        img.setColor(new Color(255, 120, 100, 150));
+        img.drawRect(barX - 3, barY - 3, barW + 6, barH + 6);
+        
+        int progress = (int)((score * 1.0 / targetScore) * barW);
+        for (int i = 0; i < progress; i++)
+        {
+            int shade = 100 + (i * 155) / barW;
+            img.setColor(new Color(255, shade, 80, 220));
+            img.drawLine(barX + i, barY, barX + i, barY + barH);
+        }
+        
+        // Direction indicators with pulse
+        int indicatorY = py + 240;
+        int leftX = px + 80;
+        int rightX = px + 380;
+        
+        // Left indicator
+        int leftAlpha = 100;
+        int leftPulse = 0;
+        if (expectedKey.equals("left"))
+        {
+            leftPulse = (int)(20 * Math.sin(animTick * 0.15));
+            leftAlpha = 200 + leftPulse;
+        }
+        if (correctFeedbackTick > 0 && lastCorrectKey.equals("left"))
+        {
+            leftAlpha = 255;
+        }
+        
+        img.setColor(new Color(100, 255, 150, leftAlpha));
+        img.setFont(new greenfoot.Font("Arial", true, false, 40));
+        img.drawString("◀", leftX - 20, indicatorY);
+        if (expectedKey.equals("left"))
+        {
+            img.setColor(new Color(100, 255, 150, 100 + leftPulse));
+            img.fillOval(leftX - 35, indicatorY - 35, 30, 30);
+        }
+        
+        // Right indicator
+        int rightAlpha = 100;
+        int rightPulse = 0;
+        if (expectedKey.equals("right"))
+        {
+            rightPulse = (int)(20 * Math.sin(animTick * 0.15));
+            rightAlpha = 200 + rightPulse;
+        }
+        if (correctFeedbackTick > 0 && lastCorrectKey.equals("right"))
+        {
+            rightAlpha = 255;
+        }
+        
+        img.setColor(new Color(150, 200, 255, rightAlpha));
+        img.drawString("▶", rightX, indicatorY);
+        if (expectedKey.equals("right"))
+        {
+            img.setColor(new Color(150, 200, 255, 100 + rightPulse));
+            img.fillOval(rightX + 10, indicatorY - 35, 30, 30);
+        }
+        
+        // Instructions
+        img.setColor(new Color(200, 200, 200, 180));
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.drawString("Press arrows in alternating pattern", px + 100, py + 300);
+    }
+    
+    private void drawResultScreen(GreenfootImage img, int w, int h)
+    {
+        int panelW = w;
+        int panelH = h;
+        int px = 0;
+        int py = 0;
+        
+        // Glow effect
+        int glowColor = success ? 100 : 200;
+        int glowColorG = success ? 255 : 100;
+        int glowColorB = success ? 100 : 100;
+        img.setColor(new Color(glowColor, glowColorG, glowColorB, 70));
+        img.fillRect(px - 10, py - 10, panelW + 20, panelH + 20);
+        
+        img.setColor(new Color(20, 20, 40, 250));
+        img.fillRect(px, py, panelW, panelH);
+        
+        img.setColor(new Color(glowColor, glowColorG, glowColorB, 200));
+        img.drawRect(px, py, panelW, panelH);
+        
+        img.setColor(new Color(255, 255, 255));
+        img.setFont(new greenfoot.Font("Arial", true, false, 32));
+        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        img.drawString(resultText, px + 80, py + 60);
+        
+        img.setColor(new Color(255, 200, 100));
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("Final Score: " + score, px + 50, py + 120);
+        img.drawString("Best Combo: " + maxCombo, px + 50, py + 160);
+        
+        img.setColor(new Color(150, 200, 255));
+        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.drawString("Quest Complete!", px + 100, py + 240);
+    }
+    
+    private void finishQuest(boolean success)
+    {
+        this.success = success;
+        completed = true;
+        questActive = false;
+        resultScreenTick = 0;
+        resultDisplayTicks = 120;
+        
+        World world = getWorld();
+        if (world == null || myOverlay == null) return;
+        
+        int panelW = 460;
+        int panelH = 280;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        
+        // Glow effect
+        int glowColor = success ? 100 : 200;
+        int glowColorG = success ? 255 : 100;
+        int glowColorB = success ? 100 : 100;
+        img.setColor(new Color(glowColor, glowColorG, glowColorB, 70));
+        img.fillRect(-10, -10, panelW + 20, panelH + 20);
+        
+        img.setColor(new Color(20, 20, 40, 250));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        img.setColor(new Color(glowColor, glowColorG, glowColorB, 200));
+        img.drawRect(0, 0, panelW, panelH);
+        
+        img.setColor(new Color(255, 255, 255));
+        img.setFont(new greenfoot.Font("Arial", true, false, 32));
+        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        img.drawString(resultText, panelW / 2 - 70, panelH / 2 - 30);
+        
+        img.setColor(new Color(255, 200, 100));
+        img.setFont(new greenfoot.Font("Arial", true, false, 22));
+        img.drawString("Final Score: " + score, panelW / 2 - 90, panelH / 2 + 30);
+        img.drawString("Best Combo: " + maxCombo, panelW / 2 - 90, panelH / 2 + 65);
+        
+        img.setColor(new Color(150, 200, 255));
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.drawString("Quest Complete!", panelW / 2 - 65, panelH / 2 + 105);
+        
+        // Set transparent actor image
+        GreenfootImage transparent = new GreenfootImage(48, 48);
+        transparent.setColor(new Color(0, 0, 0, 0));
+        transparent.fillRect(0, 0, 48, 48);
+        setImage(transparent);
+        
+        myOverlay.setImage(img);
+    }
+    
+    private void clearOverlay()
+    {
+        if (myOverlay != null && myOverlay.getWorld() != null)
+        {
+            getWorld().removeObject(myOverlay);
+            myOverlay = null;
+        }
+    }
+
+    private void initBasePosition()
+    {
+        if (!baseYSet && getWorld() != null)
+        {
+            baseY = getY();
+            baseYSet = true;
+        }
+    }
+
+    private void updateFloating()
+    {
+        if (!baseYSet) return;
+        floatTick++;
+        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
+        setLocation(getX(), baseY + offset);
+    }
+    
+    private Actor getPlayer()
+    {
+        World world = getWorld();
+        if (world == null) return null;
+        
+        java.util.List<Boy> boys = world.getObjects(Boy.class);
+        if (!boys.isEmpty()) return boys.get(0);
+        
+        java.util.List<Girl> girls = world.getObjects(Girl.class);
+        if (!girls.isEmpty()) return girls.get(0);
+        
+        return null;
+    }
+    
+    public int getMapX() { return mapX; }
+    public int getMapY() { return mapY; }
+    
+    public java.awt.Rectangle[] getCollisionRects()
+    {
+        return new java.awt.Rectangle[] { new java.awt.Rectangle(getX() - 24, getY() - 24, 48, 48) };
+    }
+}

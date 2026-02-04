@@ -1,42 +1,46 @@
 import greenfoot.*;
 import java.util.*;
 
-public class LabWorld extends World
+public class LabWorld extends World implements CollisionWorld
 {
     private Actor character;
     private GreenfootImage backgroundImage;
     private GreenfootImage overPlayerLayerImage;
     private GreenfootImage overPlayerViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
     private int maxScrollY;
     private int tileSize = 48;
     private TiledMap tiledMap;
+    private List<QuestBlock> questBlocks;
 
     public LabWorld()
     {
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-        setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
+        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
+        
+        // Initialize quest blocks list
+        questBlocks = new ArrayList<QuestBlock>();
         
         // Load lab map FIRST
         loadMap();
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        if ("Băiat".equals(playerGender))
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Fată".equals(playerGender))
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -53,13 +57,39 @@ public class LabWorld extends World
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            System.out.println("Character spawned at: " + character.getX() + ", " + character.getY());
-            System.out.println("Initial scroll: " + scrollX + ", " + scrollY);
+            DebugLog.log("Character spawned at: " + character.getX() + ", " + character.getY());
+            DebugLog.log("Initial scroll: " + scrollX + ", " + scrollY);
         }
         
         // Instructions
         Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
+        
+        // Add quest block at x=236, y=358 (map coordinates)
+        addQuestBlock(236, 358);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+    }
+    
+    /**
+     * Add all mini-quest blocks scattered across the map
+     */
+    private void addMiniQuests()
+    {
+        addObject(new RapidFireQuest(100, 100), 100, 100);
+        addObject(new KeySequenceQuest(300, 100), 300, 100);
+        addObject(new AlternatingKeysQuest(500, 100), 500, 100);
+        addObject(new DoubleTapSprintQuest(100, 300), 100, 300);
+        addObject(new DirectionDodgeQuest(300, 300), 300, 300);
+        addObject(new ComboChainQuest(500, 300), 500, 300);
+        addObject(new RhythmReleaseQuest(100, 500), 100, 500);
+        addObject(new PrecisionHoldQuest(300, 500), 300, 500);
+        addObject(new KeyRainfallQuest(500, 500), 500, 500);
     }
     
     private void loadMap()
@@ -70,7 +100,7 @@ public class LabWorld extends World
             tiledMap = new TiledMap("images/lab_noapte_2.json");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded lab map, backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded lab map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
 
             // Prepare optional overlay layer that should draw above the player
@@ -81,13 +111,13 @@ public class LabWorld extends World
                 overlayActor = new OverlayLayer();
                 overlayActor.setImage(overPlayerViewport);
                 addObject(overlayActor, getWidth() / 2, getHeight() / 2);
-                System.out.println("Over-Player overlay initialized");
+                DebugLog.log("Over-Player overlay initialized");
             }
         }
         catch (Exception e)
         {
             // Fallback: create a simple background if image not found
-            System.out.println("ERROR loading lab map: " + e.getMessage());
+            DebugLog.log("ERROR loading lab map: " + e.getMessage());
             e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50)); // Dark blue-gray
@@ -124,10 +154,13 @@ public class LabWorld extends World
             }
             else
             {
-                System.out.println("WARNING: backgroundImage is null!");
+                DebugLog.log("WARNING: backgroundImage is null!");
             }
 
             updateOverlayImage();
+            
+            // Update quest block positions
+            updateQuestBlockPositions();
             
             // Check for transition back to MainMapWorld
             checkWorldTransition();
@@ -145,14 +178,14 @@ public class LabWorld extends World
         int mapX = character.getX() + scrollX;
         int mapY = character.getY() + scrollY;
         
-        System.out.println("Character screen: (" + character.getX() + ", " + character.getY() + 
+        DebugLog.log("Character screen: (" + character.getX() + ", " + character.getY() + 
                            "), map: (" + mapX + ", " + mapY + "), scroll: (" + scrollX + ", " + scrollY + ")");
         
         // Transition to MainMapWorld when inside the exit window (bottom-left area)
         if (mapX >= 0 && mapX <= 72 && mapY >= 551 && mapY <= 599)
         {
-            System.out.println("TRANSITION TRIGGERED!");
-            Greenfoot.setWorld(new MainMapWorld());
+            DebugLog.log("TRANSITION TRIGGERED!");
+            WorldNavigator.goToMainMap();
         }
     }
     
@@ -218,5 +251,72 @@ public class LabWorld extends World
             }
         }
         return false;
+    }
+    
+    /**
+     * Add a quest block at map coordinates that creates a collision until quest is completed
+     */
+    private void addQuestBlock(int mapX, int mapY)
+    {
+        QuestBlock block = new QuestBlock(mapX, mapY);
+        questBlocks.add(block);
+        
+        // Add collision rectangle for this block
+        if (tiledMap != null)
+        {
+            TiledMap.CollisionRect questCollision = new TiledMap.CollisionRect(
+                mapX - 24,  // x - Center the collision (48px block)
+                mapY - 24,  // y
+                48,         // width
+                48          // height
+            );
+            tiledMap.collisionRects.add(questCollision);
+        }
+        
+        // Add the block to world at screen position
+        // We'll update its position in act() based on scroll
+        addObject(block, 0, 0);
+        updateQuestBlockPositions();
+    }
+    
+    /**
+     * Remove the quest block collision when quest is completed
+     */
+    public void removeQuestBlockCollision(int mapX, int mapY)
+    {
+        if (tiledMap == null) return;
+        
+        // Find and remove the collision rectangle for this quest block
+        Iterator<TiledMap.CollisionRect> iterator = tiledMap.collisionRects.iterator();
+        while (iterator.hasNext())
+        {
+            TiledMap.CollisionRect rect = iterator.next();
+            // Check if this collision rect matches the quest block position
+            if (Math.abs(rect.x - (mapX - 24)) < 5 && 
+                Math.abs(rect.y - (mapY - 24)) < 5 &&
+                rect.w == 48 && rect.h == 48)
+            {
+                iterator.remove();
+                DebugLog.log("Removed quest block collision at map: (" + mapX + ", " + mapY + ")");
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Update quest block positions based on current scroll
+     */
+    private void updateQuestBlockPositions()
+    {
+        for (QuestBlock block : questBlocks)
+        {
+            if (block.getWorld() != null && block.isActive())
+            {
+                // Convert map coordinates to screen coordinates
+                int screenX = block.getMapX() - scrollX;
+                int screenY = block.getMapY() - scrollY;
+                block.setLocation(screenX, screenY);
+            }
+        }
     }
 }

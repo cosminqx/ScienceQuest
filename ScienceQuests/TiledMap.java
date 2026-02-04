@@ -21,6 +21,7 @@ public class TiledMap
     public final int[][] objectsB;
     private final List<int[][]> tileLayers = new ArrayList<>();
     private final List<String> tileLayerNames = new ArrayList<>();
+    private final List<Float> tileLayerOpacity = new ArrayList<>();
     public final boolean[][] solid;
     public final List<CollisionRect> collisionRects = new ArrayList<>();
     private GreenfootImage fullMapImage;
@@ -122,7 +123,7 @@ public class TiledMap
         int layerPos = xml.indexOf("name=\"" + layerName + "\"");
         if (layerPos == -1)
         {
-            System.out.println("TMX layer not found: " + layerName + ", returning empty layer");
+            DebugLog.log("TMX layer not found: " + layerName + ", returning empty layer");
             return new int[h][w];
         }
 
@@ -144,8 +145,8 @@ public class TiledMap
                 for (int x = 0; x < w && x < ids.length; x++)
                 {
                     int raw = Integer.parseInt(ids[x].trim());
-                    int masked = raw & 0x1FFFFFFF; // strip Tiled flip/rotation flags
-                    layer[rowIndex][x] = masked;
+                    // Keep the raw value with flip flags - they'll be processed during rendering
+                    layer[rowIndex][x] = raw;
                 }
                 rowIndex++;
                 if (rowIndex >= h) break;
@@ -153,7 +154,7 @@ public class TiledMap
         }
         catch (Exception ex)
         {
-            System.out.println("TMX parse error in layer: " + layerName + ": " + ex.getMessage());
+            DebugLog.log("TMX parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
     }
@@ -166,35 +167,37 @@ public class TiledMap
             int heightPx = mapH * tileSize;
             fullMapImage = new GreenfootImage(widthPx, heightPx);
             
-            System.out.println("===== Building map image =====");
-            System.out.println("Map dimensions: " + mapW + "x" + mapH + " tiles");
-            System.out.println("Tile size: " + tileSize + "px");
-            System.out.println("Full image: " + widthPx + "x" + heightPx + " pixels");
-            System.out.println("Tileset loaded: " + (tileset != null));
+            DebugLog.log("===== Building map image =====");
+            DebugLog.log("Map dimensions: " + mapW + "x" + mapH + " tiles");
+            DebugLog.log("Tile size: " + tileSize + "px");
+            DebugLog.log("Full image: " + widthPx + "x" + heightPx + " pixels");
+            DebugLog.log("Tileset loaded: " + (tileset != null));
             if (tileset != null)
             {
-                System.out.println("Tileset size: " + tileset.getWidth() + "x" + tileset.getHeight());
-                System.out.println("Tile cache size: " + tileCache.size());
+                DebugLog.log("Tileset size: " + tileset.getWidth() + "x" + tileset.getHeight());
+                DebugLog.log("Tile cache size: " + tileCache.size());
             }
-            System.out.println("Layers parsed: " + tileLayers.size());
+            DebugLog.log("Layers parsed: " + tileLayers.size());
             for (int i = 0; i < tileLayers.size(); i++)
             {
-                System.out.println("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero=" + countNonZero(tileLayers.get(i)));
+                int nonZero = countNonZero(tileLayers.get(i));
+                DebugLog.log("  Layer " + i + " (" + tileLayerNames.get(i) + "): non-zero tiles=" + nonZero);
             }
-            System.out.println("Starting to draw layers in order...");
+            DebugLog.log("Starting to draw layers in order...");
 
             // Draw every tile layer in the order they appear in TMJ
             for (int i = 0; i < tileLayers.size(); i++)
             {
                 String name = i < tileLayerNames.size() ? tileLayerNames.get(i) : ("Layer " + i);
-                drawLayerOnto(fullMapImage, tileLayers.get(i), name);
+                float opacity = i < tileLayerOpacity.size() ? tileLayerOpacity.get(i) : 1.0f;
+                drawLayerOnto(fullMapImage, tileLayers.get(i), name, opacity);
             }
             
-            System.out.println("===== Map building complete =====");
+            DebugLog.log("===== Map building complete =====");
         }
         catch (Exception e)
         {
-            System.out.println("ERROR building map image: " + e.getMessage());
+            DebugLog.log("ERROR building map image: " + e.getMessage());
             e.printStackTrace();
             // Create fallback empty image
             fullMapImage = new GreenfootImage(mapW * tileSize, mapH * tileSize);
@@ -203,24 +206,32 @@ public class TiledMap
         }
     }
 
-    private void drawLayerOnto(GreenfootImage target, int[][] layer, String layerName)
+    private void drawLayerOnto(GreenfootImage target, int[][] layer, String layerName, float opacity)
     {
         int drawn = 0;
         int failed = 0;
         int skipped = 0;
         int minGid = Integer.MAX_VALUE;
         int maxGid = 0;
+        int failedCount = 0;
+        int maxFailsToReport = 5; // Only report first 5 failures per layer
         
         for (int y = 0; y < mapH; y++)
         {
             for (int x = 0; x < mapW; x++)
             {
-                int gid = layer[y][x];
-                if (gid == 0) 
+                int rawGid = layer[y][x];
+                if (rawGid == 0) 
                 { 
                     skipped++;
                     continue;
                 }
+                
+                // Extract flip flags and actual GID
+                boolean flipH = (rawGid & 0x80000000) != 0;
+                boolean flipV = (rawGid & 0x40000000) != 0;
+                boolean flipD = (rawGid & 0x20000000) != 0;
+                int gid = rawGid & 0x1FFFFFFF; // Remove flip flags
                 
                 if (gid < minGid) minGid = gid;
                 if (gid > maxGid) maxGid = gid;
@@ -229,18 +240,44 @@ public class TiledMap
                 if (tile == null)
                 {
                     failed++;
+                    if (failedCount < maxFailsToReport) {
+                        DebugLog.log("    FAILED: GID " + gid + " at (" + x + ", " + y + ")");
+                        failedCount++;
+                    }
                 }
                 else
                 {
+                    // Apply transformations if needed
+                    if (flipH || flipV || flipD)
+                    {
+                        tile = applyTileTransform(tile, flipH, flipV, flipD);
+                    }
+                    
+                    // Apply opacity if not fully opaque
+                    if (opacity < 1.0f)
+                    {
+                        tile = applyOpacity(tile, opacity);
+                    }
+                    
                     target.drawImage(tile, x * tileSize, y * tileSize);
                     drawn++;
                 }
             }
         }
-        System.out.println("  " + layerName + ": Drew " + drawn + " tiles (skipped " + skipped + ", failed " + failed + ")");
+        DebugLog.log("  " + layerName + ": Drew " + drawn + " tiles (skipped " + skipped + ", failed " + failed + ")");
         if (minGid != Integer.MAX_VALUE)
         {
-            System.out.println("    GID range: " + minGid + " - " + maxGid);
+            DebugLog.log("    GID range: " + minGid + " - " + maxGid);
+        }
+        
+        // Report available tilesets
+        if (!tilesets.isEmpty()) {
+            System.out.print("    Available tilesets: ");
+            for (int i = 0; i < tilesets.size(); i++) {
+                System.out.print("gid=" + tilesets.get(i).firstgid + 
+                    " (tiles=" + tilesets.get(i).tiles.size() + ") ");
+            }
+            DebugLog.log("");
         }
     }
     
@@ -269,18 +306,18 @@ public class TiledMap
             "images/floor.png" // last resort
         };
 
-        System.out.println("=== Tileset Loading ===");
+        DebugLog.log("=== Tileset Loading ===");
         for (String path : candidatePaths)
         {
             try
             {
                 tileset = new GreenfootImage(path);
-                System.out.println("✓ Tileset loaded from: " + path);
+                DebugLog.log("✓ Tileset loaded from: " + path);
                 break;
             }
             catch (Exception e)
             {
-                System.out.println("✗ Failed to load: " + path);
+                DebugLog.log("✗ Failed to load: " + path);
                 tileset = null;
             }
         }
@@ -291,7 +328,7 @@ public class TiledMap
             int cols = tileset.getWidth() / tileSize;
             int rows = tileset.getHeight() / tileSize;
             int total = cols * rows;
-            System.out.println("✓ Tileset dimensions: " + cols + " cols x " + rows + " rows = " + total + " tiles");
+            DebugLog.log("✓ Tileset dimensions: " + cols + " cols x " + rows + " rows = " + total + " tiles");
             for (int i = 0; i < total; i++)
             {
                 int sx = (i % cols) * tileSize;
@@ -303,12 +340,12 @@ public class TiledMap
         }
         else
         {
-            System.out.println("✗ WARNING: Tileset not found! Using fallback colors.");
+            DebugLog.log("✗ WARNING: Tileset not found! Using fallback colors.");
         }
     }
     
     private void loadMultipleTilesets(String json) {
-        System.out.println("=== Loading Multiple Tilesets ===");
+        DebugLog.log("=== Loading Multiple Tilesets ===");
         int tsPos = json.indexOf("\"tilesets\":[");
         if (tsPos == -1) return;
         
@@ -352,7 +389,7 @@ public class TiledMap
             for (String path : paths) {
                 try {
                     tilesetImg = new GreenfootImage(path);
-                    System.out.println("✓ Loaded tileset gid=" + gid + " from: " + path);
+                    DebugLog.log("✓ Loaded tileset gid=" + gid + " from: " + path);
                     break;
                 } catch (Exception e) {
                     // Try next path
@@ -374,15 +411,15 @@ public class TiledMap
                 }
                 
                 tilesets.add(new TilesetInfo(gid, tiles));
-                System.out.println("  -> " + total + " tiles loaded");
+                DebugLog.log("  -> " + total + " tiles loaded");
             } else {
-                System.out.println("✗ Failed to load tileset: " + filename);
+                DebugLog.log("✗ Failed to load tileset: " + filename);
             }
             
             searchFrom = nextTileset + 10;
         }
         
-        System.out.println("Total tilesets loaded: " + tilesets.size());
+        DebugLog.log("Total tilesets loaded: " + tilesets.size());
     }
     
     private String extractJsonString(String json, String key) {
@@ -396,12 +433,18 @@ public class TiledMap
 
     private GreenfootImage getTileFromGid(int gid)
     {
+        if (gid == 0) return null;
+        
         // Try multiple tilesets first
         if (!tilesets.isEmpty()) {
             TilesetInfo matchingTileset = null;
+            int matchedGid = -1;
+            
+            // Find the tileset with the highest firstgid that is <= gid
             for (int i = tilesets.size() - 1; i >= 0; i--) {
                 if (gid >= tilesets.get(i).firstgid) {
                     matchingTileset = tilesets.get(i);
+                    matchedGid = tilesets.get(i).firstgid;
                     break;
                 }
             }
@@ -411,25 +454,104 @@ public class TiledMap
                 if (index >= 0 && index < matchingTileset.tiles.size()) {
                     return new GreenfootImage(matchingTileset.tiles.get(index));
                 }
+                // Gid is in this tileset's range, but index is out of bounds - return blank
+                GreenfootImage blank = new GreenfootImage(tileSize, tileSize);
+                blank.setColor(new Color(0, 0, 0, 0)); // Transparent
+                return blank;
             }
+            
+            // No matching tileset found - this shouldn't happen if tilesets are loaded correctly
+            DebugLog.log("WARNING: GID " + gid + " doesn't match any tileset (available: " + 
+                tilesets.get(0).firstgid + "-" + (tilesets.get(tilesets.size()-1).firstgid + tilesets.get(tilesets.size()-1).tiles.size()) + ")");
         }
         
         // Fallback to single tileset
         int index = gid - tilesetFirstGid;
         if (tileset != null && !tileCache.isEmpty())
         {
-            if (index >= 0)
+            if (index >= 0 && index < tileCache.size())
             {
-                int wrappedIndex = index % tileCache.size();
-                return new GreenfootImage(tileCache.get(wrappedIndex));
+                return new GreenfootImage(tileCache.get(index));
             }
         }
 
-        // Final fallback colored tile
+        // Final fallback - transparent tile
         GreenfootImage fallback = new GreenfootImage(tileSize, tileSize);
-        fallback.setColor(new Color(90, 140, 90));
+        fallback.setColor(new Color(0, 0, 0, 0));
         fallback.fillRect(0, 0, tileSize, tileSize);
         return fallback;
+    }
+    
+    /**
+     * Apply flip/rotation transformations to a tile according to Tiled's specification
+     * flipD (diagonal) is applied first as a transpose, then flipH and flipV
+     */
+    private GreenfootImage applyTileTransform(GreenfootImage original, boolean flipH, boolean flipV, boolean flipD)
+    {
+        GreenfootImage transformed = new GreenfootImage(original);
+        
+        // Step 1: Apply diagonal flip (transpose) if set
+        if (flipD)
+        {
+            transformed = transposeTile(transformed);
+        }
+        
+        // Step 2: Apply horizontal flip if set
+        if (flipH)
+        {
+            transformed.mirrorHorizontally();
+        }
+        
+        // Step 3: Apply vertical flip if set
+        if (flipV)
+        {
+            transformed.mirrorVertically();
+        }
+        
+        return transformed;
+    }
+    
+    /**
+     * Transpose a tile (swap x and y coordinates) - this is the diagonal flip in Tiled
+     */
+    private GreenfootImage transposeTile(GreenfootImage original)
+    {
+        int size = original.getWidth(); // Assuming square tiles
+        GreenfootImage transposed = new GreenfootImage(size, size);
+        
+        // Transpose by swapping x and y
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Color pixel = original.getColorAt(x, y);
+                transposed.setColorAt(y, x, pixel);
+            }
+        }
+        
+        return transposed;
+    }
+    
+    /**
+     * Apply opacity to a tile by adjusting alpha channel
+     */
+    private GreenfootImage applyOpacity(GreenfootImage original, float opacity)
+    {
+        int size = original.getWidth();
+        GreenfootImage result = new GreenfootImage(size, size);
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Color pixel = original.getColorAt(x, y);
+                int alpha = (int)(pixel.getAlpha() * opacity);
+                Color newPixel = new Color(pixel.getRed(), pixel.getGreen(), pixel.getBlue(), alpha);
+                result.setColorAt(x, y, newPixel);
+            }
+        }
+        
+        return result;
     }
 
     private int extractTilesetFirstGid(String xmlOrJson)
@@ -439,13 +561,13 @@ public class TiledMap
             int tsPos = xmlOrJson.indexOf("<tileset ");
             if (tsPos == -1) return 1; // fallback
             int value = extractIntAttr(xmlOrJson.substring(tsPos), "firstgid=\"", "\"");
-            System.out.println("Extracted firstgid from XML: " + value);
+            DebugLog.log("Extracted firstgid from XML: " + value);
             return value > 0 ? value : 1;
         }
         int pos = xmlOrJson.indexOf("\"firstgid\":");
         if (pos == -1) return 1;
         int value = extractJsonInt(xmlOrJson.substring(pos), "\"firstgid\":");
-        System.out.println("Extracted firstgid from JSON: " + value);
+        DebugLog.log("Extracted firstgid from JSON: " + value);
         return value > 0 ? value : 1;
     }
 
@@ -453,13 +575,13 @@ public class TiledMap
     {
         if (isJson)
         {
-            System.out.println("TMJ layers: Floor non-zero=" + countNonZero(floor) +
+            DebugLog.log("TMJ layers: Floor non-zero=" + countNonZero(floor) +
                                " Objects=" + countNonZero(objectsA) +
                                " Objects1=" + countNonZero(objectsB));
         }
         else
         {
-            System.out.println("TMX layers: Floor non-zero=" + countNonZero(floor) +
+            DebugLog.log("TMX layers: Floor non-zero=" + countNonZero(floor) +
                                " Collision=" + countNonZero(objectsA) +
                                " Collision1=" + countNonZero(objectsB));
         }
@@ -490,12 +612,13 @@ public class TiledMap
 
         if (idx == -1)
         {
-            System.out.println("Layer not found: " + layerName);
+            DebugLog.log("Layer not found: " + layerName);
             return null;
         }
 
         GreenfootImage img = new GreenfootImage(mapW * tileSize, mapH * tileSize);
-        drawLayerOnto(img, tileLayers.get(idx), tileLayerNames.get(idx));
+        float opacity = idx < tileLayerOpacity.size() ? tileLayerOpacity.get(idx) : 1.0f;
+        drawLayerOnto(img, tileLayers.get(idx), tileLayerNames.get(idx), opacity);
         return img;
     }
 
@@ -516,29 +639,45 @@ public class TiledMap
         int namePos = json.indexOf("\"name\":\"" + layerName + "\"");
         if (namePos == -1)
         {
-            System.out.println("TMJ layer not found: " + layerName + ", returning empty layer");
+            DebugLog.log("  TMJ layer not found: " + layerName + ", returning empty layer");
             return new int[h][w];
         }
         
-        // In TMJ, "data" comes BEFORE "name" in each layer object, so search backwards
-        int searchStart = Math.max(0, namePos - 2000); // Search back up to 2000 chars
-        int dataStart = json.lastIndexOf("\"data\":[", namePos);
-        if (dataStart == -1 || dataStart < searchStart)
+        // Find the opening brace of this layer object (search backward for {)
+        int layerStart = json.lastIndexOf("{", namePos);
+        if (layerStart == -1) {
+            DebugLog.log("  TMJ layer object start not found: " + layerName);
+            return new int[h][w];
+        }
+        
+        // Find the closing brace of this layer object (search forward for })
+        int layerEnd = json.indexOf("}", namePos);
+        if (layerEnd == -1) {
+            DebugLog.log("  TMJ layer object end not found: " + layerName);
+            return new int[h][w];
+        }
+        
+        // Extract just this layer's JSON object
+        String layerJson = json.substring(layerStart, layerEnd + 1);
+        
+        // Now find "data" within this layer
+        int dataStart = layerJson.indexOf("\"data\":[");
+        if (dataStart == -1)
         {
-            System.out.println("TMJ data array not found in layer: " + layerName);
+            DebugLog.log("  TMJ data array not found in layer: " + layerName);
             return new int[h][w];
         }
         dataStart += 8; // Skip past "data":[
         
         // Find the end of the data array by looking for ],
-        int dataEnd = json.indexOf("],", dataStart);
+        int dataEnd = layerJson.indexOf("],", dataStart);
         if (dataEnd == -1)
         {
-            System.out.println("TMJ data array end not found in layer: " + layerName);
+            DebugLog.log("  TMJ data array end not found in layer: " + layerName);
             return new int[h][w];
         }
         
-        String data = json.substring(dataStart, dataEnd);
+        String data = layerJson.substring(dataStart, dataEnd);
         String[] ids = data.split(",");
         int[][] layer = new int[h][w];
         int idx = 0;
@@ -552,8 +691,8 @@ public class TiledMap
                     else
                     {
                         int raw = Integer.parseInt(ids[idx].trim());
-                        int masked = raw & 0x1FFFFFFF; // strip flip flags
-                        layer[y][x] = masked;
+                        // Keep the raw value with flip flags - they'll be processed during rendering
+                        layer[y][x] = raw;
                     }
                     idx++;
                 }
@@ -561,7 +700,7 @@ public class TiledMap
         }
         catch (Exception ex)
         {
-            System.out.println("TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
+            DebugLog.log("  TMJ parse error in layer: " + layerName + ": " + ex.getMessage());
         }
         return layer;
     }
@@ -575,10 +714,11 @@ public class TiledMap
         int searchPos = json.indexOf("\"layers\":[");
         if (searchPos == -1)
         {
-            System.out.println("No layers array found in TMJ");
+            DebugLog.log("No layers array found in TMJ");
             return;
         }
 
+        int layerCount = 0;
         while (true)
         {
             // Find next tilelayer
@@ -594,27 +734,46 @@ public class TiledMap
                 int nameEnd = json.indexOf('"', nameStart);
                 if (nameEnd > nameStart) layerName = json.substring(nameStart, nameEnd);
             }
+            
+            // Extract opacity (search forward from namePos)
+            float opacity = 1.0f;
+            int opacityPos = json.indexOf("\"opacity\":", namePos);
+            if (opacityPos != -1 && opacityPos < tilePos + 500)
+            {
+                int opacityStart = opacityPos + "\"opacity\":".length();
+                int opacityEnd = json.indexOf(",", opacityStart);
+                if (opacityEnd == -1) opacityEnd = json.indexOf("}", opacityStart);
+                try {
+                    opacity = Float.parseFloat(json.substring(opacityStart, opacityEnd).trim());
+                } catch (Exception e) {
+                    opacity = 1.0f;
+                }
+            }
 
             int[][] layerData = parseJsonTileLayer(json, layerName, w, h);
             tileLayers.add(layerData);
             tileLayerNames.add(layerName);
+            tileLayerOpacity.add(opacity);
+            
+            DebugLog.log("  Parsed tilelayer #" + (++layerCount) + ": " + layerName + " (opacity: " + opacity + ")");
 
             searchPos = tilePos + 1;
         }
 
         if (tileLayers.isEmpty())
         {
-            System.out.println("Warning: no tile layers parsed; creating empty floor");
+            DebugLog.log("Warning: no tile layers parsed; creating empty floor");
             tileLayers.add(new int[h][w]);
             tileLayerNames.add("Floor");
         }
+        DebugLog.log("Total tilelayers found: " + layerCount);
     }
 
     private void buildSolidFromObjectLayer(String json)
     {
         int layerPos = json.indexOf("\"name\":\"Collision\"");
         if (layerPos == -1) {
-            System.out.println("No Collision object layer found in TMJ");
+            DebugLog.log("No Collision object layer found in TMJ");
             return;
         }
         int objsStart = json.indexOf("\"objects\":[", layerPos);
@@ -623,7 +782,7 @@ public class TiledMap
         String objs = json.substring(objsStart + 10, objsEnd);
         String[] entries = objs.split("\\},\\s*\\{");
         
-        System.out.println("Parsing Collision object layer with " + entries.length + " objects...");
+        DebugLog.log("Parsing Collision object layer with " + entries.length + " objects...");
         
         for (String e : entries)
         {
@@ -641,7 +800,7 @@ public class TiledMap
             int rectH = (int)Math.round(h);
             collisionRects.add(new CollisionRect(rectX, rectY, rectW, rectH));
             
-            System.out.println("  Collision rect " + collisionRects.size() + ": x=" + rectX + " y=" + rectY + 
+            DebugLog.log("  Collision rect " + collisionRects.size() + ": x=" + rectX + " y=" + rectY + 
                                " w=" + rectW + " h=" + rectH);
             
             // Also mark solid grid for reference
@@ -657,7 +816,7 @@ public class TiledMap
                 }
             }
         }
-        System.out.println("Loaded " + collisionRects.size() + " collision rectangles from Collision layer");
+        DebugLog.log("Loaded " + collisionRects.size() + " collision rectangles from Collision layer");
     }
 
     private double extractJsonDouble(String json, String key)

@@ -1,7 +1,7 @@
 import greenfoot.*;
 import java.util.*;
 
-public class MainMapWorld extends World
+public class MainMapWorld extends World implements CollisionWorld
 {
     private Actor character;
     private GreenfootImage backgroundImage;
@@ -16,10 +16,22 @@ public class MainMapWorld extends World
     private int teacherMapX = 339; // Fixed position on map
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
+    private SettingsButton settingsButton; // Settings icon in top-right
+    private ExperienceBar experienceBar; // XP bar in top-left
 
     public MainMapWorld()
     {
         super(768, 576, 1);
+        // Ensure any lingering dialogue state is cleared on world init
+        DialogueManager.getInstance().reset();
+        
+        // Set paint order for all quests and UI elements
+        setPaintOrder(ExperienceBar.class, Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
+                     RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
+                     DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
+                     RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
+                     ChemicalBondQuest.class, DnaReplicationQuest.class, PendulumTimingQuest.class,
+                     Boy.class, Girl.class, Teacher.class);
         
         FontManager.loadFonts();
         
@@ -37,17 +49,16 @@ public class MainMapWorld extends World
         addObject(teacherDisplay, teacherMapX, teacherMapY);
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender - added AFTER teacher to render on top
-        if ("Băiat".equals(playerGender))
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if ("Fată".equals(playerGender))
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -60,6 +71,37 @@ public class MainMapWorld extends World
         // Instructions
         Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add settings button in top-right corner
+        settingsButton = new SettingsButton();
+        addObject(settingsButton, getWidth() - 20, 20);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+    }
+    
+    /**
+     * Add various mini-quests scattered across the main map world
+     */
+    private void addMiniQuests()
+    {
+        // Arcade-style quests scattered around the map
+        addObject(new RapidFireQuest(150, 200), 150, 200);           // Near spawn area
+        addObject(new KeySequenceQuest(400, 180), 400, 180);         // Right side
+        addObject(new AlternatingKeysQuest(600, 250), 600, 250);     // Far right
+        addObject(new DoubleTapSprintQuest(200, 400), 200, 400);     // Bottom left
+        addObject(new DirectionDodgeQuest(450, 420), 450, 420);      // Bottom center
+        addObject(new ComboChainQuest(650, 400), 650, 400);          // Bottom right
+        addObject(new RhythmReleaseQuest(100, 600), 100, 600);       // Far bottom left
+        addObject(new PrecisionHoldQuest(350, 650), 350, 650);       // Far bottom center
+        addObject(new KeyRainfallQuest(600, 600), 600, 600);         // Far bottom right
+        
+        // Chemistry-themed quest
+        addObject(new ChemicalBondQuest(500, 300), 500, 300);        // Center-right area
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
     }
     
     private void loadMap()
@@ -69,13 +111,13 @@ public class MainMapWorld extends World
             tiledMap = new TiledMap("test-map-LayersFixed.tmj");
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
         catch (Exception e)
         {
             // Fallback: create a simple green background if image not found
-            System.out.println("ERROR loading TMJ: " + e.getMessage());
+            DebugLog.log("ERROR loading TMJ: " + e.getMessage());
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 139, 34)); // Forest green
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
@@ -115,7 +157,7 @@ public class MainMapWorld extends World
             }
             else
             {
-                System.out.println("WARNING: backgroundImage is null!");
+                DebugLog.log("WARNING: backgroundImage is null!");
             }
             
             // Update teacher position to stay static on map
@@ -197,7 +239,7 @@ public class MainMapWorld extends World
     }
     
     /**
-     * Check if player should transition to LabWorld or LabFizicaWorld
+     * Check if player should transition to LabWorld, LabFizicaWorld, or LabBiologyWorld
      */
     private void checkWorldTransition()
     {
@@ -205,17 +247,24 @@ public class MainMapWorld extends World
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
+        int mapY = screenToMapY(character.getY());
         
-        // Transition to LabWorld when reaching right edge
+        // Transition to LabWorld (Chemistry) when reaching right edge
         if (mapX >= backgroundImage.getWidth() - 5)
         {
-            Greenfoot.setWorld(new LabWorld());
+            WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
         }
         
         // Transition to LabFizicaWorld when reaching left edge
         if (mapX <= 5)
         {
-            Greenfoot.setWorld(new LabFizicaWorld());
+            WorldNavigator.tryEnterLab(LabType.PHYSICS);
+        }
+        
+        // Transition to LabBiologyWorld when reaching bottom edge
+        if (mapY >= backgroundImage.getHeight() - 5)
+        {
+            WorldNavigator.tryEnterLab(LabType.BIOLOGY);
         }
     }
 }

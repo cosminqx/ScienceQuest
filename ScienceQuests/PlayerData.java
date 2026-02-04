@@ -5,7 +5,7 @@
 public class PlayerData
 {
     private static String playerName = "";
-    private static String playerGender = ""; // "Male", "Female", or "Other"
+    private static Gender playerGender = null;
 
     /**
      * Set player name
@@ -26,7 +26,7 @@ public class PlayerData
     /**
      * Set player gender
      */
-    public static void setPlayerGender(String gender)
+    public static void setPlayerGender(Gender gender)
     {
         playerGender = gender;
     }
@@ -34,7 +34,7 @@ public class PlayerData
     /**
      * Get player gender
      */
-    public static String getPlayerGender()
+    public static Gender getPlayerGender()
     {
         return playerGender;
     }
@@ -45,6 +45,6 @@ public class PlayerData
     public static void reset()
     {
         playerName = "";
-        playerGender = "";
+        playerGender = null;
     }
 }

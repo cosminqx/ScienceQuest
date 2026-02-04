@@ -3,6 +3,7 @@
  */
 public class DialogueQuestion
 {
+    private String topic;
     private String questionText;
     private String[] answers;
     private int correctAnswerIndex;
@@ -12,6 +13,13 @@ public class DialogueQuestion
     public DialogueQuestion(String questionText, String[] answers, int correctAnswerIndex,
                             String correctResponse, String incorrectResponse)
     {
+        this("general", questionText, answers, correctAnswerIndex, correctResponse, incorrectResponse);
+    }
+
+    public DialogueQuestion(String topic, String questionText, String[] answers, int correctAnswerIndex,
+                            String correctResponse, String incorrectResponse)
+    {
+        this.topic = (topic == null || topic.trim().isEmpty()) ? "general" : topic.trim();
         this.questionText = questionText;
         this.answers = answers != null ? answers : new String[0];
         this.correctAnswerIndex = Math.max(0, Math.min(correctAnswerIndex, this.answers.length - 1));
@@ -19,6 +27,11 @@ public class DialogueQuestion
         this.incorrectResponse = incorrectResponse;
     }
     
+    public String getTopic()
+    {
+        return topic;
+    }
+
     public String getQuestionText()
     {
         return questionText;

@@ -1,0 +1,203 @@
+import greenfoot.*;
+
+/**
+ * RhythmReleaseQuest - Hit moving target 3 times at different speeds
+ */
+public class RhythmReleaseQuest extends Actor
+{
+    private int mapX, mapY;
+    private int hitCount = 0;
+    private int targetHits = 3;
+    private int barWidth = 300;
+    private int indicatorPos = 0;
+    private int indicatorSpeed = 2;
+    private boolean movingRight = true;
+    private int successZoneStart = 120;
+    private int successZoneWidth = 60;
+    private boolean questActive = false;
+    private boolean completed = false;
+    private int interactionCooldown = 0;
+    private int failCooldown = 0;
+    private int animTick = 0;
+    
+    public RhythmReleaseQuest(int mapX, int mapY)
+    {
+        this.mapX = mapX;
+        this.mapY = mapY;
+        createImage();
+    }
+    
+    private void createImage()
+    {
+        GreenfootImage img = new GreenfootImage(48, 48);
+        img.setColor(new Color(0, 0, 0, 0));
+        img.fillRect(0, 0, 48, 48);
+        setImage(img);
+    }
+    
+    public void act()
+    {
+        if (completed) return;
+        
+        Actor player = getPlayer();
+        if (player != null && !questActive)
+        {
+            int dx = Math.abs(player.getX() - getX());
+            int dy = Math.abs(player.getY() - getY());
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 100 && interactionCooldown == 0 && Greenfoot.isKeyDown("space"))
+            {
+                questActive = true;
+                hitCount = 0;
+                indicatorSpeed = 2;
+                animTick = 0;
+                GameState.getInstance().setMiniQuestActive(true);
+                interactionCooldown = 10;
+            }
+        }
+        
+        if (interactionCooldown > 0) interactionCooldown--;
+        if (failCooldown > 0) failCooldown--;
+        
+        if (questActive)
+        {
+            animTick++;
+            if (failCooldown == 0)
+            {
+                // Move indicator
+                if (movingRight)
+                {
+                    indicatorPos += indicatorSpeed;
+                    if (indicatorPos >= barWidth - 10)
+                    {
+                        indicatorPos = barWidth - 10;
+                        movingRight = false;
+                    }
+                }
+                else
+                {
+                    indicatorPos -= indicatorSpeed;
+                    if (indicatorPos <= 0)
+                    {
+                        indicatorPos = 0;
+                        movingRight = true;
+                    }
+                }
+                
+                // Check space press
+                if (Greenfoot.isKeyDown("space"))
+                {
+                    if (indicatorPos >= successZoneStart && indicatorPos <= successZoneStart + successZoneWidth)
+                    {
+                        hitCount++;
+                        if (hitCount >= targetHits)
+                        {
+                            finishQuest(true);
+                        }
+                        else
+                        {
+                            // Increase difficulty
+                            indicatorSpeed += 1;
+                            failCooldown = 20;
+                        }
+                    }
+                    else
+                    {
+                        failCooldown = 30;
+                    }
+                }
+            }
+            
+            updateDisplay();
+        }
+    }
+    
+    private void updateDisplay()
+    {
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+        GreenfootImage img = new GreenfootImage(w, h);
+
+        int pulse = 120 + (int)(40 * Math.sin(animTick * 0.2));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, w, h);
+
+        int panelW = barWidth + 100;
+        int panelH = 220;
+        int px = (w - panelW) / 2;
+        int py = (h - panelH) / 2;
+
+        img.setColor(new Color(20, 20, 20, 220));
+        img.fillRect(px, py, panelW, panelH);
+        img.setColor(new Color(255, 255, 255, 180));
+        img.drawRect(px, py, panelW, panelH);
+
+        // Bar background
+        img.setColor(new Color(60, 60, 60));
+        img.fillRect(px + 40, py + 110, barWidth, 40);
+
+        // Success zone
+        if (failCooldown == 0)
+        {
+            img.setColor(new Color(0, 200, 0, 150));
+            img.fillRect(px + 40 + successZoneStart, py + 110, successZoneWidth, 40);
+        }
+
+        // Indicator
+        Color indColor = failCooldown > 0 ? new Color(255, 0, 0) : new Color(255, 255, 0);
+        img.setColor(indColor);
+        img.fillRect(px + 40 + indicatorPos, py + 105, 10, 50);
+
+        // Status
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 22));
+        img.drawString("RHYTHM", px + panelW / 2 - 60, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 18));
+        img.drawString(hitCount + "/" + targetHits, px + panelW / 2 - 15, py + 190);
+
+        setImage(img);
+    }
+    
+    private void finishQuest(boolean success)
+    {
+        questActive = false;
+        completed = true;
+        GameState.getInstance().setMiniQuestActive(false);
+
+        World world = getWorld();
+        int w = world != null ? world.getWidth() : 800;
+        int h = world != null ? world.getHeight() : 600;
+        
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(success ? new Color(0, 255, 0, 180) : new Color(255, 0, 0, 180));
+        img.fillRect(0, 0, w, h);
+        img.setColor(Color.WHITE);
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        img.drawString(success ? "SUCCESS!" : "FAILED!", w / 2 - 70, h / 2);
+        setImage(img);
+    }
+    
+    private Actor getPlayer()
+    {
+        World world = getWorld();
+        if (world == null) return null;
+        
+        java.util.List<Boy> boys = world.getObjects(Boy.class);
+        if (!boys.isEmpty()) return boys.get(0);
+        
+        java.util.List<Girl> girls = world.getObjects(Girl.class);
+        if (!girls.isEmpty()) return girls.get(0);
+        
+        return null;
+    }
+    
+    public int getMapX() { return mapX; }
+    public int getMapY() { return mapY; }
+    
+    public java.util.List<TiledMap.CollisionRect> getCollisionRects()
+    {
+        return java.util.Collections.emptyList();
+    }
+}

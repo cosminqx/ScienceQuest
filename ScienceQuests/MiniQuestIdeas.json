@@ -1,0 +1,198 @@
+{
+  "scienceMiniQuests": [
+    {
+      "questName": "Pendulum Timing",
+      "scienceType": "physics",
+      "mechanicType": "timing",
+      "inputDescription": "Release SPACE when the pendulum reaches the center point (3 successful releases)",
+      "timeLimitSeconds": 15,
+      "successEffect": "Perfect timing! Understanding of periodic motion demonstrated.",
+      "failEffect": "Mistimed release. Study harmonic motion principles."
+    },
+    {
+      "questName": "Velocity Control",
+      "scienceType": "physics",
+      "mechanicType": "hold",
+      "inputDescription": "Hold UP arrow to maintain constant velocity indicator in the green zone for 5 seconds",
+      "timeLimitSeconds": 10,
+      "successEffect": "Constant velocity maintained! Newton's First Law mastered.",
+      "failEffect": "Velocity fluctuated. Review uniform motion concepts."
+    },
+    {
+      "questName": "Free Fall Catch",
+      "scienceType": "physics",
+      "mechanicType": "timing",
+      "inputDescription": "Press SPACE exactly when falling object crosses the target line (3 catches)",
+      "timeLimitSeconds": 12,
+      "successEffect": "Gravity timing perfect! Acceleration understood.",
+      "failEffect": "Missed catch. Calculate g = 9.8 m/s²."
+    },
+    {
+      "questName": "Momentum Transfer",
+      "scienceType": "physics",
+      "mechanicType": "combo",
+      "inputDescription": "Press arrow keys in sequence (LEFT→RIGHT→LEFT) to transfer momentum between objects",
+      "timeLimitSeconds": 8,
+      "successEffect": "Momentum conserved! Collision mechanics applied correctly.",
+      "failEffect": "Momentum lost. Review conservation laws."
+    },
+    {
+      "questName": "Lever Balance",
+      "scienceType": "physics",
+      "mechanicType": "hold",
+      "inputDescription": "Hold multiple arrow keys simultaneously to balance forces (maintain equilibrium for 4 seconds)",
+      "timeLimitSeconds": 10,
+      "successEffect": "Perfect equilibrium! Torque principles mastered.",
+      "failEffect": "Unbalanced forces. Study lever mechanics."
+    },
+    {
+      "questName": "Friction Force",
+      "scienceType": "physics",
+      "mechanicType": "reflex",
+      "inputDescription": "Press and release SPACE repeatedly to overcome static friction (20 presses)",
+      "timeLimitSeconds": 6,
+      "successEffect": "Friction overcome! Force application understood.",
+      "failEffect": "Insufficient force. Study static vs kinetic friction."
+    },
+    {
+      "questName": "Chemical Bond Formation",
+      "scienceType": "chemistry",
+      "mechanicType": "combo",
+      "inputDescription": "Hold two specific arrow keys simultaneously to form molecular bonds (5 bonds)",
+      "timeLimitSeconds": 10,
+      "successEffect": "Stable molecules formed! Covalent bonding understood.",
+      "failEffect": "Unstable bonds. Review electron sharing principles."
+    },
+    {
+      "questName": "Reaction Stabilizer",
+      "scienceType": "chemistry",
+      "mechanicType": "reflex",
+      "inputDescription": "Rapidly press SPACE to add catalyst and prevent reaction from exploding (30 presses)",
+      "timeLimitSeconds": 5,
+      "successEffect": "Reaction controlled! Catalysis principles applied.",
+      "failEffect": "Reaction unstable. Study activation energy concepts."
+    },
+    {
+      "questName": "pH Neutralization",
+      "scienceType": "chemistry",
+      "mechanicType": "timing",
+      "inputDescription": "Alternate LEFT (acid) and RIGHT (base) to maintain pH at 7 (20 alternations)",
+      "timeLimitSeconds": 8,
+      "successEffect": "pH balanced! Acid-base equilibrium mastered.",
+      "failEffect": "pH imbalanced. Review neutralization reactions."
+    },
+    {
+      "questName": "Compound Builder",
+      "scienceType": "chemistry",
+      "mechanicType": "combo",
+      "inputDescription": "Press multiple arrow keys at once to create compounds (UP+RIGHT = H2O, DOWN+LEFT = CO2, etc.)",
+      "timeLimitSeconds": 12,
+      "successEffect": "Compounds synthesized! Molecular formulas understood.",
+      "failEffect": "Incorrect formula. Study chemical composition."
+    },
+    {
+      "questName": "Temperature Control",
+      "scienceType": "chemistry",
+      "mechanicType": "hold",
+      "inputDescription": "Hold SPACE to maintain optimal reaction temperature in target zone for 6 seconds",
+      "timeLimitSeconds": 10,
+      "successEffect": "Temperature optimal! Thermochemistry principles applied.",
+      "failEffect": "Temperature fluctuated. Review endothermic/exothermic reactions."
+    },
+    {
+      "questName": "Titration Precision",
+      "scienceType": "chemistry",
+      "mechanicType": "timing",
+      "inputDescription": "Press SPACE to add drops of solution, release exactly at equivalence point (3 successful titrations)",
+      "timeLimitSeconds": 15,
+      "successEffect": "Perfect titration! Stoichiometry mastered.",
+      "failEffect": "Overtitrated. Study molar calculations."
+    },
+    {
+      "questName": "Neural Impulse Response",
+      "scienceType": "biology",
+      "mechanicType": "reflex",
+      "inputDescription": "Press the matching arrow key as soon as stimulus appears (10 correct responses)",
+      "timeLimitSeconds": 8,
+      "successEffect": "Fast reflexes! Nervous system response time excellent.",
+      "failEffect": "Slow response. Study action potential mechanisms."
+    },
+    {
+      "questName": "DNA Replication",
+      "scienceType": "biology",
+      "mechanicType": "combo",
+      "inputDescription": "Press complementary base pairs in sequence: A→T, T→A, G→C, C→G (complete 3 strands)",
+      "timeLimitSeconds": 12,
+      "successEffect": "DNA replicated perfectly! Base pairing understood.",
+      "failEffect": "Replication error. Review complementary base rules."
+    },
+    {
+      "questName": "Heartbeat Rhythm",
+      "scienceType": "biology",
+      "mechanicType": "timing",
+      "inputDescription": "Press SPACE in sync with the pulsing heart indicator (maintain rhythm for 10 beats)",
+      "timeLimitSeconds": 10,
+      "successEffect": "Perfect cardiac rhythm! Heart cycle understood.",
+      "failEffect": "Arrhythmia detected. Study cardiac physiology."
+    },
+    {
+      "questName": "Immune Response",
+      "scienceType": "biology",
+      "mechanicType": "reflex",
+      "inputDescription": "Quickly press matching antibody keys when antigens appear (identify 8 pathogens)",
+      "timeLimitSeconds": 10,
+      "successEffect": "Immune system effective! Antibody-antigen recognition mastered.",
+      "failEffect": "Infection spread. Study immune response mechanisms."
+    },
+    {
+      "questName": "Cell Division Sequence",
+      "scienceType": "biology",
+      "mechanicType": "combo",
+      "inputDescription": "Press keys in mitosis order: UP (Prophase) → RIGHT (Metaphase) → DOWN (Anaphase) → LEFT (Telophase) - 3 complete cycles",
+      "timeLimitSeconds": 15,
+      "successEffect": "Mitosis complete! Cell cycle phases mastered.",
+      "failEffect": "Division error. Review PMAT sequence."
+    },
+    {
+      "questName": "Breathing Control",
+      "scienceType": "biology",
+      "mechanicType": "hold",
+      "inputDescription": "Hold SPACE to inhale (3 sec), release to exhale (3 sec), maintain 4 complete breath cycles",
+      "timeLimitSeconds": 24,
+      "successEffect": "Respiratory rhythm perfect! Gas exchange understood.",
+      "failEffect": "Breathing irregular. Study respiratory mechanics."
+    },
+    {
+      "questName": "Enzyme-Substrate Lock",
+      "scienceType": "biology",
+      "mechanicType": "timing",
+      "inputDescription": "Press SPACE when substrate (moving shape) aligns with enzyme active site (3 successful locks)",
+      "timeLimitSeconds": 10,
+      "successEffect": "Enzyme catalysis successful! Lock-and-key model understood.",
+      "failEffect": "Substrate missed. Review enzyme specificity."
+    },
+    {
+      "questName": "Photosynthesis Rhythm",
+      "scienceType": "biology",
+      "mechanicType": "timing",
+      "inputDescription": "Press keys in rhythm: UP (Light) → SPACE (H2O) → DOWN (CO2) to produce glucose (5 cycles)",
+      "timeLimitSeconds": 15,
+      "successEffect": "Glucose produced! Photosynthesis equation mastered.",
+      "failEffect": "Reaction incomplete. Study light-dependent reactions."
+    }
+  ],
+  "questStats": {
+    "totalQuests": 20,
+    "byScience": {
+      "physics": 6,
+      "chemistry": 6,
+      "biology": 8
+    },
+    "byMechanic": {
+      "timing": 8,
+      "combo": 5,
+      "reflex": 4,
+      "hold": 3
+    }
+  }
+}

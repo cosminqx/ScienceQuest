@@ -1,13 +1,15 @@
 import greenfoot.*;
 import java.util.*;
 
-public class LabFizicaWorld extends World
+public class LabFizicaWorld extends World implements CollisionWorld
 {
     private Actor character;
+    private PhysicsTeacher teacher;
     private GreenfootImage backgroundImage;
     private GreenfootImage onTopLayerImage;
     private GreenfootImage onTopViewport;
     private OverlayLayer overlayActor;
+    private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
     private int maxScrollX;
@@ -15,32 +17,41 @@ public class LabFizicaWorld extends World
     private int tileSize = 48;
     private TiledMap tiledMap;
     private boolean isBroken = false; // Track if lab is in broken state
+    private boolean hasTriggeredBreakSequence = false; // Track if initial break happened
+    private int frameCounter = 0; // Frame counter for delayed trigger
+    private int dialogueWaitCounter = 0; // Counter to wait after dialogue
+    private boolean waitingForDialogue = false; // Waiting for dialogue to finish
+    
+    // Flicker animation state
+    private boolean isAnimating = false;
+    private int animationPhase = 0;
+    private int animationCounter = 0;
+    private int flickerCount = 0;
+    private boolean showBlack = false;
 
     public LabFizicaWorld()
     {
         super(864, 672, 1); // 18x14 tiles at 48px
+        // Ensure any lingering dialogue state is cleared on world init
+        DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then characters
-        setPaintOrder(Label.class, OverlayLayer.class, Boy.class, Girl.class);
+        // Draw UI on top, then overlay, then characters and teacher
+        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, PendulumTimingQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
         
         // Load physics lab map
         loadMap("images/labfizica-normal.json");
         
         // Retrieve player data
-        String playerName = PlayerData.getPlayerName();
-        String playerGender = PlayerData.getPlayerGender();
+        Gender playerGender = PlayerData.getPlayerGender();
         
         // Spawn the correct character based on gender at screen center initially
-        boolean isBoy = "Male".equals(playerGender) || "Băiat".equals(playerGender);
-        boolean isGirl = "Female".equals(playerGender) || "Fată".equals(playerGender);
-
-        if (isBoy)
+        if (playerGender == Gender.BOY)
         {
             Boy boy = new Boy();
             addObject(boy, getWidth()/2, getHeight()/2);
             character = boy;
         }
-        else if (isGirl)
+        else if (playerGender == Gender.GIRL)
         {
             Girl girl = new Girl();
             addObject(girl, getWidth()/2, getHeight()/2);
@@ -71,9 +82,41 @@ public class LabFizicaWorld extends World
         // Draw initial background
         drawBackground();
         
+        // Add physics teacher at MAP coordinates (not screen coordinates)
+        // Teacher position in map: x=836, y=266
+        int teacherMapX = 836;
+        int teacherMapY = 266;
+        teacher = new PhysicsTeacher();
+        
+        // Calculate screen position from map position
+        int teacherScreenX = teacherMapX - scrollX;
+        int teacherScreenY = teacherMapY - scrollY;
+        addObject(teacher, teacherScreenX, teacherScreenY);
+        
+        DebugLog.log("Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
+        DebugLog.log("Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
+        DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
+        
         // Instructions
-        Label instructionsLabel = new Label("Press G to break/fix the lab", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
+        
+        // Add mini-quests scattered across the map
+        addMiniQuests();
+        
+        // Add XP bar in top-left corner
+        experienceBar = new ExperienceBar();
+        addObject(experienceBar, 110, 20);
+    }
+    
+    /**
+     * Add physics-specific mini-quest to the lab
+     */
+    private void addMiniQuests()
+    {
+        // Pendulum Timing Quest - physics-themed challenge
+        // Place it in the center of the lab for easy access
+        addObject(new PendulumTimingQuest(432, 336), 432, 336);
     }
     
     private void loadMap(String mapPath)
@@ -83,7 +126,7 @@ public class LabFizicaWorld extends World
             tiledMap = new TiledMap(mapPath);
             tileSize = tiledMap.tileSize;
             backgroundImage = tiledMap.getFullMapImage();
-            System.out.println("SUCCESS: Loaded " + mapPath + ", backgroundImage size: " + 
+            DebugLog.log("SUCCESS: Loaded " + mapPath + ", backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
             
             // Prepare optional overlay layer that should draw above the player
@@ -97,12 +140,12 @@ public class LabFizicaWorld extends World
                     overlayActor.setImage(onTopViewport);
                     addObject(overlayActor, getWidth() / 2, getHeight() / 2);
                 }
-                System.out.println("On-Top overlay initialized");
+                DebugLog.log("On-Top overlay initialized");
             }
         }
         catch (Exception e)
         {
-            System.out.println("ERROR loading map: " + e.getMessage());
+            DebugLog.log("ERROR loading map: " + e.getMessage());
             e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50));
@@ -117,11 +160,42 @@ public class LabFizicaWorld extends World
 
     public void act()
     {
-        // Check for G key press to toggle lab state
-        if (Greenfoot.isKeyDown("g"))
+        // Process dialogue input so dialogues can advance/close
+        DialogueManager.getInstance().processInput();
+
+        // Trigger break sequence after 60 frames (1 second)
+        if (!hasTriggeredBreakSequence)
         {
-            toggleLabState();
-            Greenfoot.delay(10); // Prevent rapid toggling
+            frameCounter++;
+            if (frameCounter >= 60)
+            {
+                triggerInitialBreakSequence();
+            }
+        }
+        
+        // Handle waiting for dialogue to finish before starting animation
+        if (waitingForDialogue)
+        {
+            // Start flicker once the dialogue is actually closed
+            if (!DialogueManager.getInstance().isDialogueActive())
+            {
+                waitingForDialogue = false;
+                dialogueWaitCounter = 0;
+                startFlickerAnimation();
+            }
+        }
+        
+        // Handle flicker animation
+        if (isAnimating)
+        {
+            updateFlickerAnimation();
+            // Continue with normal camera updates even during animation
+        }
+        
+        // Check for G key press to toggle lab state (debug/manual mode)
+        if (Greenfoot.isKeyDown("g") && hasTriggeredBreakSequence && !isAnimating && !waitingForDialogue)
+        {
+            startFlickerAnimation();
         }
         
         // Update the camera position to keep the character centered
@@ -135,12 +209,214 @@ public class LabFizicaWorld extends World
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            // Draw the background
-            drawBackground();
+            // Update teacher position based on scroll (teacher at map coords 836, 266)
+            if (teacher != null && teacher.getWorld() != null)
+            {
+                int teacherMapX = 836;
+                int teacherMapY = 266;
+                int teacherScreenX = teacherMapX - scrollX;
+                int teacherScreenY = teacherMapY - scrollY;
+                teacher.setLocation(teacherScreenX, teacherScreenY);
+            }
+            
+            // Draw the background (or black during flicker)
+            if (!isAnimating || !showBlack)
+            {
+                drawBackground();
+            }
+            else
+            {
+                // Draw black screen during flicker
+                GreenfootImage worldImage = getBackground();
+                worldImage.setColor(Color.BLACK);
+                worldImage.fillRect(0, 0, getWidth(), getHeight());
+            }
             
             // Check for transition back to MainMapWorld
             checkWorldTransition();
         }
+    }
+    
+    /**
+     * Trigger the initial break sequence when entering the lab
+     */
+    private void triggerInitialBreakSequence()
+    {
+        if (hasTriggeredBreakSequence) return;
+        hasTriggeredBreakSequence = true;
+        
+        // Teacher shows panic dialogue
+        if (teacher != null)
+        {
+            teacher.showPanicReaction();
+        }
+        
+        // Start waiting for dialogue to finish (non-blocking)
+        waitingForDialogue = true;
+        dialogueWaitCounter = 0;
+    }
+    
+    /**
+     * Start the flicker animation
+     */
+    private void startFlickerAnimation()
+    {
+        isAnimating = true;
+        animationPhase = 0;
+        animationCounter = 0;
+        flickerCount = 0;
+        showBlack = false;
+    }
+    
+    /**
+     * Update flicker animation (called each frame) - only updates state, rendering done in act()
+     */
+    private void updateFlickerAnimation()
+    {
+        animationCounter++;
+        
+        // Phase 0: Slow flickers (3 times)
+        if (animationPhase == 0)
+        {
+            if (showBlack)
+            {
+                if (animationCounter >= 4)
+                {
+                    showBlack = false;
+                    animationCounter = 0;
+                }
+            }
+            else
+            {
+                if (animationCounter >= 8)
+                {
+                    showBlack = true;
+                    animationCounter = 0;
+                    flickerCount++;
+                    
+                    if (flickerCount >= 3)
+                    {
+                        animationPhase = 1;
+                        flickerCount = 0;
+                        showBlack = false;
+                        animationCounter = 0;
+                    }
+                }
+            }
+        }
+        // Phase 1: Medium flickers (4 times)
+        else if (animationPhase == 1)
+        {
+            if (showBlack)
+            {
+                if (animationCounter >= 3)
+                {
+                    showBlack = false;
+                    animationCounter = 0;
+                }
+            }
+            else
+            {
+                if (animationCounter >= 5)
+                {
+                    showBlack = true;
+                    animationCounter = 0;
+                    flickerCount++;
+                    
+                    if (flickerCount >= 4)
+                    {
+                        animationPhase = 2;
+                        flickerCount = 0;
+                        showBlack = false;
+                        animationCounter = 0;
+                    }
+                }
+            }
+        }
+        // Phase 2: Fast flickers (8 times)
+        else if (animationPhase == 2)
+        {
+            if (showBlack)
+            {
+                if (animationCounter >= 1)
+                {
+                    showBlack = false;
+                    animationCounter = 0;
+                }
+            }
+            else
+            {
+                if (animationCounter >= 2)
+                {
+                    showBlack = true;
+                    animationCounter = 0;
+                    flickerCount++;
+                    
+                    if (flickerCount >= 8)
+                    {
+                        animationPhase = 3;
+                        animationCounter = 0;
+                        showBlack = true;
+                    }
+                }
+            }
+        }
+        // Phase 3: Final black flash
+        else if (animationPhase == 3)
+        {
+            if (animationCounter >= 5)
+            {
+                // Animation complete - toggle the map
+                finishFlickerAnimation();
+            }
+        }
+    }
+    
+    /**
+     * Finish the flicker animation and toggle map state
+     */
+    private void finishFlickerAnimation()
+    {
+        if (isBroken)
+        {
+            // Switch back to normal
+            loadMap("images/labfizica-normal.json");
+            isBroken = false;
+            DebugLog.log("Lab restored to normal state");
+        }
+        else
+        {
+            // Switch to broken
+            loadMap("images/labfizica-broken.json");
+            isBroken = true;
+            DebugLog.log("Lab changed to broken state");
+        }
+        
+        // Draw the new map
+        drawBackground();
+        
+        // Reset animation state
+        isAnimating = false;
+    }
+    
+    /**
+     * Public method for teacher to repair the lab
+     */
+    public void repairLab()
+    {
+        if (isBroken)
+        {
+            // Start repair animation
+            startFlickerAnimation();
+        }
+    }
+    
+    /**
+     * Check if lab is currently broken
+     */
+    public boolean isBroken()
+    {
+        return isBroken;
     }
     
     /**
@@ -170,24 +446,6 @@ public class LabFizicaWorld extends World
     /**
      * Toggle between normal and broken lab states
      */
-    private void toggleLabState()
-    {
-        if (isBroken)
-        {
-            // Switch back to normal
-            loadMap("images/labfizica-normal.json");
-            isBroken = false;
-            System.out.println("Lab restored to normal state");
-        }
-        else
-        {
-            // Switch to broken
-            loadMap("images/labfizica-broken.json");
-            isBroken = true;
-            System.out.println("Lab changed to broken state");
-        }
-    }
-    
     /**
      * Check if player should transition back to MainMapWorld (exit through left wall)
      */
@@ -202,8 +460,8 @@ public class LabFizicaWorld extends World
         // Transition to MainMapWorld when reaching left edge
         if (mapX <= 5)
         {
-            System.out.println("TRANSITION TRIGGERED - Returning to MainMapWorld!");
-            Greenfoot.setWorld(new MainMapWorld());
+            DebugLog.log("TRANSITION TRIGGERED - Returning to MainMapWorld!");
+            WorldNavigator.goToMainMap();
         }
     }
     
