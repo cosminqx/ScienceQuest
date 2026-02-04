@@ -24,6 +24,7 @@ public class PrecisionHoldQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean holdingStarted = false;
     
     public PrecisionHoldQuest(int mapX, int mapY)
     {
@@ -35,11 +36,25 @@ public class PrecisionHoldQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -82,6 +97,7 @@ public class PrecisionHoldQuest extends Actor
                 holdTime = 0;
                 animTick = 0;
                 successFlash = 0;
+                holdingStarted = false;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -96,6 +112,7 @@ public class PrecisionHoldQuest extends Actor
             animTick++;
             if (Greenfoot.isKeyDown("left"))
             {
+                holdingStarted = true;
                 holdTime++;
                 
                 // Perfect zone pulse feedback
@@ -104,7 +121,7 @@ public class PrecisionHoldQuest extends Actor
                     successFlash = 5;
                 }
             }
-            else
+            else if (holdingStarted)
             {
                 // Released, check result
                 finishHold();
@@ -156,8 +173,6 @@ public class PrecisionHoldQuest extends Actor
     private void updateDisplay()
     {
         World world = getWorld();
-        int w = world != null ? world.getWidth() : 800;
-        int h = world != null ? world.getHeight() : 600;
         
         if (world != null)
         {
@@ -167,18 +182,17 @@ public class PrecisionHoldQuest extends Actor
                 world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
             }
         }
-        
-        GreenfootImage img = new GreenfootImage(w, h);
+
+        int panelW = 460;
+        int panelH = 280;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        int px = 0;
+        int py = 0;
 
         // Animated pulsing background
         int pulse = 90 + (int)(70 * Math.sin(animTick * 0.12));
         img.setColor(new Color(0, 0, 0, pulse));
-        img.fillRect(0, 0, w, h);
-
-        int panelW = 460;
-        int panelH = 280;
-        int px = (w - panelW) / 2;
-        int py = (h - panelH) / 2;
+        img.fillRect(0, 0, panelW, panelH);
 
         // Glowing aura effect (purple: 180, 100, 220)
         img.setColor(new Color(180, 100, 220, 60));
@@ -270,7 +284,10 @@ public class PrecisionHoldQuest extends Actor
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.drawString("Score: " + totalScore, px + 170, py + 250);
 
-        setImage(img);
+        if (myOverlay != null)
+        {
+            myOverlay.setImage(img);
+        }
     }
     
     private void finishQuest(boolean success)

@@ -24,6 +24,7 @@ public class RapidFireQuest extends Actor
     private int floatTick = 0;
     private boolean promptActive = false;
     private boolean startKeyDown = false;
+    private boolean spaceDown = false;
     
     public RapidFireQuest(int mapX, int mapY)
     {
@@ -35,11 +36,25 @@ public class RapidFireQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -87,6 +102,7 @@ public class RapidFireQuest extends Actor
                     combo = 0;
                     maxCombo = 0;
                     timeRemaining = timeMax;
+                    spaceDown = false;
                     GameState.getInstance().setMiniQuestActive(true);
                     interactionCooldown = 10;
                 }
@@ -106,17 +122,19 @@ public class RapidFireQuest extends Actor
             animTick++;
             if (pressFeedbackTick > 0) pressFeedbackTick--;
             
-            if (Greenfoot.isKeyDown("space"))
+            boolean spacePressed = Greenfoot.isKeyDown("space");
+            if (spacePressed && !spaceDown)
             {
                 spaceCount++;
                 combo++;
                 pressFeedbackTick = 6;
                 if (combo > maxCombo) maxCombo = combo;
             }
-            else
+            if (!spacePressed)
             {
                 combo = 0;
             }
+            spaceDown = spacePressed;
             
             timeRemaining--;
             updateDisplay();

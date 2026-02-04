@@ -125,13 +125,14 @@ public class LabBiologyWorld extends World implements CollisionWorld
     }
     
     /**
-     * Add biology-specific mini-quest to the lab
+     * Add biology-specific mini-quests to the lab
      */
     private void addMiniQuests()
     {
-        // DNA Replication Quest - biology-themed challenge
-        // Place it in the center of the lab for easy access
-        addObject(new DnaReplicationQuest(432, 336), 432, 336);
+        // Different biology-themed challenges at specified positions
+        addObject(new DnaReplicationQuest(77, 547), 77, 547);           // DNA base pairing
+        addObject(new ChemicalBondQuest(222, 547), 222, 547);           // Molecular bonding
+        addObject(new PrecisionHoldQuest(357, 547), 357, 547);          // Precision timing
     }
     
     private void loadMap(String mapPath)

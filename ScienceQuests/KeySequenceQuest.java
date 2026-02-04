@@ -7,9 +7,12 @@ public class KeySequenceQuest extends Actor
 {
     private int mapX, mapY;
     private int sequenceIndex = 0;
-    private int targetSequences = 3;
+    private int targetSequences = 4;
     private int completedSequences = 0;
-    private String[] sequence = new String[3];
+    private static final int SEQUENCE_LENGTH = 5;
+    private String[] sequence = new String[SEQUENCE_LENGTH];
+    private int timeRemaining = 600;
+    private int timeMax = 600;
     private boolean questActive = false;
     private boolean completed = false;
     private int interactionCooldown = 0;
@@ -23,6 +26,10 @@ public class KeySequenceQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean upDown = false;
+    private boolean downDown = false;
+    private boolean leftDown = false;
+    private boolean rightDown = false;
     
     public KeySequenceQuest(int mapX, int mapY)
     {
@@ -35,20 +42,41 @@ public class KeySequenceQuest extends Actor
     private void generateSequence()
     {
         String[] keys = {"up", "down", "left", "right"};
-        for (int i = 0; i < 3; i++)
+        String last = null;
+        for (int i = 0; i < SEQUENCE_LENGTH; i++)
         {
-            sequence[i] = keys[Greenfoot.getRandomNumber(4)];
+            String next = keys[Greenfoot.getRandomNumber(4)];
+            while (next.equals(last))
+            {
+                next = keys[Greenfoot.getRandomNumber(4)];
+            }
+            sequence[i] = next;
+            last = next;
         }
     }
     
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -90,6 +118,11 @@ public class KeySequenceQuest extends Actor
                 sequenceIndex = 0;
                 completedSequences = 0;
                 animTick = 0;
+                timeRemaining = timeMax;
+                upDown = false;
+                downDown = false;
+                leftDown = false;
+                rightDown = false;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -105,40 +138,70 @@ public class KeySequenceQuest extends Actor
         {
             animTick++;
             checkInput();
+            timeRemaining--;
             updateDisplay();
+
+            if (timeRemaining <= 0)
+            {
+                finishQuest(false);
+            }
         }
     }
     
     private void checkInput()
     {
         String currentKey = sequence[sequenceIndex];
-        boolean keyPressed = false;
+        boolean upPressed = Greenfoot.isKeyDown("up");
+        boolean downPressed = Greenfoot.isKeyDown("down");
+        boolean leftPressed = Greenfoot.isKeyDown("left");
+        boolean rightPressed = Greenfoot.isKeyDown("right");
+        boolean upJust = upPressed && !upDown;
+        boolean downJust = downPressed && !downDown;
+        boolean leftJust = leftPressed && !leftDown;
+        boolean rightJust = rightPressed && !rightDown;
+        boolean anyJust = upJust || downJust || leftJust || rightJust;
         
-        if (Greenfoot.isKeyDown(currentKey))
-        {
-            keyPressed = true;
-        }
+        String pressedKey = null;
+        if (upJust) pressedKey = "up";
+        else if (downJust) pressedKey = "down";
+        else if (leftJust) pressedKey = "left";
+        else if (rightJust) pressedKey = "right";
         
-        if (keyPressed && resetCooldown == 0)
+        if (anyJust && resetCooldown == 0)
         {
-            sequenceIndex++;
-            correctFeedbackTick = 8;
-            resetCooldown = 10;
-            
-            if (sequenceIndex >= sequence.length)
+            if (pressedKey != null && pressedKey.equals(currentKey))
             {
-                completedSequences++;
-                if (completedSequences >= targetSequences)
+                sequenceIndex++;
+                correctFeedbackTick = 10;
+                resetCooldown = 10;
+                
+                if (sequenceIndex >= sequence.length)
                 {
-                    finishQuest(true);
-                }
-                else
-                {
-                    generateSequence();
-                    sequenceIndex = 0;
+                    completedSequences++;
+                    if (completedSequences >= targetSequences)
+                    {
+                        finishQuest(true);
+                    }
+                    else
+                    {
+                        generateSequence();
+                        sequenceIndex = 0;
+                    }
                 }
             }
+            else
+            {
+                wrongFeedbackTick = 12;
+                resetCooldown = 12;
+                sequenceIndex = 0;
+                generateSequence();
+            }
         }
+        
+        upDown = upPressed;
+        downDown = downPressed;
+        leftDown = leftPressed;
+        rightDown = rightPressed;
     }
     
     private void updateDisplay()
@@ -154,7 +217,7 @@ public class KeySequenceQuest extends Actor
         }
         
         int panelW = 460;
-        int panelH = 280;
+        int panelH = 300;
         GreenfootImage img = new GreenfootImage(panelW, panelH);
 
         int pulse = 100 + (int)(60 * Math.sin(animTick * 0.12));
@@ -179,41 +242,87 @@ public class KeySequenceQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("SEQUENCE", px + 130, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 26));
+        img.drawString("SEQUENCE MASTER", px + 85, py + 40);
+
+        // Sequence display
+        int seqStartX = px + 60;
+        int seqY = py + 80;
+        int boxSize = 40;
+        int gap = 12;
+        for (int i = 0; i < SEQUENCE_LENGTH; i++)
+        {
+            int bx = seqStartX + i * (boxSize + gap);
+            Color boxColor = new Color(50, 60, 80, 220);
+            Color borderColor = new Color(120, 170, 255, 140);
+            if (i < sequenceIndex)
+            {
+                boxColor = new Color(80, 180, 120, 220);
+                borderColor = new Color(120, 255, 170, 200);
+            }
+            else if (i == sequenceIndex)
+            {
+                int glow = 140 + (int)(80 * Math.sin(animTick * 0.2));
+                boxColor = new Color(70, 90, 130, 230);
+                borderColor = new Color(150, 220, 255, glow);
+            }
+            else if (wrongFeedbackTick > 0)
+            {
+                borderColor = new Color(255, 100, 100, 160);
+            }
+            
+            img.setColor(boxColor);
+            img.fillRect(bx, seqY, boxSize, boxSize);
+            img.setColor(borderColor);
+            img.drawRect(bx, seqY, boxSize, boxSize);
+            img.setColor(new Color(200, 200, 220));
+            img.setFont(new greenfoot.Font("Arial", true, false, 20));
+            img.drawString(getArrowForKey(sequence[i]), bx + 12, seqY + 28);
+        }
 
         // Current key to press
-        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setFont(new greenfoot.Font("Arial", true, false, 18));
         String keyStr = sequence[sequenceIndex].toUpperCase();
         String arrow = getArrowForKey(sequence[sequenceIndex]);
         
-        img.setColor(correctFeedbackTick > 0 ? new Color(100, 255, 100) : new Color(200, 200, 200));
-        img.drawString("Press: " + keyStr + " " + arrow, px + 95, py + 110);
+        img.setColor(correctFeedbackTick > 0 ? new Color(100, 255, 100) :
+                     wrongFeedbackTick > 0 ? new Color(255, 120, 120) : new Color(200, 200, 200));
+        img.drawString("Press: " + keyStr + " " + arrow, px + 150, py + 150);
 
         // Sequence counter
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 200, 100));
         img.drawString("Sequences: " + completedSequences + " / " + targetSequences, px + 90, py + 155);
-        img.drawString("Step: " + (sequenceIndex + 1) + " / 3", px + 135, py + 185);
+        img.drawString("Step: " + (sequenceIndex + 1) + " / " + SEQUENCE_LENGTH, px + 265, py + 185);
 
         // Progress bar for current sequence
-        float progress = (sequenceIndex + 1) / 3.0f;
+        float progress = (sequenceIndex + 1) / (float)SEQUENCE_LENGTH;
         int barW = (int)((panelW - 40) * progress);
         img.setColor(new Color(100, 200, 255, 150));
         img.fillRect(px + 20, py + 220, barW, 15);
         img.setColor(new Color(120, 220, 255, 200));
         img.drawRect(px + 20, py + 220, panelW - 40, 15);
 
-        setImage(img);
+        // Time bar
+        float timePct = timeRemaining / (float)timeMax;
+        int timeW = (int)((panelW - 40) * timePct);
+        img.setColor(new Color(120, 120, 255, 80));
+        img.fillRect(px + 20, py + 245, timeW, 8);
+        img.setColor(new Color(150, 150, 255, 180));
+        img.drawRect(px + 20, py + 245, panelW - 40, 8);
+        img.setFont(new greenfoot.Font("Arial", true, false, 12));
+        img.setColor(new Color(200, 200, 220));
+        img.drawString(Math.round(timeRemaining / 60.0f) + "s", px + panelW - 45, py + 258);
+
         myOverlay.setImage(img);
     }
     
     private String getArrowForKey(String key)
     {
-        if (key.equals("up")) return "▲";
-        if (key.equals("down")) return "▼";
-        if (key.equals("left")) return "◀";
-        if (key.equals("right")) return "▶";
+        if (key.equals("up")) return "↑";
+        if (key.equals("down")) return "↓";
+        if (key.equals("left")) return "←";
+        if (key.equals("right")) return "→";
         return "";
     }
     

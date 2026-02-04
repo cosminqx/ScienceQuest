@@ -28,6 +28,7 @@ public class RhythmReleaseQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean spaceDown = false;
     
     public RhythmReleaseQuest(int mapX, int mapY)
     {
@@ -39,11 +40,25 @@ public class RhythmReleaseQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -88,6 +103,7 @@ public class RhythmReleaseQuest extends Actor
                 indicatorSpeed = 2;
                 successZoneWidth = 50;
                 animTick = 0;
+                spaceDown = false;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -122,8 +138,8 @@ public class RhythmReleaseQuest extends Actor
                     }
                 }
                 
-                // Check space press
-                if (Greenfoot.isKeyDown("space"))
+                boolean spacePressed = Greenfoot.isKeyDown("space");
+                if (spacePressed && !spaceDown)
                 {
                     int distance = Math.abs(indicatorPos - (successZoneStart + successZoneWidth / 2));
                     
@@ -173,6 +189,7 @@ public class RhythmReleaseQuest extends Actor
                         failCooldown = 40;
                     }
                 }
+                spaceDown = spacePressed;
             }
             
             updateDisplay();
@@ -286,7 +303,6 @@ public class RhythmReleaseQuest extends Actor
             img.drawString("Combo x" + combo, px + 180, py + 260);
         }
 
-        setImage(img);
         myOverlay.setImage(img);
     }
     

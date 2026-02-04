@@ -24,6 +24,7 @@ public class DnaReplicationQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean anyArrowDown = false;
     
     public DnaReplicationQuest(int mapX, int mapY)
     {
@@ -35,11 +36,25 @@ public class DnaReplicationQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -114,37 +129,38 @@ public class DnaReplicationQuest extends Actor
         String complement = getComplement(currentBase);
         
         // Map: A=up, T=down, G=left, C=right
-        if (Greenfoot.isKeyDown(getKeyForBase(complement)))
+        boolean up = Greenfoot.isKeyDown("up");
+        boolean down = Greenfoot.isKeyDown("down");
+        boolean left = Greenfoot.isKeyDown("left");
+        boolean right = Greenfoot.isKeyDown("right");
+        boolean anyDownNow = up || down || left || right;
+        boolean expectedPressed = Greenfoot.isKeyDown(getKeyForBase(complement));
+        
+        if (anyDownNow && !anyArrowDown)
         {
-            correctFeedbackTick = 15;
-            currentBaseIndex++;
-            
-            if (currentBaseIndex >= bases.length)
+            if (expectedPressed)
             {
-                strandsCompleted++;
-                currentBaseIndex = 0;
+                correctFeedbackTick = 15;
+                currentBaseIndex++;
                 
-                if (strandsCompleted >= targetStrands)
+                if (currentBaseIndex >= bases.length)
                 {
-                    finishQuest(true);
+                    strandsCompleted++;
+                    currentBaseIndex = 0;
+                    
+                    if (strandsCompleted >= targetStrands)
+                    {
+                        finishQuest(true);
+                    }
                 }
             }
-            
-            while (Greenfoot.isKeyDown(getKeyForBase(complement)))
+            else
             {
-                Greenfoot.delay(1);
+                wrongFeedbackTick = 15;
             }
         }
-        else if (Greenfoot.isKeyDown("up") || Greenfoot.isKeyDown("down") || 
-                 Greenfoot.isKeyDown("left") || Greenfoot.isKeyDown("right"))
-        {
-            wrongFeedbackTick = 15;
-            while (Greenfoot.isKeyDown("up") || Greenfoot.isKeyDown("down") || 
-                   Greenfoot.isKeyDown("left") || Greenfoot.isKeyDown("right"))
-            {
-                Greenfoot.delay(1);
-            }
-        }
+        
+        anyArrowDown = anyDownNow;
     }
     
     private String getComplement(String base)
