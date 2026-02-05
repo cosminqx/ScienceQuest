@@ -42,6 +42,8 @@ public class DialogueBox extends Actor {
     
     // Callback for correct answer
     private Runnable onCorrectAnswerCallback;
+    // Callback for any answer attempt with correctness flag
+    private java.util.function.Consumer<Boolean> onAnswerAttemptCallback;
 
     public DialogueBox(String text, String iconPath, boolean typewriter) {
         this.fullText = text != null ? text : "";
@@ -208,6 +210,7 @@ public class DialogueBox extends Actor {
             
             if (question != null) {
                 String[] answers = question.getAnswers();
+                img.setFont(new greenfoot.Font("Arial", true, true, 10));
                 for (int i = 0; i < answers.length; i++) {
                     int optionY = y + (i * 18);
                     String label = (char)('A' + i) + ") ";
@@ -305,6 +308,12 @@ public class DialogueBox extends Actor {
         GameState state = GameState.getInstance();
         state.recordQuizResult(question.getTopic(), isCorrect);
         
+        // Call attempt callback with correctness flag
+        if (onAnswerAttemptCallback != null)
+        {
+            onAnswerAttemptCallback.accept(isCorrect);
+        }
+        
         if (isCorrect)
         {
             // Award XP for correct answer
@@ -338,5 +347,9 @@ public class DialogueBox extends Actor {
     
     public void setOnCorrectAnswerCallback(Runnable callback) {
         this.onCorrectAnswerCallback = callback;
+    }
+    
+    public void setOnAnswerAttemptCallback(java.util.function.Consumer<Boolean> callback) {
+        this.onAnswerAttemptCallback = callback;
     }
 }

@@ -2,6 +2,8 @@
 comment0.target=MainMapWorld
 comment1.params=
 comment1.target=MainMapWorld()
+comment10.params=
+comment10.target=boolean\ areMainMapMiniQuestsComplete()
 comment2.params=
 comment2.target=void\ addMiniQuests()
 comment2.text=\r\n\ Add\ various\ mini-quests\ scattered\ across\ the\ main\ map\ world\r\n
@@ -23,4 +25,4 @@ comment8.text=\r\n\ Check\ if\ a\ rectangle\ (character's\ feet\ area)\ collides
 comment9.params=
 comment9.target=void\ checkWorldTransition()
 comment9.text=\r\n\ Check\ if\ player\ should\ transition\ to\ LabWorld,\ LabFizicaWorld,\ or\ LabBiologyWorld\r\n
-numComments=10
+numComments=11

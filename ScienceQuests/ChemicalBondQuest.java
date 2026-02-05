@@ -23,6 +23,7 @@ public class ChemicalBondQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean tutorialActive = false;
     
     public ChemicalBondQuest(int mapX, int mapY)
     {
@@ -88,16 +89,38 @@ public class ChemicalBondQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                animTick = 0;
-                bondsFormed = 0;
-                currentBondIndex = 0;
-                bondHoldTime = 0;
-                timeRemaining = 600;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        animTick = 0;
+                        bondsFormed = 0;
+                        currentBondIndex = 0;
+                        bondHoldTime = 0;
+                        timeRemaining = 600;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -110,6 +133,7 @@ public class ChemicalBondQuest extends Actor
             if (bondFormTick > 0) bondFormTick--;
             
             checkBondFormation();
+            if (!questActive) return;
             
             timeRemaining--;
             updateDisplay();
@@ -120,10 +144,16 @@ public class ChemicalBondQuest extends Actor
             }
         }
     }
+
+    public boolean isCompleted()
+    {
+        return completed;
+    }
     
     private void checkBondFormation()
     {
-        String required = requiredBonds[currentBondIndex];
+        int safeIndex = Math.min(currentBondIndex, requiredBonds.length - 1);
+        String required = requiredBonds[safeIndex];
         String[] keys = required.split("\\+");
         
         boolean allPressed = true;
@@ -330,6 +360,37 @@ public class ChemicalBondQuest extends Actor
             getWorld().removeObject(myOverlay);
             myOverlay = null;
         }
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(120, 255, 170, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: LEGĂTURI", 135, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Ține simultan cele două săgeți afișate.", 85, 70);
+        img.drawString("Scop: " + targetBonds + " legături formate.", 125, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        myOverlay.setImage(img);
     }
 
     private void initBasePosition()

@@ -161,6 +161,11 @@ public class RapidFireQuest extends Actor
             }
         }
     }
+
+    public boolean isCompleted()
+    {
+        return completed;
+    }
     
     private void updateDisplay()
     {

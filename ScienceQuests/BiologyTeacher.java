@@ -2,6 +2,7 @@ import greenfoot.*;
 
 /**
  * BiologyTeacher - Teacher in the biology lab who reacts when lab is destroyed
+ * Also gives initial NPC quizzes before mini-quests
  */
 public class BiologyTeacher extends Actor implements NPC
 {
@@ -10,6 +11,7 @@ public class BiologyTeacher extends Actor implements NPC
     private boolean fKeyPressed = false;
     private boolean hasShownPanicDialogue = false;
     private LabBiologyWorld labWorld;
+    private static final int NPC_QUIZ_LIMIT_LAB = 3; // Number of quizzes in lab
     
     public BiologyTeacher()
     {
@@ -65,15 +67,12 @@ public class BiologyTeacher extends Actor implements NPC
     }
     
     /**
-     * Check for F key interaction to restore the lab
+     * Check for interaction (auto-trigger when nearby)
      */
     private void checkDialogueInteraction()
     {
         World world = getWorld();
         if (world == null || labWorld == null) return;
-        
-        // Only allow interaction if lab is destroyed
-        if (!labWorld.isDestroyed()) return;
         
         Actor player = getPlayer();
         if (player != null)
@@ -82,19 +81,80 @@ public class BiologyTeacher extends Actor implements NPC
             int dy = player.getY() - getY();
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < INTERACTION_DISTANCE && Greenfoot.isKeyDown("f"))
+            // Auto-trigger dialogue when player is nearby (no F key needed)
+            if (distance < INTERACTION_DISTANCE)
             {
-                if (!fKeyPressed)
+                DialogueManager manager = DialogueManager.getInstance();
+                if (!manager.isDialogueActive() && !fKeyPressed)
                 {
                     fKeyPressed = true;
-                    initiateRepairDialogue();
+                    // Always use quiz dialogue; lab repair is handled by LabBiologyWorld
+                    initiateNPCDialogue();
                 }
             }
-            else if (!Greenfoot.isKeyDown("f"))
+            else
             {
+                // Reset when player moves away
                 fKeyPressed = false;
             }
         }
+    }
+    
+    /**
+     * Show initial NPC quiz dialogue (before lab is destroyed)
+     */
+    private void initiateNPCDialogue()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        
+        DialogueManager manager = DialogueManager.getInstance();
+        
+        if (manager.isDialogueActive()) return;
+        
+        GameState gameState = GameState.getInstance();
+        int total = gameState.getLabBioQuizTotal();
+        int correct = gameState.getLabBioQuizCorrect();
+
+        // If quiz limit reached, show completion message
+        if (total >= 5)
+        {
+            String doneText = "Ai răspuns la toate cele 5 întrebări!\n---\n" +
+                "Ai " + correct + "/5 corecte.\n---\n" +
+                "Continuă cu mini‑quest‑urile din laborator.";
+            DialogueBox done = new DialogueBox(doneText, getIconPath(), true);
+            done.setTypewriterSpeed(2);
+            manager.showDialogue(done, world, this);
+            return;
+        }
+
+        // Greeting dialogue
+        String playerName = PlayerData.getPlayerName();
+        String greetText = "Salut " + playerName + "! Sunt profesorul de biologie.\n---\n" +
+            "Întrebarea " + (total + 1) + " din 5.\n" +
+            "Corecte: " + correct + "/5";
+        
+        DialogueBox greeting = new DialogueBox(greetText, getIconPath(), true);
+        greeting.setTypewriterSpeed(2);
+        
+        // Biology question
+        DialogueQuestion question = buildBiologyQuestion();
+        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+        questionBox.setTypewriterSpeed(2);
+        
+        // Set callback to track quiz result (for lab-specific tracking, not MainMap)
+        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+            gameState.recordLabBioNPCQuizResult(isCorrect);
+            DebugLog.log("Lab Biology NPC Quiz: " + gameState.getMainMapNPCCorrect() + " correct in MainMap");
+        });
+        
+        manager.queueDialogue(questionBox);
+        manager.showDialogue(greeting, world, this);
+    }
+    
+    private DialogueQuestion buildBiologyQuestion()
+    {
+        return GameState.getInstance().getRandomQuestion("biology", QuestionPools.getBiologyQuestions());
     }
     
     /**
@@ -137,15 +197,6 @@ public class BiologyTeacher extends Actor implements NPC
         manager.queueDialogue(questionBox);
         manager.showDialogue(instruction, world, this);
     }
-    
-    private DialogueQuestion buildBiologyQuestion()
-    {
-        return GameState.getInstance().getRandomQuestion("biology", QuestionPools.getBiologyQuestions());
-    }
-    
-    /**
-     * Check player proximity for interaction prompt
-     */
     private void checkPlayerProximity()
     {
         World world = getWorld();

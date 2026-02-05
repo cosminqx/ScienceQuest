@@ -9,6 +9,7 @@ public class Teacher extends Actor implements NPC
     private TeacherInteractionDisplay interactionDisplay;
     private static final int INTERACTION_DISTANCE = 80; // Distance in pixels to trigger interaction
     private boolean fKeyPressed = false; // Track F key state to prevent repeated presses
+    private int dialogueCooldown = 0;
     
     public Teacher()
     {
@@ -38,12 +39,16 @@ public class Teacher extends Actor implements NPC
      */
     public void act()
     {
+        if (dialogueCooldown > 0)
+        {
+            dialogueCooldown--;
+        }
         checkPlayerProximity();
         checkDialogueInteraction();
     }
     
     /**
-     * Check if player presses F key nearby to initiate dialogue
+     * Check if player is nearby to initiate dialogue (auto-trigger when close)
      */
     private void checkDialogueInteraction()
     {
@@ -68,28 +73,35 @@ public class Teacher extends Actor implements NPC
             int dy = player.getY() - getY();
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Debug output
-            boolean fKeyDown = Greenfoot.isKeyDown("f");
+            // Auto-trigger dialogue when player is nearby (no F key needed)
             if (distance < INTERACTION_DISTANCE)
             {
-                DebugLog.log("DEBUG: Player in range. Distance: " + distance + ", F key: " + fKeyDown);
-            }
-            
-            // Check if player is close enough and F key is pressed
-            if (distance < INTERACTION_DISTANCE && fKeyDown)
-            {
-                // Prevent repeated dialogue triggers from holding F key
-                if (!fKeyPressed)
+                // Check if dialogue is not already active
+                DialogueManager manager = DialogueManager.getInstance();
+                if (manager.isDialogueActive())
                 {
-                    DebugLog.log("DEBUG: F key pressed, initiating dialogue");
+                    return;
+                }
+
+                if (fKeyPressed)
+                {
+                    // Dialogue closed - allow next question after short cooldown
+                    fKeyPressed = false;
+                    dialogueCooldown = 15;
+                    return;
+                }
+
+                if (dialogueCooldown == 0)
+                {
                     fKeyPressed = true;
                     initiateDialogue();
                 }
             }
-            else if (!fKeyDown)
+            else
             {
-                // Reset when F key is released
+                // Reset when player moves away
                 fKeyPressed = false;
+                dialogueCooldown = 0;
             }
         }
     }
@@ -111,9 +123,25 @@ public class Teacher extends Actor implements NPC
             return;
         }
         
+        GameState gameState = GameState.getInstance();
+        
+        // Check if MainMapWorld NPC quizzes are exhausted
+        if (!gameState.hasMainMapNPCQuizzesRemaining())
+        {
+            // All 5 quizzes done - show completion dialogue
+            String completionText = gameState.areMainMapQuestsUnlocked() 
+                ? "Bravo! Ai răspuns corect la " + gameState.getMainMapNPCCorrect() + "/5 întrebări.\n---\nAcum mergi la Laboratorul de Biologie (săgeți de jos).\n---\nAcolo vei rezolva mai multe puzzle-uri!"
+                : "Ai terminat toate 5 întrebări! Continuă cu celelalte activități pe hartă.";
+            
+            DialogueBox completion = new DialogueBox(completionText, getIconPath(), true);
+            completion.setTypewriterSpeed(2);
+            manager.showDialogue(completion, world, this);
+            return;
+        }
+        
         // Create and show the dialogue
         String playerName = PlayerData.getPlayerName();
-        String dialogueText = getDialogueText(playerName);
+        String dialogueText = getDialogueText(playerName, gameState);
         String iconPath = getIconPath();
         
         // Greeting dialogue
@@ -124,6 +152,20 @@ public class Teacher extends Actor implements NPC
         DialogueQuestion question = buildScienceQuestion();
         DialogueBox questionBox = new DialogueBox(question, iconPath, true);
         questionBox.setTypewriterSpeed(2);
+        
+        // Set callback to record attempt with correctness flag
+        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+            GameState gs = GameState.getInstance();
+            gs.recordMainMapNPCQuizResult(isCorrect);
+            int total = gs.getMainMapNPCProgress();
+            int correct = gs.getMainMapNPCCorrect();
+            DebugLog.log("MainMap NPC Quiz Result: " + correct + "/" + total + " correct");
+            if (gs.areMainMapQuestsUnlocked())
+            {
+                DebugLog.log("QUESTS UNLOCKED! Correct: " + correct + "/5");
+            }
+        });
+        
         manager.queueDialogue(questionBox);
         
         manager.showDialogue(dialogue, world, this);
@@ -186,11 +228,41 @@ public class Teacher extends Actor implements NPC
     @Override
     public String getDialogueText(String playerName)
     {
-        return "Salut " + playerName + "!\n" +
+        GameState gameState = GameState.getInstance();
+        int correct = gameState.getMainMapNPCCorrect();
+        int total = gameState.getMainMapNPCProgress();
+        boolean unlocked = gameState.areMainMapQuestsUnlocked();
+        
+        String progressText = "Quiz-ul " + (total + 1) + " din 5";
+        String unlockStatus = unlocked 
+            ? "✓ Mini-quest-urile sunt DEZBLOCATE!" 
+            : "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+        
+        return "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
             "---\n" +
-            "Bine ai venit la Science Quests!\n" +
+            "Iată o întrebare de știință pentru tine:\n" +
+            progressText + " (" + correct + " corecte)\n" +
             "---\n" +
-            "Simte-te liber să explorezi și să înveți.";
+            unlockStatus;
+    }
+    
+    private String getDialogueText(String playerName, GameState gameState)
+    {
+        int correct = gameState.getMainMapNPCCorrect();
+        int total = gameState.getMainMapNPCProgress();
+        boolean unlocked = gameState.areMainMapQuestsUnlocked();
+        
+        String progressText = "Quiz-ul " + (total + 1) + " din 5";
+        String unlockStatus = unlocked 
+            ? "✓ Mini-quest-urile sunt DEZBLOCATE!" 
+            : "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+        
+        return "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
+            "---\n" +
+            "Iată o întrebare de știință pentru tine:\n" +
+            progressText + " (" + correct + " corecte)\n" +
+            "---\n" +
+            unlockStatus;
     }
     
     /**

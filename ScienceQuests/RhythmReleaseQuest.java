@@ -29,6 +29,7 @@ public class RhythmReleaseQuest extends Actor
     private int floatTick = 0;
     private boolean startKeyDown = false;
     private boolean spaceDown = false;
+    private boolean tutorialActive = false;
     
     public RhythmReleaseQuest(int mapX, int mapY)
     {
@@ -94,18 +95,40 @@ public class RhythmReleaseQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                hitCount = 0;
-                totalScore = 0;
-                combo = 0;
-                indicatorSpeed = 2;
-                successZoneWidth = 50;
-                animTick = 0;
-                spaceDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        hitCount = 0;
+                        totalScore = 0;
+                        combo = 0;
+                        indicatorSpeed = 2;
+                        successZoneWidth = 50;
+                        animTick = 0;
+                        spaceDown = false;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -194,6 +217,11 @@ public class RhythmReleaseQuest extends Actor
             
             updateDisplay();
         }
+    }
+
+    public boolean isCompleted()
+    {
+        return completed;
     }
     
     private void updateDisplay()
@@ -377,6 +405,37 @@ public class RhythmReleaseQuest extends Actor
             getWorld().removeObject(myOverlay);
             myOverlay = null;
         }
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 120, 120, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: ELIBERARE PE RITM", 60, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă SPATIU când indicatorul intră în zona verde.", 40, 70);
+        img.drawString("Scop: " + targetHits + " reușite.", 160, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        myOverlay.setImage(img);
     }
 
     private void initBasePosition()

@@ -43,6 +43,7 @@ public class DirectionDodgeQuest extends Actor
     private int floatTick = 0;
     private boolean startKeyDown = false;
     private boolean anyArrowDown = false;
+    private boolean tutorialActive = false;
     
     private void createImage()
     {
@@ -101,24 +102,46 @@ public class DirectionDodgeQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                score = 0;
-                combo = 0;
-                maxCombo = 0;
-                arrowsCaught = 0;
-                arrowsMissed = 0;
-                difficulty = 1;
-                spawnTimer = 0;
-                spawnDelay = 80;
-                currentArrow = null;
-                arrowAppearTick = 0;
-                arrowGrowth = 0;
-                animTick = 0;
-                anyArrowDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        score = 0;
+                        combo = 0;
+                        maxCombo = 0;
+                        arrowsCaught = 0;
+                        arrowsMissed = 0;
+                        difficulty = 1;
+                        spawnTimer = 0;
+                        spawnDelay = 80;
+                        currentArrow = null;
+                        arrowAppearTick = 0;
+                        arrowGrowth = 0;
+                        animTick = 0;
+                        anyArrowDown = false;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -152,6 +175,7 @@ public class DirectionDodgeQuest extends Actor
             }
             
             checkInput();
+            if (!questActive) return;
             
             if (arrowsCaught >= targetArrows)
             {
@@ -160,6 +184,11 @@ public class DirectionDodgeQuest extends Actor
             
             updateDisplay();
         }
+    }
+
+    public boolean isCompleted()
+    {
+        return completed;
     }
     
     private void spawnNewArrow()
@@ -185,19 +214,29 @@ public class DirectionDodgeQuest extends Actor
         else if (currentArrow.equals("left") && left) keyPressed = true;
         else if (currentArrow.equals("right") && right) keyPressed = true;
         
-        if (keyPressed && !anyArrowDown && arrowAppearTick >= catchZoneStart && arrowAppearTick <= catchZoneEnd)
+        if (keyPressed && !anyArrowDown)
         {
-            int timeInZone = arrowAppearTick - catchZoneStart;
-            int centerOffset = catchZoneSize / 2;
-            int distanceFromCenter = Math.abs(timeInZone - centerOffset);
-            int earnedPoints = Math.max(1, 3 - (distanceFromCenter / 5));
+            boolean inCatch = arrowAppearTick >= catchZoneStart && arrowAppearTick <= catchZoneEnd;
+            int earnedPoints;
+            if (inCatch)
+            {
+                int timeInZone = arrowAppearTick - catchZoneStart;
+                int centerOffset = catchZoneSize / 2;
+                int distanceFromCenter = Math.abs(timeInZone - centerOffset);
+                earnedPoints = Math.max(2, 4 - (distanceFromCenter / 5));
+            }
+            else
+            {
+                earnedPoints = 1;
+                combo = 0;
+            }
             
             score += earnedPoints;
-            combo++;
+            if (inCatch) combo++;
             if (combo > maxCombo) maxCombo = combo;
             arrowsCaught++;
             feedbackTick = 12;
-            lastWasHit = true;
+            lastWasHit = inCatch;
             currentArrow = null;
         }
         
@@ -243,8 +282,6 @@ public class DirectionDodgeQuest extends Actor
         {
             drawQuestScreen(img, panelW, panelH);
         }
-        
-        setImage(img);
         myOverlay.setImage(img);
     }
     
@@ -298,7 +335,7 @@ public class DirectionDodgeQuest extends Actor
         int barW = 450;
         int barH = 32;
         int barX = px + 45;
-        int barY = py + 210;
+        int barY = py + 170;
         
         img.setColor(new Color(60, 60, 80, 200));
         img.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
@@ -317,9 +354,9 @@ public class DirectionDodgeQuest extends Actor
         
         // Arrow display area
         int arrowAreaX = px + 45;
-        int arrowAreaY = py + 280;
+        int arrowAreaY = py + 210;
         int arrowAreaW = 450;
-        int arrowAreaH = 70;
+        int arrowAreaH = 60;
         
         img.setColor(new Color(40, 50, 100, 100));
         img.fillRect(arrowAreaX, arrowAreaY, arrowAreaW, arrowAreaH);
@@ -347,7 +384,8 @@ public class DirectionDodgeQuest extends Actor
             else if (inCatchZone)
             {
                 int zoneFlash = 50 + (int)(50 * Math.sin(animTick * 0.2));
-                img.setColor(new Color(100, 255, 150, 200 + zoneFlash));
+                int zoneAlpha = Math.min(255, 200 + zoneFlash);
+                img.setColor(new Color(100, 255, 150, zoneAlpha));
             }
             else
             {
@@ -453,6 +491,7 @@ public class DirectionDodgeQuest extends Actor
         questActive = false;
         resultScreenTick = 0;
         resultDisplayTicks = 120;
+        GameState.getInstance().setMiniQuestActive(false);
         
         World world = getWorld();
         if (world == null || myOverlay == null) return;
@@ -505,6 +544,37 @@ public class DirectionDodgeQuest extends Actor
             getWorld().removeObject(myOverlay);
             myOverlay = null;
         }
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(120, 170, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: DIRECȚII", 130, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă săgeata afișată când intră în zona verde.", 35, 70);
+        img.drawString("Scop: prinde " + targetArrows + " săgeți.", 140, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        myOverlay.setImage(img);
     }
 
     private void initBasePosition()

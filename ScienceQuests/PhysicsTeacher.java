@@ -65,15 +65,12 @@ public class PhysicsTeacher extends Actor implements NPC
     }
     
     /**
-     * Check for F key interaction to fix the lab
+     * Check for interaction (auto-trigger when nearby)
      */
     private void checkDialogueInteraction()
     {
         World world = getWorld();
         if (world == null || labWorld == null) return;
-        
-        // Only allow interaction if lab is broken
-        if (!labWorld.isBroken()) return;
         
         Actor player = getPlayer();
         if (player != null)
@@ -82,15 +79,16 @@ public class PhysicsTeacher extends Actor implements NPC
             int dy = player.getY() - getY();
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < INTERACTION_DISTANCE && Greenfoot.isKeyDown("f"))
+            if (distance < INTERACTION_DISTANCE)
             {
-                if (!fKeyPressed)
+                DialogueManager manager = DialogueManager.getInstance();
+                if (!manager.isDialogueActive() && !fKeyPressed)
                 {
                     fKeyPressed = true;
                     initiateRepairDialogue();
                 }
             }
-            else if (!Greenfoot.isKeyDown("f"))
+            else
             {
                 fKeyPressed = false;
             }
@@ -98,7 +96,7 @@ public class PhysicsTeacher extends Actor implements NPC
     }
     
     /**
-     * Show repair question dialogue
+     * Show physics lab quiz dialogue
      */
     private void initiateRepairDialogue()
     {
@@ -109,8 +107,23 @@ public class PhysicsTeacher extends Actor implements NPC
         
         if (manager.isDialogueActive()) return;
         
-        // Repair instruction dialogue
-        String repairText = "Pentru a repara echipamentul, trebuie să răspunzi corect la o întrebare!";
+        GameState state = GameState.getInstance();
+        int total = state.getLabPhysQuizTotal();
+        int correct = state.getLabPhysQuizCorrect();
+
+        if (total >= 5)
+        {
+            String doneText = "Ai terminat toate cele 5 întrebări.\n---\n" +
+                "Corecte: " + correct + "/5.\n---\n" +
+                "Continuă cu mini‑quest‑urile.";
+            DialogueBox done = new DialogueBox(doneText, getIconPath(), true);
+            done.setTypewriterSpeed(2);
+            manager.showDialogue(done, world, this);
+            return;
+        }
+
+        String repairText = "Întrebarea " + (total + 1) + " din 5.\n---\n" +
+            "Corecte: " + correct + "/5.";
         DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
         instruction.setTypewriterSpeed(2);
         
@@ -119,19 +132,9 @@ public class PhysicsTeacher extends Actor implements NPC
         DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
         questionBox.setTypewriterSpeed(2);
         
-        // Add callback to fix lab when answered correctly
-        questionBox.setOnCorrectAnswerCallback(() -> {
-            if (labWorld != null)
-            {
-                labWorld.repairLab();
-                
-                // Mark physics lab as completed and award badge
-                GameState state = GameState.getInstance();
-                state.completeLab(LabType.PHYSICS);
-                state.awardBadge("physics_expert");
-                state.addXp(25); // XP for lab repair
-                state.addXp(50); // Bonus XP for completing the lab
-            }
+        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+            GameState gs = GameState.getInstance();
+            gs.recordLabPhysNPCQuizResult(isCorrect);
         });
         
         manager.queueDialogue(questionBox);

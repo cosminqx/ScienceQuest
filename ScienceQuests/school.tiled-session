@@ -12,12 +12,16 @@
             "dynamicWrapping": true,
             "scaleInDock": 1
         },
+        "images/48px/CoolSchool_Tileset.tsx": {
+            "scaleInDock": 1
+        },
         "images/48px/School_Tileset.tsx": {
             "dynamicWrapping": false
         }
     },
     "last.externalTilesetPath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
     "last.imagePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images",
+    "map.lastUsedFormat": "json",
     "openFiles": [
     ],
     "project": "school.tiled-project",

@@ -45,15 +45,12 @@ public class BiologyAssistant extends Actor implements NPC
     }
     
     /**
-     * Check for F key interaction to restore the lab
+     * Check for interaction (auto-trigger when nearby)
      */
     private void checkDialogueInteraction()
     {
         World world = getWorld();
         if (world == null || labWorld == null) return;
-        
-        // Only allow interaction if lab is destroyed
-        if (!labWorld.isDestroyed()) return;
         
         Actor player = getPlayer();
         if (player != null)
@@ -62,15 +59,16 @@ public class BiologyAssistant extends Actor implements NPC
             int dy = player.getY() - getY();
             double distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < INTERACTION_DISTANCE && Greenfoot.isKeyDown("f"))
+            if (distance < INTERACTION_DISTANCE)
             {
-                if (!fKeyPressed)
+                DialogueManager manager = DialogueManager.getInstance();
+                if (!manager.isDialogueActive() && !fKeyPressed)
                 {
                     fKeyPressed = true;
                     initiateRepairDialogue();
                 }
             }
-            else if (!Greenfoot.isKeyDown("f"))
+            else
             {
                 fKeyPressed = false;
             }
@@ -78,7 +76,7 @@ public class BiologyAssistant extends Actor implements NPC
     }
     
     /**
-     * Show repair question dialogue
+     * Show lab quiz dialogue (no repair on single question)
      */
     private void initiateRepairDialogue()
     {
@@ -89,8 +87,23 @@ public class BiologyAssistant extends Actor implements NPC
         
         if (manager.isDialogueActive()) return;
         
-        // Repair instruction dialogue
-        String repairText = "Eu sunt asistentul de laborator. Pot să te ajut să restaurezi laboratorul!\n---\nRăspunde corect la întrebarea mea de biologie.";
+        GameState state = GameState.getInstance();
+        int total = state.getLabBioQuizTotal();
+        int correct = state.getLabBioQuizCorrect();
+
+        if (total >= 5)
+        {
+            String doneText = "Ai terminat toate cele 5 întrebări.\n---\n" +
+                "Corecte: " + correct + "/5.\n---\n" +
+                "Continuă cu mini‑quest‑urile.";
+            DialogueBox done = new DialogueBox(doneText, getIconPath(), true);
+            done.setTypewriterSpeed(2);
+            manager.showDialogue(done, world, this);
+            return;
+        }
+        
+        String repairText = "Întrebarea " + (total + 1) + " din 5.\n---\n" +
+            "Corecte: " + correct + "/5.";
         DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
         instruction.setTypewriterSpeed(2);
         
@@ -99,22 +112,9 @@ public class BiologyAssistant extends Actor implements NPC
         DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
         questionBox.setTypewriterSpeed(2);
         
-        // Add callback to fix lab when answered correctly
-        questionBox.setOnCorrectAnswerCallback(() -> {
-            if (labWorld != null)
-            {
-                labWorld.repairLab();
-                
-                // Mark biology lab as completed and award badge (if not already done)
-                GameState state = GameState.getInstance();
-                state.addXp(25); // XP for lab repair
-                if (!state.isLabCompleted(LabType.BIOLOGY))
-                {
-                    state.completeLab(LabType.BIOLOGY);
-                    state.awardBadge("biology_master");
-                    state.addXp(50); // Bonus XP for completing the lab
-                }
-            }
+        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+            GameState gs = GameState.getInstance();
+            gs.recordLabBioNPCQuizResult(isCorrect);
         });
         
         manager.queueDialogue(questionBox);

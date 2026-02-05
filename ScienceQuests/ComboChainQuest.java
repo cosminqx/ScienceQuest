@@ -8,7 +8,7 @@ public class ComboChainQuest extends Actor
     private int mapX, mapY;
     private int comboStep = 0;
     private String[] combos = {"up", "down", "left", "right"};
-    private String[] comboArrows = {"▲", "▼", "◀", "▶"};
+    private String[] comboArrows = {"↑", "↓", "←", "→"};
     private boolean spaceHeld = false;
     private int timeRemaining = 300;
     private boolean questActive = false;
@@ -22,6 +22,7 @@ public class ComboChainQuest extends Actor
     private int floatTick = 0;
     private boolean startKeyDown = false;
     private boolean comboKeyDown = false;
+    private boolean tutorialActive = false;
     private OverlayLayer myOverlay = null;
     private int resultDisplayTicks = 0;
     
@@ -89,16 +90,39 @@ public class ComboChainQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                comboStep = 0;
-                animTick = 0;
-                successTick = 0;
-                failTick = 0;
-                comboKeyDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        comboStep = 0;
+                        animTick = 0;
+                        successTick = 0;
+                        failTick = 0;
+                        comboKeyDown = false;
+                        timeRemaining = 300;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -121,6 +145,7 @@ public class ComboChainQuest extends Actor
                 }
             }
             comboKeyDown = comboPressed;
+            if (!questActive) return;
             
             timeRemaining--;
             updateDisplay();
@@ -130,6 +155,11 @@ public class ComboChainQuest extends Actor
                 finishQuest(false);
             }
         }
+    }
+
+    public boolean isCompleted()
+    {
+        return completed;
     }
     
     private void updateDisplay()
@@ -183,7 +213,8 @@ public class ComboChainQuest extends Actor
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
         Color instrColor = spaceHeld ? new Color(100, 255, 100) : new Color(255, 200, 100);
         img.setColor(instrColor);
-        img.drawString("SPATIU + " + comboArrows[comboStep], px + 130, py + 130);
+        int safeStep = Math.min(comboStep, comboArrows.length - 1);
+        img.drawString("SPATIU + " + comboArrows[safeStep], px + 130, py + 130);
 
         // Combo step indicators with glow
         for (int i = 0; i < combos.length; i++)
@@ -229,7 +260,6 @@ public class ComboChainQuest extends Actor
         img.setColor(new Color(100, 200, 255));
         img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
 
-        setImage(img);
         myOverlay.setImage(img);
     }
     
@@ -293,6 +323,37 @@ public class ComboChainQuest extends Actor
             getWorld().removeObject(myOverlay);
             myOverlay = null;
         }
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(100, 170, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: COMBO", 145, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Ține SPATIU și apasă săgeata indicată.", 85, 70);
+        img.drawString("Scop: completează toate combo‑urile.", 105, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        myOverlay.setImage(img);
     }
 
     private void initBasePosition()

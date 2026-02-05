@@ -190,6 +190,11 @@ public class DoubleTapSprintQuest extends Actor
             }
         }
     }
+
+    public boolean isCompleted()
+    {
+        return completed;
+    }
     
     private void checkInput()
     {
@@ -277,7 +282,6 @@ public class DoubleTapSprintQuest extends Actor
             drawQuestScreen(img, panelW, panelH);
         }
         
-        setImage(img);
         myOverlay.setImage(img);
     }
     
@@ -308,7 +312,7 @@ public class DoubleTapSprintQuest extends Actor
         // Title
         img.setColor(new Color(255, 180, 80));
         img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("SPRINT CU DUBLĂ APĂSARE", px + 20, py + 50);
+        drawCenteredString(img, "SPRINT CU DUBLĂ APĂSARE", px + panelW / 2, py + 45, 28);
         
         // Status display
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
@@ -356,7 +360,7 @@ public class DoubleTapSprintQuest extends Actor
         // Double-tap window indicator
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
         img.setColor(new Color(180, 180, 200, 200));
-        img.drawString("INSTRUCȚIUNI: apasă SPATIU de două ori rapid", px + 35, py + 305);
+        drawCenteredString(img, "INSTRUCȚIUNI: apasă SPATIU de două ori rapid", px + panelW / 2, py + 300, 16);
         
         // Draw particles
         for (Particle p : particles)
@@ -389,7 +393,7 @@ public class DoubleTapSprintQuest extends Actor
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 36));
         String resultText = success ? "SUCCES!" : "COMPLET!";
-        img.drawString(resultText, px + 70, py + 60);
+        drawCenteredString(img, resultText, px + panelW / 2, py + 60, 36);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
@@ -398,7 +402,7 @@ public class DoubleTapSprintQuest extends Actor
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
-        img.drawString("Provocare de sprint completă!", px + 20, py + 240);
+        drawCenteredString(img, "Provocare de sprint completă!", px + panelW / 2, py + 235, 16);
     }
 
     private void showTutorial()
@@ -439,6 +443,7 @@ public class DoubleTapSprintQuest extends Actor
         questActive = false;
         resultScreenTick = 0;
         resultDisplayTicks = 120;
+        GameState.getInstance().setMiniQuestActive(false);
         
         World world = getWorld();
         if (world == null || myOverlay == null) return;
@@ -480,6 +485,12 @@ public class DoubleTapSprintQuest extends Actor
         setImage(transparent);
         
         myOverlay.setImage(img);
+    }
+
+    private void drawCenteredString(GreenfootImage img, String str, int centerX, int y, int size)
+    {
+        int strWidth = size * str.length() / 2;
+        img.drawString(str, centerX - strWidth / 2, y + size / 4);
     }
     
     private void clearOverlay()

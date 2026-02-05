@@ -773,6 +773,9 @@ public class TiledMap
     {
         int layerPos = json.indexOf("\"name\":\"Collision\"");
         if (layerPos == -1) {
+            layerPos = json.indexOf("\"name\":\"Object Layer 1\"");
+        }
+        if (layerPos == -1) {
             DebugLog.log("No Collision object layer found in TMJ");
             return;
         }

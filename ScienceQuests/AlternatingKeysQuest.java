@@ -163,6 +163,11 @@ public class AlternatingKeysQuest extends Actor
             }
         }
     }
+
+    public boolean isCompleted()
+    {
+        return completed;
+    }
     
     private void checkInput()
     {
@@ -225,8 +230,6 @@ public class AlternatingKeysQuest extends Actor
         {
             drawQuestScreen(img, panelW, panelH);
         }
-        
-        setImage(img);
         myOverlay.setImage(img);
     }
     
@@ -299,7 +302,7 @@ public class AlternatingKeysQuest extends Actor
         if (expectedKey.equals("left"))
         {
             leftPulse = (int)(20 * Math.sin(animTick * 0.15));
-            leftAlpha = 200 + leftPulse;
+            leftAlpha = Math.min(255, 200 + leftPulse);
         }
         if (correctFeedbackTick > 0 && lastCorrectKey.equals("left"))
         {
@@ -308,7 +311,7 @@ public class AlternatingKeysQuest extends Actor
         
         img.setColor(new Color(100, 255, 150, leftAlpha));
         img.setFont(new greenfoot.Font("Arial", true, false, 40));
-        img.drawString("◀", leftX - 20, indicatorY);
+        img.drawString("←", leftX - 20, indicatorY);
         if (expectedKey.equals("left"))
         {
             img.setColor(new Color(100, 255, 150, 100 + leftPulse));
@@ -321,7 +324,7 @@ public class AlternatingKeysQuest extends Actor
         if (expectedKey.equals("right"))
         {
             rightPulse = (int)(20 * Math.sin(animTick * 0.15));
-            rightAlpha = 200 + rightPulse;
+            rightAlpha = Math.min(255, 200 + rightPulse);
         }
         if (correctFeedbackTick > 0 && lastCorrectKey.equals("right"))
         {
@@ -329,7 +332,7 @@ public class AlternatingKeysQuest extends Actor
         }
         
         img.setColor(new Color(150, 200, 255, rightAlpha));
-        img.drawString("▶", rightX, indicatorY);
+        img.drawString("→", rightX, indicatorY);
         if (expectedKey.equals("right"))
         {
             img.setColor(new Color(150, 200, 255, 100 + rightPulse));
@@ -415,6 +418,7 @@ public class AlternatingKeysQuest extends Actor
         questActive = false;
         resultScreenTick = 0;
         resultDisplayTicks = 120;
+        GameState.getInstance().setMiniQuestActive(false);
         
         World world = getWorld();
         if (world == null || myOverlay == null) return;

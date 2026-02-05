@@ -161,6 +161,7 @@ public class KeySequenceQuest extends Actor
         {
             animTick++;
             checkInput();
+            if (!questActive) return;
             timeRemaining--;
             updateDisplay();
 
@@ -169,6 +170,11 @@ public class KeySequenceQuest extends Actor
                 finishQuest(false);
             }
         }
+    }
+
+    public boolean isCompleted()
+    {
+        return completed;
     }
     
     private void checkInput()

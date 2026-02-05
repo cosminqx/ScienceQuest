@@ -18,10 +18,17 @@ public class MainMapWorld extends World implements CollisionWorld
     private DialogueManager dialogueManager; // For managing dialogue interactions
     private SettingsButton settingsButton; // Settings icon in top-right
     private ExperienceBar experienceBar; // XP bar in top-left
+    private RapidFireQuest rapidFireQuest;
+    private KeySequenceQuest keySequenceQuest;
+    private AlternatingKeysQuest alternatingKeysQuest;
+    private DoubleTapSprintQuest doubleTapSprintQuest;
+    private ComboChainQuest comboChainQuest;
+    private DirectionDodgeQuest directionDodgeQuest;
 
     public MainMapWorld()
     {
-        super(768, 576, 1);
+        // Match world size to full map size (18x14 tiles at 48px)
+        super(864, 672, 1);
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
@@ -31,7 +38,7 @@ public class MainMapWorld extends World implements CollisionWorld
                      DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
                      RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
                      ChemicalBondQuest.class, DnaReplicationQuest.class, PendulumTimingQuest.class,
-                     Boy.class, Girl.class, Teacher.class);
+                 DirectionArrow.class, Boy.class, Girl.class, Teacher.class);
         
         FontManager.loadFonts();
         
@@ -64,6 +71,11 @@ public class MainMapWorld extends World implements CollisionWorld
             addObject(girl, getWidth()/2, getHeight()/2);
             character = girl;
         }
+        // Set character spawn position on the map
+        if (character != null)
+        {
+            character.setLocation(505, 155);
+        }
         
         // Add collision objects AFTER character so they render behind
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
@@ -78,6 +90,10 @@ public class MainMapWorld extends World implements CollisionWorld
         
         // Add mini-quests scattered across the map
         addMiniQuests();
+
+        // Exit hints for labs
+        addObject(new DirectionArrow("down", "LAB BIOLOGIE (ÎNCEPE AICI)"), 432, 620);
+        addObject(new DirectionArrow("left", "LAB FIZICĂ (după BIO)"), 70, 190);
     }
     
     /**
@@ -86,12 +102,19 @@ public class MainMapWorld extends World implements CollisionWorld
     private void addMiniQuests()
     {
         // Arcade-style quests scattered around the map
-        addObject(new RapidFireQuest(150, 200), 150, 200);           // Near spawn area
-        addObject(new KeySequenceQuest(400, 180), 400, 180);         // Right side
-        addObject(new AlternatingKeysQuest(600, 250), 600, 250);     // Far right
-        addObject(new DoubleTapSprintQuest(200, 400), 200, 400);     // Bottom left
-        addObject(new ComboChainQuest(500, 350), 500, 350);          // Center area
-        addObject(new DirectionDodgeQuest(650, 400), 650, 400);      // Bottom right
+        rapidFireQuest = new RapidFireQuest(150, 200);
+        keySequenceQuest = new KeySequenceQuest(400, 180);
+        alternatingKeysQuest = new AlternatingKeysQuest(600, 250);
+        doubleTapSprintQuest = new DoubleTapSprintQuest(200, 400);
+        comboChainQuest = new ComboChainQuest(500, 350);
+        directionDodgeQuest = new DirectionDodgeQuest(650, 400);
+
+        addObject(rapidFireQuest, 150, 200);           // Near spawn area
+        addObject(keySequenceQuest, 400, 180);         // Right side
+        addObject(alternatingKeysQuest, 600, 250);     // Far right
+        addObject(doubleTapSprintQuest, 200, 400);     // Bottom left
+        addObject(comboChainQuest, 500, 350);          // Center area
+        addObject(directionDodgeQuest, 650, 400);      // Bottom right
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
@@ -102,9 +125,26 @@ public class MainMapWorld extends World implements CollisionWorld
     {
         try
         {
-            tiledMap = new TiledMap("test-map-LayersFixed.tmj");
+            tiledMap = new TiledMap("images/classroom-new.json");
             tileSize = tiledMap.tileSize;
-            backgroundImage = tiledMap.getFullMapImage();
+            // Render layers in the specified order
+            String[] layerOrder = new String[] {
+                "Tile Layer 1",
+                "Obiecte",
+                "Tile Layer 2",
+                "Tile Layer 4",
+                "Object Layer 1" // collision layer (not rendered if not a tile layer)
+            };
+
+            backgroundImage = new GreenfootImage(tiledMap.mapW * tileSize, tiledMap.mapH * tileSize);
+            for (String layerName : layerOrder)
+            {
+                GreenfootImage layerImage = tiledMap.getLayerImage(layerName);
+                if (layerImage != null)
+                {
+                    backgroundImage.drawImage(layerImage, 0, 0);
+                }
+            }
             DebugLog.log("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
@@ -128,36 +168,23 @@ public class MainMapWorld extends World implements CollisionWorld
         // Process dialogue input (ENTER key to dismiss)
         dialogueManager.processInput();
         
-        // Update the camera position to keep the character centered
+        // Draw full map without scrolling
         if (character != null && character.getWorld() != null)
         {
-            // Calculate scroll position to center the character
-            scrollX = character.getX() - getWidth() / 2;
-            scrollY = character.getY() - getHeight() / 2;
-            
-            // Clamp scroll values to prevent viewing beyond the background
-            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
-            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-            
-            // Draw the background image with the scroll offset
+            scrollX = 0;
+            scrollY = 0;
             GreenfootImage worldImage = getBackground();
-            // Fill with solid color first to avoid StartWorld bleed-through
             worldImage.setColor(new Color(0, 0, 0));
             worldImage.fillRect(0, 0, getWidth(), getHeight());
-            // Draw map at scroll offset
             if (backgroundImage != null)
             {
-                worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
+                worldImage.drawImage(backgroundImage, 0, 0);
             }
             else
             {
                 DebugLog.log("WARNING: backgroundImage is null!");
             }
-            
-            // Update teacher position to stay static on map
             updateTeacherPosition();
-            
-            // Check for world transition
             checkWorldTransition();
         }
     }
@@ -169,10 +196,8 @@ public class MainMapWorld extends World implements CollisionWorld
     {
         if (teacher != null && teacher.getWorld() != null)
         {
-            int screenX = teacherMapX - scrollX;
-            int screenY = teacherMapY - scrollY;
-            teacher.setLocation(screenX, screenY);
-            teacherDisplay.setLocation(screenX, screenY);
+            teacher.setLocation(teacherMapX, teacherMapY);
+            teacherDisplay.setLocation(teacherMapX, teacherMapY);
         }
     }
     
@@ -183,24 +208,12 @@ public class MainMapWorld extends World implements CollisionWorld
      */
     public int screenToMapX(int screenX)
     {
-        // Update scroll first to ensure latest values
-        if (character != null && character.getWorld() != null)
-        {
-            scrollX = character.getX() - getWidth() / 2;
-            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
-        }
-        return screenX + scrollX;
+        return screenX;
     }
     
     public int screenToMapY(int screenY)
     {
-        // Update scroll first to ensure latest values
-        if (character != null && character.getWorld() != null)
-        {
-            scrollY = character.getY() - getHeight() / 2;
-            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-        }
-        return screenY + scrollY;
+        return screenY;
     }
     
     /**
@@ -238,6 +251,9 @@ public class MainMapWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null || backgroundImage == null) return;
+
+        GameState state = GameState.getInstance();
+        boolean canEnterLabs = state.areMainMapQuestsUnlocked() && areMainMapMiniQuestsComplete();
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
@@ -246,20 +262,38 @@ public class MainMapWorld extends World implements CollisionWorld
         // Transition to LabWorld (Chemistry) when reaching right edge
         if (mapX >= backgroundImage.getWidth() - 5)
         {
-            WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
+            if (canEnterLabs)
+            {
+                WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
+            }
         }
         
         // Transition to LabFizicaWorld when reaching left edge
         if (mapX <= 5)
         {
-            WorldNavigator.tryEnterLab(LabType.PHYSICS);
+            if (canEnterLabs)
+            {
+                WorldNavigator.tryEnterLab(LabType.PHYSICS);
+            }
         }
         
         // Transition to LabBiologyWorld when reaching bottom edge
         if (mapY >= backgroundImage.getHeight() - 5)
         {
-            WorldNavigator.tryEnterLab(LabType.BIOLOGY);
+            if (canEnterLabs)
+            {
+                WorldNavigator.tryEnterLab(LabType.BIOLOGY);
+            }
         }
+    }
+
+    private boolean areMainMapMiniQuestsComplete()
+    {
+        return rapidFireQuest != null && keySequenceQuest != null && alternatingKeysQuest != null
+            && doubleTapSprintQuest != null && comboChainQuest != null && directionDodgeQuest != null
+            && rapidFireQuest.isCompleted() && keySequenceQuest.isCompleted()
+            && alternatingKeysQuest.isCompleted() && doubleTapSprintQuest.isCompleted()
+            && comboChainQuest.isCompleted() && directionDodgeQuest.isCompleted();
     }
 }
 

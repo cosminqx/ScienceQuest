@@ -22,6 +22,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private int frameCounter = 0; // Frame counter for delayed trigger
     private int dialogueWaitCounter = 0; // Counter to wait after dialogue
     private boolean waitingForDialogue = false; // Waiting for dialogue to finish
+    private boolean miniQuestsAdded = false;
+    private boolean repairTriggered = false;
+    private DnaReplicationQuest dnaQuest;
+    private ChemicalBondQuest bondQuest;
+    private PrecisionHoldQuest precisionQuest;
     
     // Flicker animation state
     private boolean isAnimating = false;
@@ -39,8 +44,19 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Draw UI on top, then overlay, then characters and teacher
         setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
         
-        // Load biology lab map
-        loadMap("images/LabBiologyWorld-Normal.json");
+        // Load biology lab map (start destroyed until repaired, unless already completed)
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            loadMap("images/LabBiologyWorld-Normal.json");
+            isDestroyed = false;
+            hasTriggeredDestroySequence = true;
+        }
+        else
+        {
+            loadMap("images/LabBiologyWorld-destroyed.json");
+            isDestroyed = true;
+            hasTriggeredDestroySequence = true;
+        }
         
         // Retrieve player data
         Gender playerGender = PlayerData.getPlayerGender();
@@ -116,8 +132,12 @@ public class LabBiologyWorld extends World implements CollisionWorld
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
-        // Add mini-quests scattered across the map
-        addMiniQuests();
+        // Add mini-quests only after NPC quiz gate is completed
+        if (GameState.getInstance().isLabBioQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
@@ -130,9 +150,19 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private void addMiniQuests()
     {
         // Different biology-themed challenges at specified positions
-        addObject(new DnaReplicationQuest(77, 547), 77, 547);           // DNA base pairing
-        addObject(new ChemicalBondQuest(222, 547), 222, 547);           // Molecular bonding
-        addObject(new PrecisionHoldQuest(357, 547), 357, 547);          // Precision timing
+        dnaQuest = new DnaReplicationQuest(77, 547);
+        bondQuest = new ChemicalBondQuest(222, 547);
+        precisionQuest = new PrecisionHoldQuest(357, 547);
+
+        addObject(dnaQuest, 77, 547);           // DNA base pairing
+        addObject(bondQuest, 222, 547);         // Molecular bonding
+        addObject(precisionQuest, 357, 547);    // Precision timing
+    }
+
+    private boolean areLabMiniQuestsComplete()
+    {
+        return dnaQuest != null && bondQuest != null && precisionQuest != null
+            && dnaQuest.isCompleted() && bondQuest.isCompleted() && precisionQuest.isCompleted();
     }
     
     private void loadMap(String mapPath)
@@ -181,15 +211,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Process dialogue input so dialogues can advance/close
         DialogueManager.getInstance().processInput();
 
-        // Trigger destroy sequence after 60 frames (1 second)
-        if (!hasTriggeredDestroySequence)
-        {
-            frameCounter++;
-            if (frameCounter >= 60)
-            {
-                triggerInitialDestroySequence();
-            }
-        }
+        // No automatic destroy sequence; lab starts destroyed until repaired
         
         // Handle waiting for dialogue to finish before starting animation
         if (waitingForDialogue)
@@ -261,6 +283,27 @@ public class LabBiologyWorld extends World implements CollisionWorld
             }
         }
         
+        // Gate mini-quests until NPC quiz requirement is met
+        if (!miniQuestsAdded && GameState.getInstance().isLabBioQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
+
+        // Repair lab after mini-quests are completed
+        if (!repairTriggered && isDestroyed && miniQuestsAdded && areLabMiniQuestsComplete())
+        {
+            repairTriggered = true;
+            repairLab();
+            GameState state = GameState.getInstance();
+            if (!state.isLabCompleted(LabType.BIOLOGY))
+            {
+                state.completeLab(LabType.BIOLOGY);
+                state.awardBadge("biology_master");
+                state.addXp(50);
+            }
+        }
+
         // Check for world transitions
         checkWorldTransition();
     }
