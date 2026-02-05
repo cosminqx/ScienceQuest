@@ -26,6 +26,10 @@ public class KeyRainfallQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean upDown = false;
+    private boolean downDown = false;
+    private boolean leftDown = false;
+    private boolean rightDown = false;
     
     public KeyRainfallQuest(int mapX, int mapY)
     {
@@ -37,11 +41,25 @@ public class KeyRainfallQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -102,6 +120,15 @@ public class KeyRainfallQuest extends Actor
             // Difficulty progression - spawn rate increases
             currentSpawnRate = Math.max(15, baseSpawnRate - (catchCount * 3));
             
+            boolean upPressed = Greenfoot.isKeyDown("up");
+            boolean downPressed = Greenfoot.isKeyDown("down");
+            boolean leftPressed = Greenfoot.isKeyDown("left");
+            boolean rightPressed = Greenfoot.isKeyDown("right");
+            boolean upJust = upPressed && !upDown;
+            boolean downJust = downPressed && !downDown;
+            boolean leftJust = leftPressed && !leftDown;
+            boolean rightJust = rightPressed && !rightDown;
+            
             // Spawn new keys
             spawnTimer++;
             if (spawnTimer > currentSpawnRate && catchCount < targetCount)
@@ -117,7 +144,11 @@ public class KeyRainfallQuest extends Actor
                 key.fall();
                 
                 // Check if key was caught
-                if (Greenfoot.isKeyDown(key.keyName))
+                boolean caught = ("up".equals(key.keyName) && upJust) ||
+                                 ("down".equals(key.keyName) && downJust) ||
+                                 ("left".equals(key.keyName) && leftJust) ||
+                                 ("right".equals(key.keyName) && rightJust);
+                if (caught)
                 {
                     // Score based on how early caught (earlier = more points)
                     int catchZoneDist = Math.abs(key.y - 150);
@@ -142,6 +173,11 @@ public class KeyRainfallQuest extends Actor
                 }
             }
             
+            upDown = upPressed;
+            downDown = downPressed;
+            leftDown = leftPressed;
+            rightDown = rightPressed;
+            
             updateDisplay();
         }
     }
@@ -155,6 +191,11 @@ public class KeyRainfallQuest extends Actor
     
     private void updateDisplay()
     {
+            
+                upDown = Greenfoot.isKeyDown("up");
+                downDown = Greenfoot.isKeyDown("down");
+                leftDown = Greenfoot.isKeyDown("left");
+                rightDown = Greenfoot.isKeyDown("right");
         World world = getWorld();
         int w = world != null ? world.getWidth() : 800;
         int h = world != null ? world.getHeight() : 600;

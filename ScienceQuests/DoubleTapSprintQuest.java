@@ -28,6 +28,7 @@ public class DoubleTapSprintQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean spaceDown = false;
     
     private class Particle
     {
@@ -70,11 +71,25 @@ public class DoubleTapSprintQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -119,6 +134,7 @@ public class DoubleTapSprintQuest extends Actor
                 lastSpacePress = -100;
                 animTick = 0;
                 particles.clear();
+                spaceDown = false;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -154,7 +170,8 @@ public class DoubleTapSprintQuest extends Actor
     
     private void checkInput()
     {
-        if (Greenfoot.isKeyDown("space"))
+        boolean spacePressed = Greenfoot.isKeyDown("space");
+        if (spacePressed && !spaceDown)
         {
             int timeSinceLastPress = animTick - lastSpacePress;
             
@@ -173,6 +190,7 @@ public class DoubleTapSprintQuest extends Actor
                 emitParticles();
             }
         }
+        spaceDown = spacePressed;
     }
     
     private void emitParticles()

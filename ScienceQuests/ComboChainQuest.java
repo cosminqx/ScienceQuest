@@ -21,6 +21,7 @@ public class ComboChainQuest extends Actor
     private boolean baseYSet = false;
     private int floatTick = 0;
     private boolean startKeyDown = false;
+    private boolean comboKeyDown = false;
     private OverlayLayer myOverlay = null;
     private int resultDisplayTicks = 0;
     
@@ -34,11 +35,25 @@ public class ComboChainQuest extends Actor
     private void createImage()
     {
         GreenfootImage img = new GreenfootImage("exclamation-mark.png");
-        img.scale(32, 32);
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
         GreenfootImage marker = new GreenfootImage(48, 48);
         marker.setColor(new Color(0, 0, 0, 0));
         marker.fillRect(0, 0, 48, 48);
-        marker.drawImage(img, 8, 0);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
         marker.drawString("SPACE", 6, 46);
@@ -81,6 +96,7 @@ public class ComboChainQuest extends Actor
                 animTick = 0;
                 successTick = 0;
                 failTick = 0;
+                comboKeyDown = false;
                 GameState.getInstance().setMiniQuestActive(true);
                 interactionCooldown = 10;
             }
@@ -93,8 +109,9 @@ public class ComboChainQuest extends Actor
         {
             animTick++;
             spaceHeld = Greenfoot.isKeyDown("space");
+            boolean comboPressed = Greenfoot.isKeyDown(combos[comboStep]);
             
-            if (spaceHeld && Greenfoot.isKeyDown(combos[comboStep]))
+            if (spaceHeld && comboPressed && !comboKeyDown)
             {
                 successTick = 20;
                 comboStep++;
@@ -103,6 +120,7 @@ public class ComboChainQuest extends Actor
                     finishQuest(true);
                 }
             }
+            comboKeyDown = comboPressed;
             
             timeRemaining--;
             updateDisplay();

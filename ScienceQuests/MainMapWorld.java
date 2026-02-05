@@ -90,14 +90,8 @@ public class MainMapWorld extends World implements CollisionWorld
         addObject(new KeySequenceQuest(400, 180), 400, 180);         // Right side
         addObject(new AlternatingKeysQuest(600, 250), 600, 250);     // Far right
         addObject(new DoubleTapSprintQuest(200, 400), 200, 400);     // Bottom left
-        addObject(new DirectionDodgeQuest(450, 420), 450, 420);      // Bottom center
-        addObject(new ComboChainQuest(650, 400), 650, 400);          // Bottom right
-        addObject(new RhythmReleaseQuest(100, 600), 100, 600);       // Far bottom left
-        addObject(new PrecisionHoldQuest(350, 650), 350, 650);       // Far bottom center
-        addObject(new KeyRainfallQuest(600, 600), 600, 600);         // Far bottom right
-        
-        // Chemistry-themed quest
-        addObject(new ChemicalBondQuest(500, 300), 500, 300);        // Center-right area
+        addObject(new ComboChainQuest(500, 350), 500, 350);          // Center area
+        addObject(new DirectionDodgeQuest(650, 400), 650, 400);      // Bottom right
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();

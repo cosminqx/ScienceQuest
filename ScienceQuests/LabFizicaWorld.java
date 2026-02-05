@@ -110,13 +110,14 @@ public class LabFizicaWorld extends World implements CollisionWorld
     }
     
     /**
-     * Add physics-specific mini-quest to the lab
+     * Add physics-specific mini-quests to the lab
      */
     private void addMiniQuests()
     {
-        // Pendulum Timing Quest - physics-themed challenge
-        // Place it in the center of the lab for easy access
-        addObject(new PendulumTimingQuest(432, 336), 432, 336);
+        // Different physics-themed challenges at specified positions
+        addObject(new PendulumTimingQuest(645, 546), 645, 546);         // Pendulum motion
+        addObject(new RhythmReleaseQuest(504, 546), 504, 546);          // Timing & rhythm
+        addObject(new KeySequenceQuest(366, 546), 366, 546);            // Sequential patterns
     }
     
     private void loadMap(String mapPath)
