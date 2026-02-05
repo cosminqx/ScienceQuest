@@ -29,6 +29,7 @@ public class DoubleTapSprintQuest extends Actor
     private int floatTick = 0;
     private boolean startKeyDown = false;
     private boolean spaceDown = false;
+    private boolean tutorialActive = false;
     
     private class Particle
     {
@@ -125,18 +126,40 @@ public class DoubleTapSprintQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                score = 0;
-                totalTaps = 0;
-                successfulDoubleTaps = 0;
-                lastSpacePress = -100;
-                animTick = 0;
-                particles.clear();
-                spaceDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        score = 0;
+                        totalTaps = 0;
+                        successfulDoubleTaps = 0;
+                        lastSpacePress = -100;
+                        animTick = 0;
+                        particles.clear();
+                        spaceDown = false;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
