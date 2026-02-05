@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="48" tileheight="48" infinite="0" nextlayerid="5" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="48" tileheight="48" infinite="0" nextlayerid="6" nextobjectid="49">
  <tileset firstgid="1" source="../../../../../CoolSchool_tileset.tsx"/>
  <layer id="1" name="Tile Layer 1" width="18" height="14">
   <data encoding="csv">
@@ -73,4 +73,47 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="5" name="Object Layer 1">
+  <object id="2" x="0" y="88.4739" width="286.351" height="27.5886"/>
+  <object id="4" x="47.5666" y="174.094" width="190.266" height="39.0046"/>
+  <object id="8" x="48.5179" y="262.568" width="141.749" height="44.7126"/>
+  <object id="9" x="47.5666" y="356.75" width="141.749" height="44.7126"/>
+  <object id="10" x="73.2526" y="320.599"/>
+  <object id="11" x="167.434" y="320.599"/>
+  <object id="12" x="50.4206" y="455.688" width="137.943" height="44.7126"/>
+  <object id="13" x="71.3499" y="512.768"/>
+  <object id="14" x="167.434" y="511.817"/>
+  <object id="15" x="50.4206" y="550.821" width="139.846" height="42.81"/>
+  <object id="16" x="71.3499" y="606.95"/>
+  <object id="17" x="168.386" y="607.901"/>
+  <object id="18" x="386.241" y="262.568" width="138.895" height="45.664"/>
+  <object id="19" x="407.17" y="319.648"/>
+  <object id="20" x="505.157" y="313.94"/>
+  <object id="21" x="384.338" y="356.75" width="141.749" height="46.6153"/>
+  <object id="22" x="410.024" y="413.83" height="1.90266"/>
+  <object id="23" x="504.206" y="415.732"/>
+  <object id="24" x="386.241" y="454.737" width="138.895" height="44.7126"/>
+  <object id="25" x="408.122" y="509.914"/>
+  <object id="26" x="503.255" y="509.914"/>
+  <object id="27" x="386.241" y="551.773" width="140.797" height="41.8586"/>
+  <object id="28" x="408.122" y="610.755"/>
+  <object id="29" x="503.255" y="608.853"/>
+  <object id="30" x="671.641" y="262.568" width="141.749" height="42.81"/>
+  <object id="31" x="672.592" y="358.652" width="141.749" height="43.7613"/>
+  <object id="32" x="671.641" y="453.786" width="142.7" height="45.664"/>
+  <object id="33" x="671.641" y="548.919" width="142.7" height="45.664"/>
+  <object id="34" x="697.327" y="607.901"/>
+  <object id="35" x="791.508" y="607.901"/>
+  <object id="36" x="697.327" y="412.878"/>
+  <object id="37" x="793.411" y="410.976"/>
+  <object id="38" x="695.424" y="512.768"/>
+  <object id="39" x="792.46" y="513.719"/>
+  <object id="40" x="793.411" y="319.648"/>
+  <object id="41" x="695.424" y="317.745"/>
+  <object id="42" x="695.424" y="415.732"/>
+  <object id="43" x="791.508" y="414.781"/>
+  <object id="44" x="281.594" y="44.7126" width="116.063" height="48.5179"/>
+  <object id="47" x="658.322" y="48.5179" width="205.488" height="44.7126"/>
+  <object id="48" x="397.657" y="71.3499" width="257.811" height="21.8806"/>
+ </objectgroup>
 </map>
