@@ -54,7 +54,7 @@ public class PendulumTimingQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -177,11 +177,11 @@ public class PendulumTimingQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("PENDULUM TIMING", 100, 40);
+        img.drawString("TIMINGUL PENDULULUI", 80, 40);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 200, 255));
-        img.drawString("PHYSICS: Release SPACE at center position", 60, 65);
+        img.drawString("INSTRUCȚIUNI: eliberează SPATIU în centru", 70, 65);
 
         // Draw pendulum
         int pivotX = panelW / 2;
@@ -215,11 +215,11 @@ public class PendulumTimingQuest extends Actor
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Successful Releases: " + successfulReleases + " / " + targetReleases, 90, 220);
+        img.drawString("Eliberări corecte: " + successfulReleases + " / " + targetReleases, 90, 220);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 200, 255));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 245);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 245);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 12));
         img.setColor(inCenterZone ? new Color(100, 255, 100) : new Color(255, 200, 100));
@@ -251,11 +251,11 @@ public class PendulumTimingQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Perfect timing! Understanding of", panelW / 2 - 140, panelH / 2 + 30);
-            img.drawString("periodic motion demonstrated.", panelW / 2 - 125, panelH / 2 + 55);
+            img.drawString("Timing perfect! Mișcarea periodică", panelW / 2 - 150, panelH / 2 + 30);
+            img.drawString("este înțeleasă.", panelW / 2 - 85, panelH / 2 + 55);
         }
         else
         {
@@ -266,11 +266,11 @@ public class PendulumTimingQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Mistimed release. Study harmonic", panelW / 2 - 140, panelH / 2 + 30);
-            img.drawString("motion principles. " + successfulReleases + "/" + targetReleases + " completed.", panelW / 2 - 140, panelH / 2 + 55);
+            img.drawString("Eliberare greșită. Recitește", panelW / 2 - 135, panelH / 2 + 30);
+            img.drawString("mișcarea armonică. " + successfulReleases + "/" + targetReleases + " finalizat.", panelW / 2 - 150, panelH / 2 + 55);
         }
         
         myOverlay.setImage(img);

@@ -57,7 +57,7 @@ public class DnaReplicationQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -233,11 +233,11 @@ public class DnaReplicationQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("DNA REPLICATION", 100, 40);
+        img.drawString("REPLICAREA ADN", 110, 40);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(255, 150, 220));
-        img.drawString("BIOLOGY: Press complementary base pairs", 70, 65);
+        img.drawString("INSTRUCȚIUNI: apasă baza complementară", 70, 65);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 12));
         img.drawString("A=▲  T=▼  G=◀  C=▶", 155, 85);
@@ -297,7 +297,7 @@ public class DnaReplicationQuest extends Actor
             
             img.setFont(new greenfoot.Font("Arial", true, false, 24));
             img.setColor(instrColor);
-            img.drawString("Press: " + complement + " " + arrow, 145, 220);
+            img.drawString("Apasă: " + complement + " " + arrow, 145, 220);
         }
 
         // Progress
@@ -311,11 +311,11 @@ public class DnaReplicationQuest extends Actor
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Strands: " + strandsCompleted + "/" + targetStrands + " | Bases: " + currentBaseIndex + "/8", 85, 285);
+        img.drawString("Catene: " + strandsCompleted + "/" + targetStrands + " | Baze: " + currentBaseIndex + "/8", 95, 285);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(255, 150, 220));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 305);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 305);
 
         myOverlay.setImage(img);
     }
@@ -343,11 +343,11 @@ public class DnaReplicationQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("DNA replicated perfectly!", panelW / 2 - 110, panelH / 2 + 30);
-            img.drawString("Base pairing understood.", panelW / 2 - 105, panelH / 2 + 55);
+            img.drawString("ADN replicat perfect!", panelW / 2 - 105, panelH / 2 + 30);
+            img.drawString("Împerecherea bazelor e corectă.", panelW / 2 - 150, panelH / 2 + 55);
         }
         else
         {
@@ -358,11 +358,11 @@ public class DnaReplicationQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Replication error. Review", panelW / 2 - 115, panelH / 2 + 30);
-            img.drawString("complementary base rules. " + strandsCompleted + "/" + targetStrands, panelW / 2 - 140, panelH / 2 + 55);
+            img.drawString("Eroare de replicare. Recitește", panelW / 2 - 150, panelH / 2 + 30);
+            img.drawString("regulile de complementaritate. " + strandsCompleted + "/" + targetStrands, panelW / 2 - 170, panelH / 2 + 55);
         }
         
         myOverlay.setImage(img);

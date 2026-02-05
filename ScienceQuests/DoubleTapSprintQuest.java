@@ -92,7 +92,7 @@ public class DoubleTapSprintQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -284,19 +284,19 @@ public class DoubleTapSprintQuest extends Actor
         
         // Title
         img.setColor(new Color(255, 180, 80));
-        img.setFont(new greenfoot.Font("Arial", true, false, 34));
-        img.drawString("DOUBLE TAP SPRINT", px + 50, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        img.drawString("SPRINT CU DUBLĂ APĂSARE", px + 20, py + 50);
         
         // Status display
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
         img.setColor(new Color(120, 255, 120));
-        img.drawString("Successful Taps: " + successfulDoubleTaps + "/" + targetDoubleTaps, px + 40, py + 110);
+        img.drawString("Duble reușite: " + successfulDoubleTaps + "/" + targetDoubleTaps, px + 40, py + 110);
         
         img.setColor(new Color(255, 200, 120));
-        img.drawString("Score: " + score, px + 40, py + 145);
+        img.drawString("Scor: " + score, px + 40, py + 145);
         
         img.setColor(new Color(150, 180, 255));
-        img.drawString("Total Presses: " + totalTaps, px + 40, py + 180);
+        img.drawString("Apăsări totale: " + totalTaps, px + 40, py + 180);
         
         // Progress bar with glow
         int barW = 420;
@@ -333,7 +333,7 @@ public class DoubleTapSprintQuest extends Actor
         // Double-tap window indicator
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
         img.setColor(new Color(180, 180, 200, 200));
-        img.drawString("Press SPACE twice quickly", px + 120, py + 305);
+        img.drawString("INSTRUCȚIUNI: apasă SPATIU de două ori rapid", px + 35, py + 305);
         
         // Draw particles
         for (Particle p : particles)
@@ -365,17 +365,17 @@ public class DoubleTapSprintQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 36));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        String resultText = success ? "SUCCES!" : "COMPLET!";
         img.drawString(resultText, px + 70, py + 60);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        img.drawString("Double Taps: " + successfulDoubleTaps, px + 50, py + 120);
-        img.drawString("Total Score: " + score, px + 50, py + 160);
+        img.drawString("Duble: " + successfulDoubleTaps, px + 50, py + 120);
+        img.drawString("Scor total: " + score, px + 50, py + 160);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
-        img.drawString("Sprint Challenge Complete!", px + 60, py + 240);
+        img.drawString("Provocare de sprint completă!", px + 20, py + 240);
     }
     
     private void finishQuest(boolean success)
@@ -407,17 +407,17 @@ public class DoubleTapSprintQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 32));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        String resultText = success ? "SUCCES!" : "COMPLET!";
         img.drawString(resultText, panelW / 2 - 70, panelH / 2 - 30);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
-        img.drawString("Double Taps: " + successfulDoubleTaps, panelW / 2 - 90, panelH / 2 + 20);
-        img.drawString("Total Score: " + score, panelW / 2 - 90, panelH / 2 + 55);
+        img.drawString("Duble: " + successfulDoubleTaps, panelW / 2 - 80, panelH / 2 + 20);
+        img.drawString("Scor total: " + score, panelW / 2 - 80, panelH / 2 + 55);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
-        img.drawString("Sprint Challenge Complete!", panelW / 2 - 105, panelH / 2 + 95);
+        img.drawString("Provocare de sprint completă!", panelW / 2 - 130, panelH / 2 + 95);
         
         // Set transparent actor image
         GreenfootImage transparent = new GreenfootImage(48, 48);

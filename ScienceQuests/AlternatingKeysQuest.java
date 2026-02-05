@@ -29,6 +29,7 @@ public class AlternatingKeysQuest extends Actor
     private boolean startKeyDown = false;
     private boolean leftDown = false;
     private boolean rightDown = false;
+    private boolean tutorialActive = false;
     
     public AlternatingKeysQuest(int mapX, int mapY)
     {
@@ -61,7 +62,7 @@ public class AlternatingKeysQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -94,17 +95,39 @@ public class AlternatingKeysQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                score = 0;
-                combo = 0;
-                maxCombo = 0;
-                expectedKey = "left";
-                timeSinceLastPress = 0;
-                animTick = 0;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        score = 0;
+                        combo = 0;
+                        maxCombo = 0;
+                        expectedKey = "left";
+                        timeSinceLastPress = 0;
+                        animTick = 0;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -232,19 +255,19 @@ public class AlternatingKeysQuest extends Actor
         
         // Title
         img.setColor(new Color(255, 200, 100));
-        img.setFont(new greenfoot.Font("Arial", true, false, 32));
-        img.drawString("ALTERNATING KEYS", px + 60, py + 45);
+        img.setFont(new greenfoot.Font("Arial", true, false, 30));
+        img.drawString("ALTERNARE SĂGEȚI", px + 65, py + 45);
         
         // Score and combo display
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
         img.setColor(new Color(100, 255, 150));
-        img.drawString("Score: " + score + "/" + targetScore, px + 30, py + 100);
+        img.drawString("Scor: " + score + "/" + targetScore, px + 30, py + 100);
         
         img.setColor(new Color(255, 200, 100));
         img.drawString("Combo: " + combo, px + 30, py + 130);
         
         img.setColor(new Color(150, 150, 255));
-        img.drawString("Best: " + maxCombo, px + 320, py + 130);
+        img.drawString("Max: " + maxCombo, px + 330, py + 130);
         
         // Progress bar with gradient
         int barW = 400;
@@ -316,7 +339,7 @@ public class AlternatingKeysQuest extends Actor
         // Instructions
         img.setColor(new Color(200, 200, 200, 180));
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
-        img.drawString("Press arrows in alternating pattern", px + 100, py + 300);
+        img.drawString("INSTRUCȚIUNI: apasă stânga/dreapta alternativ", px + 60, py + 300);
     }
     
     private void drawResultScreen(GreenfootImage img, int w, int h)
@@ -341,17 +364,48 @@ public class AlternatingKeysQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 32));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        String resultText = success ? "SUCCES!" : "COMPLET!";
         img.drawString(resultText, px + 80, py + 60);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        img.drawString("Final Score: " + score, px + 50, py + 120);
-        img.drawString("Best Combo: " + maxCombo, px + 50, py + 160);
+        img.drawString("Scor final: " + score, px + 50, py + 120);
+        img.drawString("Combo maxim: " + maxCombo, px + 50, py + 160);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
-        img.drawString("Quest Complete!", px + 100, py + 240);
+        img.drawString("Misiune completă!", px + 90, py + 240);
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 440;
+        int h = 180;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 140, 120, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: ALTERNARE", 120, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă STÂNGA și DREAPTA alternativ.", 80, 70);
+        img.drawString("Scop: atinge " + targetScore + " puncte.", 115, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 130, 140);
+
+        myOverlay.setImage(img);
     }
     
     private void finishQuest(boolean success)
@@ -384,17 +438,17 @@ public class AlternatingKeysQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 32));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        String resultText = success ? "SUCCES!" : "COMPLET!";
         img.drawString(resultText, panelW / 2 - 70, panelH / 2 - 30);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
-        img.drawString("Final Score: " + score, panelW / 2 - 90, panelH / 2 + 30);
-        img.drawString("Best Combo: " + maxCombo, panelW / 2 - 90, panelH / 2 + 65);
+        img.drawString("Scor final: " + score, panelW / 2 - 90, panelH / 2 + 30);
+        img.drawString("Combo maxim: " + maxCombo, panelW / 2 - 90, panelH / 2 + 65);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
-        img.drawString("Quest Complete!", panelW / 2 - 65, panelH / 2 + 105);
+        img.drawString("Misiune completă!", panelW / 2 - 75, panelH / 2 + 105);
         
         // Set transparent actor image
         GreenfootImage transparent = new GreenfootImage(48, 48);

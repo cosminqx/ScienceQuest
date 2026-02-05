@@ -25,6 +25,7 @@ public class RapidFireQuest extends Actor
     private boolean promptActive = false;
     private boolean startKeyDown = false;
     private boolean spaceDown = false;
+    private boolean tutorialActive = false;
     
     public RapidFireQuest(int mapX, int mapY)
     {
@@ -57,7 +58,7 @@ public class RapidFireQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -92,24 +93,39 @@ public class RapidFireQuest extends Actor
             boolean startPressed = Greenfoot.isKeyDown("space");
             if (distance < 100)
             {
-                showStartPrompt("RAPID FIRE");
-                if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                if (!tutorialActive)
                 {
-                    promptActive = false;
-                    questActive = true;
-                    animTick = 0;
-                    spaceCount = 0;
-                    combo = 0;
-                    maxCombo = 0;
-                    timeRemaining = timeMax;
-                    spaceDown = false;
-                    GameState.getInstance().setMiniQuestActive(true);
-                    interactionCooldown = 10;
+                    showStartPrompt("FOC RAPID");
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        promptActive = false;
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        animTick = 0;
+                        spaceCount = 0;
+                        combo = 0;
+                        maxCombo = 0;
+                        timeRemaining = timeMax;
+                        spaceDown = false;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
                 }
             }
-            else if (promptActive)
+            else if (promptActive || tutorialActive)
             {
                 promptActive = false;
+                tutorialActive = false;
                 clearOverlay();
             }
             startKeyDown = startPressed;
@@ -217,11 +233,11 @@ public class RapidFireQuest extends Actor
 
         // Title and stats
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("RAPID FIRE", px + 115, py + 45);
+        img.setFont(new greenfoot.Font("Arial", true, false, 26));
+        img.drawString("FOC RAPID", px + 135, py + 45);
         
         img.setFont(new greenfoot.Font("Arial", true, false, 16));
-        img.drawString("Presses: " + spaceCount + " / " + targetCount, px + 100, py + 85);
+        img.drawString("Apasări: " + spaceCount + " / " + targetCount, px + 100, py + 85);
         img.drawString("Combo: " + combo + " (Max: " + maxCombo + ")", px + 105, py + 110);
         
         // Time bar
@@ -271,10 +287,10 @@ public class RapidFireQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 110, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
-            img.drawString("Score: " + score + " | Combo: " + maxCombo, panelW / 2 - 140, panelH / 2 + 50);
+            img.drawString("Scor: " + score + " | Combo: " + maxCombo, panelW / 2 - 140, panelH / 2 + 50);
         }
         else
         {
@@ -287,11 +303,11 @@ public class RapidFireQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 16));
-            img.drawString("Need " + (targetCount - spaceCount) + " more!", panelW / 2 - 100, panelH / 2 + 50);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 75);
+            img.drawString("Mai ai nevoie de " + (targetCount - spaceCount) + "!", panelW / 2 - 140, panelH / 2 + 50);
+            img.drawString("Scor: " + score, panelW / 2 - 60, panelH / 2 + 75);
         }
         
         // Set transparent actor image
@@ -339,8 +355,8 @@ public class RapidFireQuest extends Actor
             world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
         }
 
-        int w = 320;
-        int h = 90;
+        int w = 360;
+        int h = 110;
         GreenfootImage img = new GreenfootImage(w, h);
         img.setColor(new Color(0, 0, 0, 170));
         img.fillRect(0, 0, w, h);
@@ -352,10 +368,42 @@ public class RapidFireQuest extends Actor
         img.drawString(title, 20, 30);
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(200, 200, 200));
-        img.drawString("Press SPACE to start", 70, 60);
+        img.drawString("INSTRUCȚIUNI: apasă SPATIU rapid", 20, 60);
+        img.drawString("Apasă SPATIU pentru tutorial", 45, 85);
 
         myOverlay.setImage(img);
         promptActive = true;
+    }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 420;
+        int h = 170;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 140, 100, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: FOC RAPID", 90, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Scop: apasă SPATIU de cât mai multe ori", 40, 65);
+        img.drawString("Trebuie să atingi " + targetCount + " în timp.", 40, 85);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 110, 130);
+
+        myOverlay.setImage(img);
     }
     
     private Actor getPlayer()

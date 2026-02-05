@@ -61,7 +61,7 @@ public class RhythmReleaseQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -236,13 +236,14 @@ public class RhythmReleaseQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("RHYTHM RELEASE", px + 75, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("ELIBERARE PE RITM", px + 50, py + 50);
 
         // Speed indicator - difficulty progression
         img.setColor(new Color(255, 150, 150));
         img.setFont(new greenfoot.Font("Arial", true, false, 14));
-        img.drawString("LEVEL: " + (hitCount + 1) + " | SPEED: " + indicatorSpeed, px + 110, py + 75);
+        img.drawString("INSTRUCȚIUNI: apasă SPATIU când indicatorul e în zona verde", px + 20, py + 75);
+        img.drawString("NIVEL: " + (hitCount + 1) + " | VITEZĂ: " + indicatorSpeed, px + 140, py + 95);
 
         // Bar background
         img.setColor(new Color(40, 40, 40, 200));
@@ -251,9 +252,9 @@ public class RhythmReleaseQuest extends Actor
         // Zone labels
         img.setColor(new Color(200, 200, 200));
         img.setFont(new greenfoot.Font("Arial", true, false, 12));
-        img.drawString("MISS", px + 55, py + 115);
+        img.drawString("RATAT", px + 45, py + 115);
         img.drawString("PERFECT", px + 160, py + 115);
-        img.drawString("MISS", px + 410, py + 115);
+        img.drawString("RATAT", px + 400, py + 115);
 
         // Red miss zone
         img.setColor(new Color(200, 50, 50, 100));
@@ -290,11 +291,11 @@ public class RhythmReleaseQuest extends Actor
         // Status and scoring
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
-        img.drawString("HITS: " + hitCount + " / " + targetHits, px + 150, py + 205);
+        img.drawString("REUȘITE: " + hitCount + " / " + targetHits, px + 130, py + 205);
 
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
-        img.drawString("Score: " + totalScore, px + 165, py + 235);
+        img.drawString("Scor: " + totalScore, px + 175, py + 235);
 
         if (combo > 1)
         {
@@ -329,15 +330,15 @@ public class RhythmReleaseQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("SUCCESS!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 20));
             img.setColor(new Color(255, 200, 100));
-            img.drawString("Final Score: " + totalScore, panelW / 2 - 100, panelH / 2 + 15);
+            img.drawString("Scor final: " + totalScore, panelW / 2 - 100, panelH / 2 + 15);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 16));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Perfect Hits: " + hitCount + " | Combo: x" + combo, panelW / 2 - 130, panelH / 2 + 50);
+            img.drawString("Lovituri perfecte: " + hitCount + " | Combo: x" + combo, panelW / 2 - 150, panelH / 2 + 50);
         }
         else
         {
@@ -348,16 +349,16 @@ public class RhythmReleaseQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("FAILED!", panelW / 2 - 100, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
             img.setColor(new Color(255, 100, 100));
-            img.drawString("Better luck next time!", panelW / 2 - 110, panelH / 2 + 10);
+            img.drawString("Încearcă din nou!", panelW / 2 - 90, panelH / 2 + 10);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 14));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Completed: " + hitCount + " / " + targetHits, panelW / 2 - 95, panelH / 2 + 50);
-            img.drawString("Score: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
+            img.drawString("Finalizat: " + hitCount + " / " + targetHits, panelW / 2 - 95, panelH / 2 + 50);
+            img.drawString("Scor: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
         }
         
         // Set transparent actor image

@@ -55,7 +55,7 @@ public class ChemicalBondQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -192,11 +192,11 @@ public class ChemicalBondQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("CHEMICAL BONDING", 90, 40);
+        img.drawString("LEGĂTURI CHIMICE", 110, 40);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 255, 200));
-        img.drawString("CHEMISTRY: Hold arrow keys simultaneously", 70, 65);
+        img.drawString("INSTRUCȚIUNI: ține două săgeți simultan", 70, 65);
 
         // Current required bond
         String required = requiredBonds[currentBondIndex];
@@ -204,7 +204,7 @@ public class ChemicalBondQuest extends Actor
         
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Form Bond:", 150, 110);
+        img.drawString("Formează legătura:", 130, 110);
         
         // Draw atom representations with bond
         int atomY = 150;
@@ -260,17 +260,17 @@ public class ChemicalBondQuest extends Actor
             
             img.setFont(new greenfoot.Font("Arial", false, false, 12));
             img.setColor(Color.WHITE);
-            img.drawString("Hold to form bond...", 155, 223);
+            img.drawString("Ține apăsat pentru legătură...", 115, 223);
         }
 
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Bonds Formed: " + bondsFormed + " / " + targetBonds, 120, 250);
+        img.drawString("Legături formate: " + bondsFormed + " / " + targetBonds, 105, 250);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 255, 200));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 275);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 275);
 
         myOverlay.setImage(img);
     }
@@ -298,11 +298,11 @@ public class ChemicalBondQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Stable molecules formed!", panelW / 2 - 115, panelH / 2 + 30);
-            img.drawString("Covalent bonding understood.", panelW / 2 - 125, panelH / 2 + 55);
+            img.drawString("Molecule stabile formate!", panelW / 2 - 120, panelH / 2 + 30);
+            img.drawString("Legătura covalentă e înțeleasă.", panelW / 2 - 150, panelH / 2 + 55);
         }
         else
         {
@@ -313,11 +313,11 @@ public class ChemicalBondQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Unstable bonds. Review electron", panelW / 2 - 130, panelH / 2 + 30);
-            img.drawString("sharing principles. " + bondsFormed + "/" + targetBonds + " completed.", panelW / 2 - 150, panelH / 2 + 55);
+            img.drawString("Legături instabile. Recitește", panelW / 2 - 140, panelH / 2 + 30);
+            img.drawString("partajarea electronilor. " + bondsFormed + "/" + targetBonds + " finalizat.", panelW / 2 - 165, panelH / 2 + 55);
         }
         
         myOverlay.setImage(img);

@@ -30,6 +30,7 @@ public class KeySequenceQuest extends Actor
     private boolean downDown = false;
     private boolean leftDown = false;
     private boolean rightDown = false;
+    private boolean tutorialActive = false;
     
     public KeySequenceQuest(int mapX, int mapY)
     {
@@ -79,7 +80,7 @@ public class KeySequenceQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -112,19 +113,41 @@ public class KeySequenceQuest extends Actor
             double distance = Math.sqrt(dx * dx + dy * dy);
             
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (distance < 100)
             {
-                questActive = true;
-                sequenceIndex = 0;
-                completedSequences = 0;
-                animTick = 0;
-                timeRemaining = timeMax;
-                upDown = false;
-                downDown = false;
-                leftDown = false;
-                rightDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        sequenceIndex = 0;
+                        completedSequences = 0;
+                        animTick = 0;
+                        timeRemaining = timeMax;
+                        upDown = false;
+                        downDown = false;
+                        leftDown = false;
+                        rightDown = false;
+                        GameState.getInstance().setMiniQuestActive(true);
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -242,8 +265,12 @@ public class KeySequenceQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("SEQUENCE MASTER", px + 85, py + 40);
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("MAESTRUL SECVENȚEI", px + 70, py + 38);
+
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(170, 200, 255));
+        img.drawString("INSTRUCȚIUNI: apasă săgețile în ordinea afișată", px + 40, py + 58);
 
         // Sequence display
         int seqStartX = px + 60;
@@ -287,13 +314,13 @@ public class KeySequenceQuest extends Actor
         
         img.setColor(correctFeedbackTick > 0 ? new Color(100, 255, 100) :
                      wrongFeedbackTick > 0 ? new Color(255, 120, 120) : new Color(200, 200, 200));
-        img.drawString("Press: " + keyStr + " " + arrow, px + 150, py + 150);
+        img.drawString("Apasă: " + keyStr + " " + arrow, px + 160, py + 150);
 
         // Sequence counter
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 200, 100));
-        img.drawString("Sequences: " + completedSequences + " / " + targetSequences, px + 90, py + 155);
-        img.drawString("Step: " + (sequenceIndex + 1) + " / " + SEQUENCE_LENGTH, px + 265, py + 185);
+        img.drawString("Secvențe: " + completedSequences + " / " + targetSequences, px + 80, py + 155);
+        img.drawString("Pas: " + (sequenceIndex + 1) + " / " + SEQUENCE_LENGTH, px + 285, py + 185);
 
         // Progress bar for current sequence
         float progress = (sequenceIndex + 1) / (float)SEQUENCE_LENGTH;
@@ -325,6 +352,37 @@ public class KeySequenceQuest extends Actor
         if (key.equals("right")) return "→";
         return "";
     }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 200;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(120, 170, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: SECVENȚE", 130, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă săgețile în ordinea afișată.", 90, 70);
+        img.drawString("Completează " + targetSequences + " secvențe de " + SEQUENCE_LENGTH + " pași.", 70, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 150);
+
+        myOverlay.setImage(img);
+    }
     
     private void finishQuest(boolean success)
     {
@@ -349,10 +407,10 @@ public class KeySequenceQuest extends Actor
             img.fillRect(-8, -8, panelW + 16, panelH + 16);
 
             img.setColor(new Color(255, 255, 255));
-            img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.setFont(new greenfoot.Font("Arial", true, false, 38));
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             img.setFont(new greenfoot.Font("Arial", true, false, 20));
-            img.drawString("Score: " + score, panelW / 2 - 80, panelH / 2 + 50);
+            img.drawString("Scor: " + score, panelW / 2 - 70, panelH / 2 + 50);
         }
         
         // Set transparent actor image

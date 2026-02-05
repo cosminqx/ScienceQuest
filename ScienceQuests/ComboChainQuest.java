@@ -56,7 +56,7 @@ public class ComboChainQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -172,18 +172,18 @@ public class ComboChainQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("COMBO CHAIN", px + 110, py + 50);
+        img.drawString("LANȚ COMBO", px + 135, py + 50);
 
         // Instruction
         img.setFont(new greenfoot.Font("Arial", true, false, 16));
         img.setColor(new Color(200, 200, 255));
-        img.drawString("Press SPACE + Direction Arrow", px + 95, py + 80);
+        img.drawString("INSTRUCȚIUNI: ține SPATIU și apasă săgeata", px + 45, py + 80);
 
         // Current combo instruction
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
         Color instrColor = spaceHeld ? new Color(100, 255, 100) : new Color(255, 200, 100);
         img.setColor(instrColor);
-        img.drawString("SPACE + " + comboArrows[comboStep], px + 130, py + 130);
+        img.drawString("SPATIU + " + comboArrows[comboStep], px + 130, py + 130);
 
         // Combo step indicators with glow
         for (int i = 0; i < combos.length; i++)
@@ -223,11 +223,11 @@ public class ComboChainQuest extends Actor
         // Progress text
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 200, 100));
-        img.drawString("Step: " + comboStep + " / " + combos.length, px + 155, py + 240);
+        img.drawString("Pas: " + comboStep + " / " + combos.length, px + 175, py + 240);
 
         // Time remaining
         img.setColor(new Color(100, 200, 255));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
 
         setImage(img);
         myOverlay.setImage(img);
@@ -257,10 +257,10 @@ public class ComboChainQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+               img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
-            img.drawString("All combos completed!", panelW / 2 - 110, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+               img.drawString("Toate combo-urile completate!", panelW / 2 - 145, panelH / 2 + 30);
+            img.drawString("Scor: " + score, panelW / 2 - 60, panelH / 2 + 60);
         }
         else
         {
@@ -271,10 +271,10 @@ public class ComboChainQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+               img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             img.setFont(new greenfoot.Font("Arial", true, false, 16));
-            img.drawString("Completed " + comboStep + "/" + combos.length, panelW / 2 - 90, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+               img.drawString("Finalizat " + comboStep + "/" + combos.length, panelW / 2 - 90, panelH / 2 + 30);
+            img.drawString("Scor: " + score, panelW / 2 - 60, panelH / 2 + 60);
         }
         
         // Set transparent actor image

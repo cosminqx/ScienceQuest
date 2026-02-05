@@ -1,0 +1,31 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "C:/Users/lenov/CoolSchool_tileset.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "images/48px/School_Tileset.tsx": {
+            "dynamicWrapping": false
+        }
+    },
+    "last.externalTilesetPath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images/48px",
+    "last.imagePath": "C:/Users/lenov/Documents/Github/ScienceQuest/ScienceQuests/images",
+    "openFiles": [
+    ],
+    "project": "school.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 48,
+        "width": 48
+    }
+}

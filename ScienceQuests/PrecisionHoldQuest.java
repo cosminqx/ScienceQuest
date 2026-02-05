@@ -57,7 +57,7 @@ public class PrecisionHoldQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -210,13 +210,17 @@ public class PrecisionHoldQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("PRECISION HOLD", px + 85, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("MENȚINERE PRECISĂ", px + 70, py + 50);
+
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(200, 180, 220));
+        img.drawString("INSTRUCȚIUNI: ține apăsată săgeata STÂNGA exact cât trebuie", px + 20, py + 70);
 
         // Difficulty level
         img.setColor(new Color(200, 150, 220));
         img.setFont(new greenfoot.Font("Arial", true, false, 14));
-        img.drawString("LEVEL " + (levelCount + 1) + " | TARGET: " + (targetTime / 60.0f) + "s", px + 125, py + 75);
+        img.drawString("NIVEL " + (levelCount + 1) + " | ȚINTĂ: " + (targetTime / 60.0f) + "s", px + 140, py + 90);
 
         // Tolerance zone visualization
         int progressBarWidth = panelW - 80;
@@ -268,21 +272,21 @@ public class PrecisionHoldQuest extends Actor
         // Zone labels
         img.setColor(new Color(180, 180, 180));
         img.setFont(new greenfoot.Font("Arial", true, false, 12));
-        img.drawString("SHORT", barX + 5, barY - 5);
+        img.drawString("PREA SCURT", barX + 5, barY - 5);
         img.drawString("PERFECT", barX + progressBarWidth / 2 - 25, barY - 5);
-        img.drawString("LONG", barX + progressBarWidth - 40, barY - 5);
+        img.drawString("PREA LUNG", barX + progressBarWidth - 60, barY - 5);
 
         // Time display
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
         float seconds = holdTime / 60.0f;
         float targetSeconds = targetTime / 60.0f;
-        img.drawString(String.format("HELD: %.2f / %.2f sec", seconds, targetSeconds), px + 110, py + 220);
+        img.drawString(String.format("ȚINUT: %.2f / %.2f sec", seconds, targetSeconds), px + 110, py + 220);
 
         // Score display
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
-        img.drawString("Score: " + totalScore, px + 170, py + 250);
+        img.drawString("Scor: " + totalScore, px + 175, py + 250);
 
         if (myOverlay != null)
         {
@@ -310,15 +314,15 @@ public class PrecisionHoldQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("PERFECT!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("PERFECT!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 20));
             img.setColor(new Color(100, 255, 200));
-            img.drawString("Score: " + totalScore, panelW / 2 - 80, panelH / 2 + 15);
+            img.drawString("Scor: " + totalScore, panelW / 2 - 70, panelH / 2 + 15);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 15));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Hold Time: " + String.format("%.2f sec", holdTime / 60.0f), panelW / 2 - 110, panelH / 2 + 50);
+            img.drawString("Durată ținută: " + String.format("%.2f sec", holdTime / 60.0f), panelW / 2 - 140, panelH / 2 + 50);
         }
         else
         {
@@ -329,18 +333,18 @@ public class PrecisionHoldQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("FAILED!", panelW / 2 - 100, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
             img.setColor(new Color(255, 150, 200));
-            img.drawString("Hold too " + (holdTime < targetTime ? "SHORT" : "LONG"), panelW / 2 - 120, panelH / 2 + 10);
+            img.drawString("Ai ținut prea " + (holdTime < targetTime ? "PUȚIN" : "MULT"), panelW / 2 - 120, panelH / 2 + 10);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 14));
             img.setColor(new Color(200, 200, 200));
             float held = holdTime / 60.0f;
             float target = targetTime / 60.0f;
-            img.drawString("You: " + String.format("%.2f sec", held), panelW / 2 - 80, panelH / 2 + 45);
-            img.drawString("Target: " + String.format("%.2f sec", target), panelW / 2 - 95, panelH / 2 + 65);
+            img.drawString("Tu: " + String.format("%.2f sec", held), panelW / 2 - 60, panelH / 2 + 45);
+            img.drawString("Țintă: " + String.format("%.2f sec", target), panelW / 2 - 80, panelH / 2 + 65);
         }
         
         // Set transparent actor image

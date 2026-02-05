@@ -68,7 +68,7 @@ public class DirectionDodgeQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -274,22 +274,25 @@ public class DirectionDodgeQuest extends Actor
         
         // Title
         img.setColor(new Color(150, 200, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 34));
-        img.drawString("DIRECTION DODGE", px + 70, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 30));
+        img.drawString("Evită DIRECȚIA", px + 80, py + 50);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(180, 220, 255));
+        img.drawString("INSTRUCȚIUNI: apasă săgeata corectă când apare", px + 60, py + 75);
         
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
         img.setColor(new Color(120, 255, 150));
-        img.drawString("Caught: " + arrowsCaught + "/" + targetArrows, px + 40, py + 105);
+        img.drawString("Prinse: " + arrowsCaught + "/" + targetArrows, px + 40, py + 105);
         
         img.setColor(new Color(255, 200, 100));
-        img.drawString("Score: " + score, px + 40, py + 135);
+        img.drawString("Scor: " + score, px + 40, py + 135);
         
         img.setColor(new Color(150, 200, 255));
-        img.drawString("Combo: " + combo + " | Best: " + maxCombo, px + 40, py + 165);
+        img.drawString("Combo: " + combo + " | Max: " + maxCombo, px + 40, py + 165);
         
         img.setColor(new Color(255, 150, 150));
-        img.drawString("Difficulty: " + difficulty, px + 340, py + 105);
+        img.drawString("Dificultate: " + difficulty, px + 310, py + 105);
         
         // Progress bar
         int barW = 450;
@@ -359,25 +362,25 @@ public class DirectionDodgeQuest extends Actor
             if (arrowAppearTick < catchZoneStart)
             {
                 img.setColor(new Color(100, 255, 150, 100));
-                img.drawString("Get Ready...", arrowAreaX + 150, arrowAreaY + 55);
+                img.drawString("Pregătește-te...", arrowAreaX + 130, arrowAreaY + 55);
             }
             else if (inCatchZone)
             {
                 img.setColor(new Color(100, 255, 150, 255));
                 img.setFont(new greenfoot.Font("Arial", true, false, 16));
-                img.drawString("NOW!", arrowAreaX + 190, arrowAreaY + 55);
+                img.drawString("ACUM!", arrowAreaX + 185, arrowAreaY + 55);
             }
             else
             {
                 img.setColor(new Color(255, 100, 100, 200));
-                img.drawString("Missed!", arrowAreaX + 170, arrowAreaY + 55);
+                img.drawString("Ratat!", arrowAreaX + 175, arrowAreaY + 55);
             }
         }
         else
         {
             img.setColor(new Color(150, 150, 200, 150));
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Waiting for arrow...", arrowAreaX + 140, arrowAreaY + 40);
+            img.drawString("Aștept săgeata...", arrowAreaX + 140, arrowAreaY + 40);
         }
         
         // Flash feedback on hit
@@ -416,13 +419,13 @@ public class DirectionDodgeQuest extends Actor
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        img.drawString("Final Score: " + score, px + 70, py + 120);
-        img.drawString("Arrows Caught: " + arrowsCaught, px + 70, py + 155);
-        img.drawString("Max Combo: " + maxCombo, px + 70, py + 190);
+        img.drawString("Scor final: " + score, px + 70, py + 120);
+        img.drawString("Săgeți prinse: " + arrowsCaught, px + 70, py + 155);
+        img.drawString("Combo maxim: " + maxCombo, px + 70, py + 190);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
-        img.drawString("Reached Difficulty: " + difficulty, px + 110, py + 255);
+        img.drawString("Dificultate atinsă: " + difficulty, px + 95, py + 255);
     }
     
     private String getArrowChar(String direction)
@@ -478,13 +481,13 @@ public class DirectionDodgeQuest extends Actor
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
-        img.drawString("Final Score: " + score, panelW / 2 - 90, panelH / 2 + 20);
-        img.drawString("Arrows Caught: " + arrowsCaught, panelW / 2 - 110, panelH / 2 + 50);
-        img.drawString("Max Combo: " + maxCombo, panelW / 2 - 85, panelH / 2 + 80);
+        img.drawString("Scor final: " + score, panelW / 2 - 90, panelH / 2 + 20);
+        img.drawString("Săgeți prinse: " + arrowsCaught, panelW / 2 - 120, panelH / 2 + 50);
+        img.drawString("Combo maxim: " + maxCombo, panelW / 2 - 95, panelH / 2 + 80);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", false, false, 13));
-        img.drawString("Reached Difficulty: " + difficulty, panelW / 2 - 95, panelH / 2 + 115);
+        img.drawString("Dificultate atinsă: " + difficulty, panelW / 2 - 105, panelH / 2 + 115);
         
         // Set transparent actor image
         GreenfootImage transparent = new GreenfootImage(48, 48);
