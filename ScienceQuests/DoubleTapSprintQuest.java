@@ -400,6 +400,37 @@ public class DoubleTapSprintQuest extends Actor
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
         img.drawString("Provocare de sprint completă!", px + 20, py + 240);
     }
+
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 150, 120, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: DUBLĂ APĂSARE", 90, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă SPATIU de două ori rapid.", 110, 70);
+        img.drawString("Scop: " + targetDoubleTaps + " duble reușite.", 130, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        myOverlay.setImage(img);
+    }
     
     private void finishQuest(boolean success)
     {
