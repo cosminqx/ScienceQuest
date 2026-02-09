@@ -57,16 +57,38 @@ public class EndingSequence extends OverlayLayer
             int textAlpha = (int)(128 + 127 * Math.sin(displayTick * 0.05));
             
             img.setColor(new Color(255, 255, 255, textAlpha));
-            img.setFont(new greenfoot.Font("Arial", true, false, 48));
             
-            String text = "În curând...";
-            int textX = img.getWidth() / 2 - (text.length() * 24) / 2;
-            img.drawString(text, textX, img.getHeight() / 2 - 30);
+            // Main title - "În curând..."
+            img.setFont(FontManager.getPixeledLarge());
+            String text = "In curand...";
+            int textWidth = text.length() * 12; // Approximate width for pixeled font
+            int textX = (img.getWidth() - textWidth) / 2;
+            img.drawString(text, textX, img.getHeight() / 2 - 80);
             
-            img.setFont(new greenfoot.Font("Arial", true, false, 36));
+            // Subtitle - "ScienceQuests 2"
+            img.setFont(FontManager.getPixeled());
             String text2 = "ScienceQuests 2";
-            int text2X = img.getWidth() / 2 - (text2.length() * 18) / 2;
-            img.drawString(text2, text2X, img.getHeight() / 2 + 40);
+            int text2Width = text2.length() * 10;
+            int text2X = (img.getWidth() - text2Width) / 2;
+            img.drawString(text2, text2X, img.getHeight() / 2 - 40);
+            
+            // Credits section
+            img.setFont(FontManager.getPixeled());
+            String creditsTitle = "CREDITS";
+            int creditsTitleWidth = creditsTitle.length() * 10;
+            int creditsTitleX = (img.getWidth() - creditsTitleWidth) / 2;
+            img.drawString(creditsTitle, creditsTitleX, img.getHeight() / 2 + 30);
+            
+            img.setFont(FontManager.getPixeledSmall());
+            String credit1 = "Silviu Chiscareanu";
+            int credit1Width = credit1.length() * 8;
+            int credit1X = (img.getWidth() - credit1Width) / 2;
+            img.drawString(credit1, credit1X, img.getHeight() / 2 + 60);
+            
+            String credit2 = "Cosmin Lacatus";
+            int credit2Width = credit2.length() * 8;
+            int credit2X = (img.getWidth() - credit2Width) / 2;
+            img.drawString(credit2, credit2X, img.getHeight() / 2 + 85);
         }
         
         setImage(img);

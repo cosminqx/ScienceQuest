@@ -310,9 +310,9 @@ public class KeyRainfallQuest extends Actor
             
             img.setColor(new Color(100, 255, 200, alpha));
             
-            String arrow = key.keyName.equals("up") ? "▲" :
-                          key.keyName.equals("down") ? "▼" :
-                          key.keyName.equals("left") ? "◀" : "▶";
+            String arrow = key.keyName.equals("up") ? "^" :
+                          key.keyName.equals("down") ? "v" :
+                          key.keyName.equals("left") ? "<" : ">";
             
             img.setFont(new greenfoot.Font("Arial", true, false, keySize));
             int keyX = px + key.x - (int)(keySize / 2.5);

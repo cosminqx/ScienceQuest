@@ -8,7 +8,7 @@ public class ComboChainQuest extends Actor
     private int mapX, mapY;
     private int comboStep = 0;
     private String[] combos = {"up", "down", "left", "right"};
-    private String[] comboArrows = {"↑", "↓", "←", "→"};
+    private String[] comboArrows = {"^", "v", "<", ">"};
     private boolean spaceHeld = false;
     private int timeRemaining = 300;
     private boolean questActive = false;

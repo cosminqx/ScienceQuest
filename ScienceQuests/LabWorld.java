@@ -103,6 +103,13 @@ public class LabWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
+        if (!getObjects(KeyRainfallQuest.class).isEmpty()
+            || !getObjects(ComboChainQuest.class).isEmpty()
+            || !getObjects(RhythmReleaseQuest.class).isEmpty())
+        {
+            return;
+        }
+
         // Three chemistry-themed challenges positioned below the main area
         rainfallQuest = new KeyRainfallQuest(150, 400);
         comboQuest = new ComboChainQuest(300, 400);
@@ -161,6 +168,9 @@ public class LabWorld extends World implements CollisionWorld
 
     public void act()
     {
+        // Process dialogue input so dialogues can advance/close
+        DialogueManager.getInstance().processInput();
+
         // Update the camera position to keep the character centered
         if (character != null && character.getWorld() != null)
         {
