@@ -46,6 +46,42 @@ public class QuestionPools
             "Nu e corect. ADN-ul este răspunsul corect."
         ));
         
+        questions.add(new DialogueQuestion(
+            "biology",
+            "Ce proces permite organismelor să transforme hrana în energie?",
+            new String[] { "Respirația celulară", "Fotosinteza", "Digestia", "Reproducția" },
+            0,
+            "Corect! Respirația celulară produce energie.",
+            "Greșit. Răspunsul este respirația celulară."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "biology",
+            "Care sunt cele două tipuri principale de celule?",
+            new String[] { "Procariote și eucariote", "Animale și vegetale", "Vii și moarte", "Mici și mari" },
+            0,
+            "Excelent! Procariote (fără nucleu) și eucariote (cu nucleu).",
+            "Nu e corect. Sunt procariote și eucariote."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "biology",
+            "Ce găsim în interior celulelor care produce energia?",
+            new String[] { "Mitocondriile", "Ribozomii", "Nucleul", "Membrana" },
+            0,
+            "Perfect! Mitocondriile sunt centralele energetice ale celulei.",
+            "Greșit. Mitocondriile produc energia."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "biology",
+            "Ce sistem controlează toate funcțiile corpului?",
+            new String[] { "Sistemul nervos", "Sistemul digestiv", "Sistemul circulator", "Sistemul respirator" },
+            0,
+            "Corect! Sistemul nervos coordonează toate funcțiile.",
+            "Nu e corect. Sistemul nervos este răspunsul."
+        ));
+        
         return questions;
     }
     
@@ -89,6 +125,42 @@ public class QuestionPools
             "Nu e corect. Este Prima lege a lui Newton (inerția)."
         ));
         
+        questions.add(new DialogueQuestion(
+            "physics",
+            "Ce tip de curent electric circulă în direcție constantă?",
+            new String[] { "Curent continuu", "Curent alternativ", "Curent static", "Curent magnetic" },
+            0,
+            "Perfect! Curentul continuu circulă într-o direcție constantă.",
+            "Greșit. Curentul continuu este răspunsul corect."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "physics",
+            "Care este unitatea pentru măsurarea puterii electrice?",
+            new String[] { "Watt", "Volt", "Amper", "Ohm" },
+            0,
+            "Corect! Watt-ul măsoară puterea electrică.",
+            "Nu e corect. Răspunsul este Watt."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "physics",
+            "Ce fenomen explica de ce vedem curcubeul?",
+            new String[] { "Reflexia și refracția luminii", "Absorbția luminii", "Difracția luminii", "Polarizarea luminii" },
+            0,
+            "Excelent! Lumina se refractă prin picaturile de apă creând curcubeul.",
+            "Greșit. Reflexia și refracția sunt răspunsul corect."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "physics",
+            "Ce forta ține planetele în orbita lor?",
+            new String[] { "Gravitația", "Magnetismul", "Fricțiunea", "Tensiunea" },
+            0,
+            "Perfect! Gravitația ține planetele în orbită în jurul Soarelui.",
+            "Nu e corect. Gravitația este răspunsul corect."
+        ));
+        
         return questions;
     }
     
@@ -122,7 +194,41 @@ public class QuestionPools
             "Corect! Mercur este cea mai apropiată planetă de Soare.",
             "Nu e corect. Mercur este cel mai aproape de Soare."
         ));
+                questions.add(new DialogueQuestion(
+            "general",
+            "Ce stare de agregare are apa la temperatura camerei?",
+            new String[] { "Lichidă", "Solidă", "Gazoasă", "Plasma" },
+            0,
+            "Corect! Apa este lichidă la temperatura camerei.",
+            "Greșit. Apa este lichidă la temperatura normală."
+        ));
         
-        return questions;
+        questions.add(new DialogueQuestion(
+            "general",
+            "Din ce este format nucleul atomului?",
+            new String[] { "Protoni și neutroni", "Electroni și protoni", "Numai neutroni", "Numai protoni" },
+            0,
+            "Perfect! Nucleul conține protoni și neutroni.",
+            "Nu e corect. Protoni și neutroni formează nucleul."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "general",
+            "Care este formula chimică a apei?",
+            new String[] { "H₂O", "CO₂", "O₂", "H₂SO₄" },
+            0,
+            "Excelent! Apa este H₂O - doi atomi de hidrogen și unul de oxigen.",
+            "Greșit. Răspunsul corect este H₂O."
+        ));
+        
+        questions.add(new DialogueQuestion(
+            "general",
+            "Ce tip de energie produce Soarele?",
+            new String[] { "Energie nucleară", "Energie chimică", "Energie mecanică", "Energie electrică" },
+            0,
+            "Perfect! Soarele produce energie prin fuziune nucleară.",
+            "Nu e corect. Soarele produce energie nucleară."
+        ));
+                return questions;
     }
 }

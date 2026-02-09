@@ -34,7 +34,17 @@ public class GameState
     private int labNPCTotalCountBio = 0;           // Total questions in LabBiologyWorld
     private int labNPCCorrectCountPhys = 0;        // Correct answers from NPC in LabFizicaWorld
     private int labNPCTotalCountPhys = 0;          // Total questions in LabFizicaWorld
+    private int labNPCCorrectCountChem = 0;        // Correct answers from NPC in LabWorld (Chemistry)
+    private int labNPCTotalCountChem = 0;          // Total questions in LabWorld (Chemistry)
     private boolean hasShownMainMapTutorial = false; // Track if tutorial was shown in MainMapWorld
+    
+    // MainMap mini-quest completion tracking
+    private boolean rapidFireQuestComplete = false;
+    private boolean keySequenceQuestComplete = false;
+    private boolean alternatingKeysQuestComplete = false;
+    private boolean doubleTapSprintQuestComplete = false;
+    private boolean comboChainQuestComplete = false;
+    private boolean directionDodgeQuestComplete = false;
 
     private GameState()
     {
@@ -54,6 +64,8 @@ public class GameState
         labNPCTotalCountBio = 0;
         labNPCCorrectCountPhys = 0;
         labNPCTotalCountPhys = 0;
+        labNPCCorrectCountChem = 0;
+        labNPCTotalCountChem = 0;
         hasShownMainMapTutorial = false;
     }
 
@@ -83,7 +95,15 @@ public class GameState
         labNPCTotalCountBio = 0;
         labNPCCorrectCountPhys = 0;
         labNPCTotalCountPhys = 0;
+        labNPCCorrectCountChem = 0;
+        labNPCTotalCountChem = 0;
         hasShownMainMapTutorial = false;
+        rapidFireQuestComplete = false;
+        keySequenceQuestComplete = false;
+        alternatingKeysQuestComplete = false;
+        doubleTapSprintQuestComplete = false;
+        comboChainQuestComplete = false;
+        directionDodgeQuestComplete = false;
     }
 
     public boolean hasShownMainMapTutorial()
@@ -386,4 +406,50 @@ public class GameState
     {
         return labNPCTotalCountPhys >= NPC_QUIZ_LIMIT && labNPCCorrectCountPhys >= CORRECT_NEEDED;
     }
+
+    /**
+     * Record a quiz result from LabWorld NPC (Chemistry)
+     */
+    public void recordLabChemQuizResult(boolean correct)
+    {
+        labNPCTotalCountChem++;
+        if (correct)
+        {
+            labNPCCorrectCountChem++;
+        }
+    }
+
+    public int getLabChemQuizTotal()
+    {
+        return labNPCTotalCountChem;
+    }
+
+    public int getLabChemQuizCorrect()
+    {
+        return labNPCCorrectCountChem;
+    }
+
+    public boolean isLabChemQuizGateComplete()
+    {
+        return labNPCTotalCountChem >= NPC_QUIZ_LIMIT && labNPCCorrectCountChem >= CORRECT_NEEDED;
+    }
+    
+    // MainMap mini-quest completion methods
+    public boolean isRapidFireQuestComplete() { return rapidFireQuestComplete; }
+    public void setRapidFireQuestComplete(boolean complete) { rapidFireQuestComplete = complete; }
+    
+    public boolean isKeySequenceQuestComplete() { return keySequenceQuestComplete; }
+    public void setKeySequenceQuestComplete(boolean complete) { keySequenceQuestComplete = complete; }
+    
+    public boolean isAlternatingKeysQuestComplete() { return alternatingKeysQuestComplete; }
+    public void setAlternatingKeysQuestComplete(boolean complete) { alternatingKeysQuestComplete = complete; }
+    
+    public boolean isDoubleTapSprintQuestComplete() { return doubleTapSprintQuestComplete; }
+    public void setDoubleTapSprintQuestComplete(boolean complete) { doubleTapSprintQuestComplete = complete; }
+    
+    public boolean isComboChainQuestComplete() { return comboChainQuestComplete; }
+    public void setComboChainQuestComplete(boolean complete) { comboChainQuestComplete = complete; }
+    
+    public boolean isDirectionDodgeQuestComplete() { return directionDodgeQuestComplete; }
+    public void setDirectionDodgeQuestComplete(boolean complete) { directionDodgeQuestComplete = complete; }
 }

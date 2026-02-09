@@ -193,8 +193,8 @@ public class DirectionDodgeQuest extends Actor
     
     private void spawnNewArrow()
     {
-        String[] directions = {"up", "down", "left", "right"};
-        currentArrow = directions[Greenfoot.getRandomNumber(4)];
+        String[] directions = {"up", "down"}; // Only up and down arrows
+        currentArrow = directions[Greenfoot.getRandomNumber(2)];
         arrowAppearTick = 0;
         arrowGrowth = 0;
     }
@@ -205,14 +205,10 @@ public class DirectionDodgeQuest extends Actor
         
         boolean up = Greenfoot.isKeyDown("up");
         boolean down = Greenfoot.isKeyDown("down");
-        boolean left = Greenfoot.isKeyDown("left");
-        boolean right = Greenfoot.isKeyDown("right");
-        boolean anyDownNow = up || down || left || right;
+        boolean anyDownNow = up || down;
         boolean keyPressed = false;
         if (currentArrow.equals("up") && up) keyPressed = true;
         else if (currentArrow.equals("down") && down) keyPressed = true;
-        else if (currentArrow.equals("left") && left) keyPressed = true;
-        else if (currentArrow.equals("right") && right) keyPressed = true;
         
         if (keyPressed && !anyArrowDown)
         {

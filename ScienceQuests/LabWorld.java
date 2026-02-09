@@ -4,6 +4,7 @@ import java.util.*;
 public class LabWorld extends World implements CollisionWorld
 {
     private Actor character;
+    private ChemistryTeacher teacher;
     private GreenfootImage backgroundImage;
     private GreenfootImage overPlayerLayerImage;
     private GreenfootImage overPlayerViewport;
@@ -16,13 +17,17 @@ public class LabWorld extends World implements CollisionWorld
     private int tileSize = 48;
     private TiledMap tiledMap;
     private List<QuestBlock> questBlocks;
+    private boolean miniQuestsAdded = false;
 
     public LabWorld()
     {
         super(800, 600, 1);
 
         // Draw UI on top, then overlay, then characters
-        setPaintOrder(ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, OverlayLayer.class, Boy.class, Girl.class);
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, TimingQuestUI.class, QuestBlock.class, RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class, Boy.class, Girl.class, ChemistryTeacher.class);
+        
+        // Ensure any lingering dialogue state is cleared on world init
+        DialogueManager.getInstance().reset();
         
         // Initialize quest blocks list
         questBlocks = new ArrayList<QuestBlock>();
@@ -61,26 +66,39 @@ public class LabWorld extends World implements CollisionWorld
             DebugLog.log("Initial scroll: " + scrollX + ", " + scrollY);
         }
         
+        // Add Chemistry teacher at center of the map
+        teacher = new ChemistryTeacher();
+        addObject(teacher, getWidth() / 2, getHeight() / 2);
+        DebugLog.log("Chemistry Teacher added to LabWorld");
+        
         // Instructions
-        Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
         addObject(experienceBar, 110, 20);
         
-        // Add quest block at x=236, y=358 (map coordinates)
-        addQuestBlock(236, 358);
+        // Add mini-quests only after NPC quiz gate is completed
+        if (GameState.getInstance().isLabChemQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
         
-        // Add mini-quests scattered across the map
-        addMiniQuests();
+        // Add return arrow at top to go back to MainMapWorld (only if lab is completed)
+        if (GameState.getInstance().isLabCompleted(LabType.CHEMISTRY))
+        {
+            addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
+        }
     }
     
     /**
-     * Add all mini-quest blocks scattered across the map
+     * Add chemistry-specific mini-quests to the lab
      */
     private void addMiniQuests()
     {
+        // Different chemistry-themed challenges at specified positions
         addObject(new RapidFireQuest(100, 100), 100, 100);
         addObject(new AlternatingKeysQuest(300, 100), 300, 100);
         addObject(new DoubleTapSprintQuest(500, 100), 500, 100);
@@ -157,6 +175,14 @@ public class LabWorld extends World implements CollisionWorld
             // Update quest block positions
             updateQuestBlockPositions();
             
+            // Check if player got enough correct quizzes to unlock mini-quests
+            if (!miniQuestsAdded && GameState.getInstance().isLabChemQuizGateComplete())
+            {
+                addMiniQuests();
+                miniQuestsAdded = true;
+                DebugLog.log("Chemistry mini-quests unlocked!");
+            }
+            
             // Check for transition back to MainMapWorld
             checkWorldTransition();
         }
@@ -173,13 +199,10 @@ public class LabWorld extends World implements CollisionWorld
         int mapX = character.getX() + scrollX;
         int mapY = character.getY() + scrollY;
         
-        DebugLog.log("Character screen: (" + character.getX() + ", " + character.getY() + 
-                           "), map: (" + mapX + ", " + mapY + "), scroll: (" + scrollX + ", " + scrollY + ")");
-        
         // Transition to MainMapWorld when inside the exit window (bottom-left area)
         if (mapX >= 0 && mapX <= 72 && mapY >= 551 && mapY <= 599)
         {
-            DebugLog.log("TRANSITION TRIGGERED!");
+            DebugLog.log("TRANSITION TO MainMapWorld TRIGGERED!");
             WorldNavigator.goToMainMap();
         }
     }

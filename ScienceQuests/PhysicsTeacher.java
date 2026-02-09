@@ -87,6 +87,13 @@ public class PhysicsTeacher extends Actor implements NPC
             
             if (distance < INTERACTION_DISTANCE)
             {
+                // Stop showing dialogue after 5/5 quizzes complete
+                GameState state = GameState.getInstance();
+                if (state.getLabPhysQuizTotal() >= 5)
+                {
+                    return;
+                }
+                
                 DialogueManager manager = DialogueManager.getInstance();
                 if (manager.isDialogueActive())
                 {

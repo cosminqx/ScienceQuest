@@ -26,7 +26,10 @@ public class MainMapWorld extends World implements CollisionWorld
     private DirectionDodgeQuest directionDodgeQuest;
     private DirectionArrow bioArrow;
     private DirectionArrow physArrow;
+    private DirectionArrow chemArrow;
     private OverlayLayer tutorialOverlay;
+    private EndingSequence endingSequence;
+    private boolean endingTriggered = false;
     private int tutorialDisplayTicks = 0;
 
     public MainMapWorld()
@@ -86,10 +89,6 @@ public class MainMapWorld extends World implements CollisionWorld
         // Add collision objects AFTER character so they render behind
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
         
-        // Instructions
-        Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
-        addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
-        
         // Add settings button in top-right corner
         settingsButton = new SettingsButton();
         addObject(settingsButton, getWidth() - 20, 20);
@@ -109,6 +108,13 @@ public class MainMapWorld extends World implements CollisionWorld
             addObject(physArrow, 70, 190);
         }
         
+        // Only show Chemistry arrow if Physics lab is completed
+        if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            chemArrow = new DirectionArrow("right", "LAB CHIMIE");
+            addObject(chemArrow, 790, 350);
+        }
+        
         // Show tutorial popup if first time entering MainMapWorld
         if (!GameState.getInstance().hasShownMainMapTutorial())
         {
@@ -122,20 +128,44 @@ public class MainMapWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
-        // Arcade-style quests scattered around the map
-        rapidFireQuest = new RapidFireQuest(150, 200);
-        keySequenceQuest = new KeySequenceQuest(400, 180);
-        alternatingKeysQuest = new AlternatingKeysQuest(600, 250);
-        doubleTapSprintQuest = new DoubleTapSprintQuest(200, 400);
-        comboChainQuest = new ComboChainQuest(500, 350);
-        directionDodgeQuest = new DirectionDodgeQuest(650, 400);
-
-        addObject(rapidFireQuest, 150, 200);           // Near spawn area
-        addObject(keySequenceQuest, 400, 180);         // Right side
-        addObject(alternatingKeysQuest, 600, 250);     // Far right
-        addObject(doubleTapSprintQuest, 200, 400);     // Bottom left
-        addObject(comboChainQuest, 500, 350);          // Center area
-        addObject(directionDodgeQuest, 650, 400);      // Bottom right
+        GameState state = GameState.getInstance();
+        
+        // Only add quests that haven't been completed yet
+        if (!state.isRapidFireQuestComplete())
+        {
+            rapidFireQuest = new RapidFireQuest(150, 200);
+            addObject(rapidFireQuest, 150, 200);
+        }
+        
+        if (!state.isKeySequenceQuestComplete())
+        {
+            keySequenceQuest = new KeySequenceQuest(400, 180);
+            addObject(keySequenceQuest, 400, 180);
+        }
+        
+        if (!state.isAlternatingKeysQuestComplete())
+        {
+            alternatingKeysQuest = new AlternatingKeysQuest(600, 250);
+            addObject(alternatingKeysQuest, 600, 250);
+        }
+        
+        if (!state.isDoubleTapSprintQuestComplete())
+        {
+            doubleTapSprintQuest = new DoubleTapSprintQuest(200, 400);
+            addObject(doubleTapSprintQuest, 200, 400);
+        }
+        
+        if (!state.isComboChainQuestComplete())
+        {
+            comboChainQuest = new ComboChainQuest(500, 350);
+            addObject(comboChainQuest, 500, 350);
+        }
+        
+        if (!state.isDirectionDodgeQuestComplete())
+        {
+            directionDodgeQuest = new DirectionDodgeQuest(650, 400);
+            addObject(directionDodgeQuest, 650, 400);
+        }
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
@@ -210,6 +240,16 @@ public class MainMapWorld extends World implements CollisionWorld
             physArrow = new DirectionArrow("left", "LAB FIZICĂ");
             addObject(physArrow, 70, 190);
         }
+        
+        // Check if Chemistry arrow should be added after Physics completion
+        if (chemArrow == null && GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            chemArrow = new DirectionArrow("right", "LAB CHIMIE");
+            addObject(chemArrow, 790, 350);
+        }
+        
+        // Track quest completions in GameState
+        checkQuestCompletions();
         
         // Draw full map without scrolling
         if (character != null && character.getWorld() != null)
@@ -296,6 +336,17 @@ public class MainMapWorld extends World implements CollisionWorld
         if (character == null || backgroundImage == null) return;
 
         GameState state = GameState.getInstance();
+        
+        // Check if game is completely finished - all labs completed + all mini-quests done
+        if (!endingTriggered && state.isLabCompleted(LabType.CHEMISTRY) && areMainMapMiniQuestsComplete())
+        {
+            endingTriggered = true;
+            endingSequence = new EndingSequence();
+            addObject(endingSequence, getWidth() / 2, getHeight() / 2);
+            DebugLog.log("GAME COMPLETED! Ending sequence triggered!");
+            return;
+        }
+        
         boolean canEnterLabs = state.areMainMapQuestsUnlocked() && areMainMapMiniQuestsComplete();
         
         // Get character's map position
@@ -332,11 +383,54 @@ public class MainMapWorld extends World implements CollisionWorld
 
     private boolean areMainMapMiniQuestsComplete()
     {
-        return rapidFireQuest != null && keySequenceQuest != null && alternatingKeysQuest != null
-            && doubleTapSprintQuest != null && comboChainQuest != null && directionDodgeQuest != null
-            && rapidFireQuest.isCompleted() && keySequenceQuest.isCompleted()
-            && alternatingKeysQuest.isCompleted() && doubleTapSprintQuest.isCompleted()
-            && comboChainQuest.isCompleted() && directionDodgeQuest.isCompleted();
+        GameState state = GameState.getInstance();
+        return state.isRapidFireQuestComplete() && state.isKeySequenceQuestComplete()
+            && state.isAlternatingKeysQuestComplete() && state.isDoubleTapSprintQuestComplete()
+            && state.isComboChainQuestComplete() && state.isDirectionDodgeQuestComplete();
+    }
+    
+    /**
+     * Check and track quest completions in GameState
+     */
+    private void checkQuestCompletions()
+    {
+        GameState state = GameState.getInstance();
+        
+        if (rapidFireQuest != null && rapidFireQuest.isCompleted() && !state.isRapidFireQuestComplete())
+        {
+            state.setRapidFireQuestComplete(true);
+            DebugLog.log("RapidFireQuest completed - saved to GameState");
+        }
+        
+        if (keySequenceQuest != null && keySequenceQuest.isCompleted() && !state.isKeySequenceQuestComplete())
+        {
+            state.setKeySequenceQuestComplete(true);
+            DebugLog.log("KeySequenceQuest completed - saved to GameState");
+        }
+        
+        if (alternatingKeysQuest != null && alternatingKeysQuest.isCompleted() && !state.isAlternatingKeysQuestComplete())
+        {
+            state.setAlternatingKeysQuestComplete(true);
+            DebugLog.log("AlternatingKeysQuest completed - saved to GameState");
+        }
+        
+        if (doubleTapSprintQuest != null && doubleTapSprintQuest.isCompleted() && !state.isDoubleTapSprintQuestComplete())
+        {
+            state.setDoubleTapSprintQuestComplete(true);
+            DebugLog.log("DoubleTapSprintQuest completed - saved to GameState");
+        }
+        
+        if (comboChainQuest != null && comboChainQuest.isCompleted() && !state.isComboChainQuestComplete())
+        {
+            state.setComboChainQuestComplete(true);
+            DebugLog.log("ComboChainQuest completed - saved to GameState");
+        }
+        
+        if (directionDodgeQuest != null && directionDodgeQuest.isCompleted() && !state.isDirectionDodgeQuestComplete())
+        {
+            state.setDirectionDodgeQuestComplete(true);
+            DebugLog.log("DirectionDodgeQuest completed - saved to GameState");
+        }
     }
     
     private void showTutorial()

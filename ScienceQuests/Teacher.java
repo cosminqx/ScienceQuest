@@ -76,6 +76,13 @@ public class Teacher extends Actor implements NPC
             // Auto-trigger dialogue when player is nearby (no F key needed)
             if (distance < INTERACTION_DISTANCE)
             {
+                // Stop showing dialogue after 5/5 quizzes complete
+                GameState gameState = GameState.getInstance();
+                if (!gameState.hasMainMapNPCQuizzesRemaining())
+                {
+                    return;
+                }
+                
                 // Check if dialogue is not already active
                 DialogueManager manager = DialogueManager.getInstance();
                 if (manager.isDialogueActive())

@@ -9,6 +9,7 @@ public class BiologyAssistant extends Actor implements NPC
     private static final int INTERACTION_DISTANCE = 80;
     private boolean fKeyPressed = false;
     private LabBiologyWorld labWorld;
+    private int dialogueCooldown = 0;
     
     public BiologyAssistant()
     {
@@ -34,6 +35,11 @@ public class BiologyAssistant extends Actor implements NPC
     
     public void act()
     {
+        if (dialogueCooldown > 0)
+        {
+            dialogueCooldown--;
+        }
+        
         // Store reference to world
         if (labWorld == null && getWorld() instanceof LabBiologyWorld)
         {
@@ -61,8 +67,28 @@ public class BiologyAssistant extends Actor implements NPC
             
             if (distance < INTERACTION_DISTANCE)
             {
+                // Stop showing dialogue after 5/5 quizzes complete
+                GameState state = GameState.getInstance();
+                if (state.getLabBioQuizTotal() >= 5)
+                {
+                    return;
+                }
+                
                 DialogueManager manager = DialogueManager.getInstance();
-                if (!manager.isDialogueActive() && !fKeyPressed)
+                if (manager.isDialogueActive())
+                {
+                    return;
+                }
+
+                if (fKeyPressed)
+                {
+                    // Dialogue closed - allow next question after short cooldown
+                    fKeyPressed = false;
+                    dialogueCooldown = 15;
+                    return;
+                }
+
+                if (dialogueCooldown == 0)
                 {
                     fKeyPressed = true;
                     initiateRepairDialogue();
@@ -71,6 +97,7 @@ public class BiologyAssistant extends Actor implements NPC
             else
             {
                 fKeyPressed = false;
+                dialogueCooldown = 0;
             }
         }
     }
@@ -102,23 +129,42 @@ public class BiologyAssistant extends Actor implements NPC
             return;
         }
         
-        String repairText = "Întrebarea " + (total + 1) + " din 5.\n---\n" +
-            "Corecte: " + correct + "/5.";
-        DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
-        instruction.setTypewriterSpeed(2);
-        
-        // Biology question
-        DialogueQuestion question = buildBiologyQuestion();
-        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-        questionBox.setTypewriterSpeed(2);
-        
-        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-            GameState gs = GameState.getInstance();
-            gs.recordLabBioNPCQuizResult(isCorrect);
-        });
-        
-        manager.queueDialogue(questionBox);
-        manager.showDialogue(instruction, world, this);
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String repairText = "Bine ai venit la Laboratorul de Biologie!\n---\n" +
+                "Întrebarea 1 din 5.\n---\n" +
+                "Corecte: 0/5.";
+            DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
+            instruction.setTypewriterSpeed(2);
+            
+            // Biology question
+            DialogueQuestion question = buildBiologyQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabBioNPCQuizResult(isCorrect);
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(instruction, world, this);
+        }
+        else
+        {
+            // Show question directly for subsequent questions
+            DialogueQuestion question = buildBiologyQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabBioNPCQuizResult(isCorrect);
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
     
     private DialogueQuestion buildBiologyQuestion()

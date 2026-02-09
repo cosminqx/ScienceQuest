@@ -4,7 +4,6 @@ import java.util.*;
 public class LabBiologyWorld extends World implements CollisionWorld
 {
     private Actor character;
-    private BiologyTeacher teacher;
     private BiologyAssistant assistant;
     private GreenfootImage backgroundImage;
     private GreenfootImage onTopLayerImage;
@@ -41,11 +40,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then arrows, then characters and teacher
+        // Draw UI on top, then overlay, then arrows, then characters and assistant
         setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
                      TeacherInteractionDisplay.class, DirectionArrow.class, DnaReplicationQuest.class, 
                      ChemicalBondQuest.class, PrecisionHoldQuest.class, Boy.class, Girl.class, 
-                     BiologyTeacher.class, BiologyAssistant.class);
+                     BiologyAssistant.class);
         
         // Load biology lab map (start destroyed until repaired, unless already completed)
         if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
@@ -102,24 +101,9 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Draw initial background
         drawBackground();
         
-        // Add biology teacher at MAP coordinates
-        // Teacher position in map: x=144, y=266
-        int teacherMapX = 144;
-        int teacherMapY = 266;
-        teacher = new BiologyTeacher();
-        
-        // Calculate screen position from map position
-        int teacherScreenX = teacherMapX - scrollX;
-        int teacherScreenY = teacherMapY - scrollY;
-        addObject(teacher, teacherScreenX, teacherScreenY);
-        
-        DebugLog.log("Biology Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
-        DebugLog.log("Biology Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
-        DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
-        
-        // Add biology assistant at MAP coordinates (opposite side of the lab)
-        // Assistant position in map: x=720, y=266
-        int assistantMapX = 720;
+        // Add biology assistant at MAP coordinates (center of the lab)
+        // Assistant position in map: x=432, y=266
+        int assistantMapX = 432;
         int assistantMapY = 266;
         assistant = new BiologyAssistant();
         
@@ -258,20 +242,10 @@ public class LabBiologyWorld extends World implements CollisionWorld
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            // Update teacher position based on scroll (teacher at map coords 144, 266)
-            if (teacher != null && teacher.getWorld() != null)
-            {
-                int teacherMapX = 144;
-                int teacherMapY = 266;
-                int teacherScreenX = teacherMapX - scrollX;
-                int teacherScreenY = teacherMapY - scrollY;
-                teacher.setLocation(teacherScreenX, teacherScreenY);
-            }
-            
-            // Update assistant position based on scroll (assistant at map coords 720, 266)
+            // Update assistant position based on scroll (assistant at map coords 432, 266)
             if (assistant != null && assistant.getWorld() != null)
             {
-                int assistantMapX = 720;
+                int assistantMapX = 432;
                 int assistantMapY = 266;
                 int assistantScreenX = assistantMapX - scrollX;
                 int assistantScreenY = assistantMapY - scrollY;
@@ -327,15 +301,8 @@ public class LabBiologyWorld extends World implements CollisionWorld
         
         DebugLog.log("Triggering biology lab destruction sequence...");
         
-        // Show panic dialogue through teacher
-        if (teacher != null)
-        {
-            teacher.showPanicReaction();
-        }
-        
-        // Wait for dialogue to finish, then start animation
-        waitingForDialogue = true;
-        dialogueWaitCounter = 0;
+        // Start animation directly (no panic dialogue)
+        startFlickerAnimation();
     }
     
     private void startFlickerAnimation()

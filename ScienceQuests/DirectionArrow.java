@@ -12,9 +12,9 @@ public class DirectionArrow extends Actor
 
     private GreenfootImage buildImage(String direction, String label)
     {
-        // Make it more visible - larger and more opaque
-        int w = 220;
-        int h = 140;
+        // Smaller and more compact
+        int w = 140;
+        int h = 90;
         GreenfootImage img = new GreenfootImage(w, h);
         img.setColor(new Color(0, 0, 0, 0));
         img.fillRect(0, 0, w, h);
@@ -33,20 +33,20 @@ public class DirectionArrow extends Actor
             arrow = "↑";
         }
 
-        // More visible background - brighter and more opaque
+        // Smaller background rectangle
         img.setColor(new Color(20, 20, 40, 160));
-        img.fillRect(8, 8, w - 16, h - 16);
+        img.fillRect(6, 6, w - 12, h - 12);
 
-        // Larger, brighter arrow with glow effect
-        img.setFont(new greenfoot.Font("Arial", true, false, 64));
+        // Smaller arrow
+        img.setFont(new greenfoot.Font("Arial", true, false, 42));
         img.setColor(new Color(255, 230, 120, 255));
-        img.drawString(arrow, w / 2 - 18, 68);
+        img.drawString(arrow, w / 2 - 12, 45);
 
-        // Larger, more visible text with Pixeled font
-        img.setFont(FontManager.getPixeledLarge());
+        // Smaller text with Pixeled font
+        img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(255, 255, 255, 255));
-        int labelX = Math.max(10, (w - (label.length() * 7)) / 2);
-        img.drawString(label, labelX, 105);
+        int labelX = Math.max(8, (w - (label.length() * 5)) / 2);
+        img.drawString(label, labelX, 70);
 
         return img;
     }
