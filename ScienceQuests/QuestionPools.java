@@ -182,8 +182,8 @@ public class QuestionPools
             "Ce gaz respiră plantele în timpul zilei?",
             new String[] { "Dioxid de carbon", "Oxigen", "Azot", "Hidrogen" },
             0,
-            "Perfect! Plantele absorb CO₂ și eliberează oxigen.",
-            "Greșit. Plantele absorb dioxid de carbon (CO₂)."
+            "Perfect! Plantele absorb CO2 și eliberează oxigen.",
+            "Greșit. Plantele absorb dioxid de carbon (CO2)."
         ));
         
         questions.add(new DialogueQuestion(
@@ -215,10 +215,10 @@ public class QuestionPools
         questions.add(new DialogueQuestion(
             "general",
             "Care este formula chimică a apei?",
-            new String[] { "H₂O", "CO₂", "O₂", "H₂SO₄" },
+            new String[] { "H2O", "CO2", "O2", "H2SO4" },
             0,
-            "Excelent! Apa este H₂O - doi atomi de hidrogen și unul de oxigen.",
-            "Greșit. Răspunsul corect este H₂O."
+            "Excelent! Apa este H2O - doi atomi de hidrogen și unul de oxigen.",
+            "Greșit. Răspunsul corect este H2O."
         ));
         
         questions.add(new DialogueQuestion(

@@ -300,6 +300,12 @@ public class PendulumTimingQuest extends Actor
             img.drawString("Eliberare greșită. Recitește", panelW / 2 - 135, panelH / 2 + 30);
             img.drawString("mișcarea armonică. " + successfulReleases + "/" + targetReleases + " finalizat.", panelW / 2 - 150, panelH / 2 + 55);
         }
+
+        // Hide exclamation marker after completion
+        GreenfootImage transparent = new GreenfootImage(48, 48);
+        transparent.setColor(new Color(0, 0, 0, 0));
+        transparent.fillRect(0, 0, 48, 48);
+        setImage(transparent);
         
         myOverlay.setImage(img);
     }
