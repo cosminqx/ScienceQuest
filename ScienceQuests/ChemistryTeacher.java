@@ -23,9 +23,9 @@ public class ChemistryTeacher extends Actor implements NPC
             labWorld = (LabWorld) world;
         }
         
-        // Set NPC appearance (chemistry teacher sprite)
-        GreenfootImage sprite = new GreenfootImage("teacher_face.png");
-        sprite.scale(48, 48);
+        // Set NPC appearance using man_teacher sprite
+        GreenfootImage sprite = new GreenfootImage("man_teacher.png");
+        sprite.scale(80, 80);
         setImage(sprite);
     }
     
@@ -45,7 +45,7 @@ public class ChemistryTeacher extends Actor implements NPC
     private void checkDialogueInteraction()
     {
         World world = getWorld();
-        if (world == null || labWorld == null) return;
+        if (world == null) return;
         
         Actor player = getPlayer();
         if (player != null)
@@ -69,23 +69,15 @@ public class ChemistryTeacher extends Actor implements NPC
                     return;
                 }
 
-                if (fKeyPressed)
-                {
-                    // Dialogue closed - allow next question after short cooldown
-                    fKeyPressed = false;
-                    dialogueCooldown = 15;
-                    return;
-                }
-
+                // Auto-trigger dialogue when in range and no active dialogue
                 if (dialogueCooldown == 0)
                 {
-                    fKeyPressed = true;
                     initiateChemistryDialogue();
+                    dialogueCooldown = 15;
                 }
             }
             else
             {
-                fKeyPressed = false;
                 dialogueCooldown = 0;
             }
         }
@@ -193,7 +185,7 @@ public class ChemistryTeacher extends Actor implements NPC
      */
     public String getIconPath()
     {
-        return "images/teacher_face.png";
+        return "images/man_teacher.png";
     }
     
     /**

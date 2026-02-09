@@ -18,6 +18,11 @@ public class LabWorld extends World implements CollisionWorld
     private TiledMap tiledMap;
     private List<QuestBlock> questBlocks;
     private boolean miniQuestsAdded = false;
+    
+    // Chemistry-specific mini-quests
+    private KeyRainfallQuest rainfallQuest;
+    private ComboChainQuest comboQuest;
+    private RhythmReleaseQuest rhythmQuest;
 
     public LabWorld()
     {
@@ -98,11 +103,20 @@ public class LabWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
-        // Different chemistry-themed challenges at specified positions
-        addObject(new RapidFireQuest(100, 100), 100, 100);
-        addObject(new AlternatingKeysQuest(300, 100), 300, 100);
-        addObject(new DoubleTapSprintQuest(500, 100), 500, 100);
-        addObject(new DirectionDodgeQuest(300, 300), 300, 300);
+        // Three chemistry-themed challenges
+        rainfallQuest = new KeyRainfallQuest(200, 450);
+        comboQuest = new ComboChainQuest(350, 450);
+        rhythmQuest = new RhythmReleaseQuest(500, 450);
+
+        addObject(rainfallQuest, 200, 450);      // Chemical reactions (elements falling)
+        addObject(comboQuest, 350, 450);         // Chain reactions
+        addObject(rhythmQuest, 500, 450);        // Periodic table patterns
+    }
+    
+    private boolean areLabMiniQuestsComplete()
+    {
+        return rainfallQuest != null && comboQuest != null && rhythmQuest != null
+            && rainfallQuest.isCompleted() && comboQuest.isCompleted() && rhythmQuest.isCompleted();
     }
     
     private void loadMap()
@@ -181,6 +195,16 @@ public class LabWorld extends World implements CollisionWorld
                 addMiniQuests();
                 miniQuestsAdded = true;
                 DebugLog.log("Chemistry mini-quests unlocked!");
+            }
+            
+            // Check if all mini-quests are completed to mark lab as complete
+            if (miniQuestsAdded && areLabMiniQuestsComplete() && !GameState.getInstance().isLabCompleted(LabType.CHEMISTRY))
+            {
+                GameState.getInstance().completeLab(LabType.CHEMISTRY);
+                DebugLog.log("Chemistry Lab completed!");
+                
+                // Add return arrow when lab is completed
+                addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
             }
             
             // Check for transition back to MainMapWorld

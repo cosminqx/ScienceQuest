@@ -153,19 +153,8 @@ public class GameState
      */
     public boolean canEnterLab(LabType lab)
     {
-        if (lab == LabType.BIOLOGY)
-        {
-            return true;
-        }
-        if (lab == LabType.PHYSICS)
-        {
-            return completedLabs.contains(LabType.BIOLOGY);
-        }
-        if (lab == LabType.CHEMISTRY)
-        {
-            return completedLabs.contains(LabType.PHYSICS);
-        }
-        return false;
+        // All labs are accessible without prerequisites
+        return true;
     }
 
     public int getXp()

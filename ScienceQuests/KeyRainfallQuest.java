@@ -506,6 +506,11 @@ public class KeyRainfallQuest extends Actor
     public int getMapX() { return mapX; }
     public int getMapY() { return mapY; }
     
+    public boolean isCompleted()
+    {
+        return completed;
+    }
+    
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {
         return java.util.Collections.emptyList();
