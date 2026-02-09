@@ -347,7 +347,7 @@ public class MainMapWorld extends World implements CollisionWorld
             return;
         }
         
-        boolean canEnterLabs = state.areMainMapQuestsUnlocked() && areMainMapMiniQuestsComplete();
+        // Labs are accessible without quest requirements
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
@@ -356,28 +356,19 @@ public class MainMapWorld extends World implements CollisionWorld
         // Transition to LabWorld (Chemistry) when reaching right edge
         if (mapX >= backgroundImage.getWidth() - 5)
         {
-            if (canEnterLabs)
-            {
-                WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
-            }
+            WorldNavigator.tryEnterLab(LabType.CHEMISTRY);
         }
         
         // Transition to LabFizicaWorld when reaching left edge
         if (mapX <= 5)
         {
-            if (canEnterLabs)
-            {
-                WorldNavigator.tryEnterLab(LabType.PHYSICS);
-            }
+            WorldNavigator.tryEnterLab(LabType.PHYSICS);
         }
         
         // Transition to LabBiologyWorld when reaching bottom edge
         if (mapY >= backgroundImage.getHeight() - 5)
         {
-            if (canEnterLabs)
-            {
-                WorldNavigator.tryEnterLab(LabType.BIOLOGY);
-            }
+            WorldNavigator.tryEnterLab(LabType.BIOLOGY);
         }
     }
 

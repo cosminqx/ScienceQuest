@@ -71,10 +71,10 @@ public class LabWorld extends World implements CollisionWorld
             DebugLog.log("Initial scroll: " + scrollX + ", " + scrollY);
         }
         
-        // Add Chemistry teacher at center of the map
+        // Add Chemistry teacher near the character spawn for easy interaction
         teacher = new ChemistryTeacher();
-        addObject(teacher, getWidth() / 2, getHeight() / 2);
-        DebugLog.log("Chemistry Teacher added to LabWorld");
+        addObject(teacher, 250, 200);
+        DebugLog.log("Chemistry Teacher added to LabWorld at (250, 200)");
         
         // Instructions
         Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
@@ -103,14 +103,16 @@ public class LabWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
-        // Three chemistry-themed challenges
-        rainfallQuest = new KeyRainfallQuest(200, 450);
-        comboQuest = new ComboChainQuest(350, 450);
-        rhythmQuest = new RhythmReleaseQuest(500, 450);
+        // Three chemistry-themed challenges positioned below the main area
+        rainfallQuest = new KeyRainfallQuest(150, 400);
+        comboQuest = new ComboChainQuest(300, 400);
+        rhythmQuest = new RhythmReleaseQuest(450, 400);
 
-        addObject(rainfallQuest, 200, 450);      // Chemical reactions (elements falling)
-        addObject(comboQuest, 350, 450);         // Chain reactions
-        addObject(rhythmQuest, 500, 450);        // Periodic table patterns
+        addObject(rainfallQuest, 150, 400);      // Chemical reactions (elements falling)
+        addObject(comboQuest, 300, 400);         // Chain reactions
+        addObject(rhythmQuest, 450, 400);        // Periodic table patterns
+        
+        DebugLog.log("Chemistry mini-quests added to lab");
     }
     
     private boolean areLabMiniQuestsComplete()

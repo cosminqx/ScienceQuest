@@ -69,15 +69,23 @@ public class ChemistryTeacher extends Actor implements NPC
                     return;
                 }
 
-                // Auto-trigger dialogue when in range and no active dialogue
+                if (fKeyPressed)
+                {
+                    // Dialogue closed - allow next question after short cooldown
+                    fKeyPressed = false;
+                    dialogueCooldown = 15;
+                    return;
+                }
+
                 if (dialogueCooldown == 0)
                 {
+                    fKeyPressed = true;
                     initiateChemistryDialogue();
-                    dialogueCooldown = 15;
                 }
             }
             else
             {
+                fKeyPressed = false;
                 dialogueCooldown = 0;
             }
         }
@@ -110,57 +118,25 @@ public class ChemistryTeacher extends Actor implements NPC
             return;
         }
         
-        // Show introduction only on first question
-        if (total == 0)
-        {
-            String introText = "Bine ai venit la Laboratorul de Chimie!\n---\n" +
-                "Întrebarea 1 din 5.\n---\n" +
-                "Corecte: 0/5.";
-            DialogueBox intro = new DialogueBox(introText, getIconPath(), true);
-            intro.setTypewriterSpeed(2);
-            
-            // Queue the quiz question
-            DialogueQuestion question = buildChemistryQuestion();
-            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-            questionBox.setTypewriterSpeed(2);
-            
-            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-                GameState gs = GameState.getInstance();
-                gs.recordLabChemQuizResult(isCorrect);
-                int t = gs.getLabChemQuizTotal();
-                int c = gs.getLabChemQuizCorrect();
-                DebugLog.log("Chemistry Lab Quiz Result: " + c + "/" + t + " correct");
-                if (gs.isLabChemQuizGateComplete())
-                {
-                    DebugLog.log("CHEMISTRY MINI-QUESTS UNLOCKED! Correct: " + c + "/5");
-                }
-            });
-            
-            manager.queueDialogue(questionBox);
-            manager.showDialogue(intro, world, this);
-        }
-        else
-        {
-            // Show quiz question directly for subsequent questions
-            DialogueQuestion question = buildChemistryQuestion();
-            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-            questionBox.setTypewriterSpeed(2);
-            
-            // Set callback to record attempt with correctness flag
-            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-                GameState gs = GameState.getInstance();
-                gs.recordLabChemQuizResult(isCorrect);
-                int t = gs.getLabChemQuizTotal();
-                int c = gs.getLabChemQuizCorrect();
-                DebugLog.log("Chemistry Lab Quiz Result: " + c + "/" + t + " correct");
-                if (gs.isLabChemQuizGateComplete())
-                {
-                    DebugLog.log("CHEMISTRY MINI-QUESTS UNLOCKED! Correct: " + c + "/5");
-                }
-            });
-            
-            manager.showDialogue(questionBox, world, this);
-        }
+        // Show quiz question directly
+        DialogueQuestion question = buildChemistryQuestion();
+        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+        questionBox.setTypewriterSpeed(2);
+        
+        // Set callback to record attempt with correctness flag
+        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+            GameState gs = GameState.getInstance();
+            gs.recordLabChemQuizResult(isCorrect);
+            int t = gs.getLabChemQuizTotal();
+            int c = gs.getLabChemQuizCorrect();
+            DebugLog.log("Chemistry Lab Quiz Result: " + c + "/" + t + " correct");
+            if (gs.isLabChemQuizGateComplete())
+            {
+                DebugLog.log("CHEMISTRY MINI-QUESTS UNLOCKED! Correct: " + c + "/5");
+            }
+        });
+        
+        manager.showDialogue(questionBox, world, this);
     }
     
     /**
@@ -168,7 +144,7 @@ public class ChemistryTeacher extends Actor implements NPC
      */
     private DialogueQuestion buildChemistryQuestion()
     {
-        return GameState.getInstance().getRandomQuestion("general", QuestionPools.getGeneralScienceQuestions());
+        return GameState.getInstance().getRandomQuestion("chemistry", QuestionPools.getChemistryQuestions());
     }
     
     /**

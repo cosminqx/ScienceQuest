@@ -230,5 +230,93 @@ public class QuestionPools
             "Nu e corect. Soarele produce energie nucleară."
         ));
                 return questions;
-    }
-}
+            }
+    
+            public static List<DialogueQuestion> getChemistryQuestions()
+            {
+                List<DialogueQuestion> questions = new ArrayList<>();
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Care este simbolul chimic pentru aur?",
+                    new String[] { "Au", "Ag", "Fe", "Cu" },
+                    0,
+                    "Corect! Au provine din latinescul Aurum - aur.",
+                    "Greșit. Simbolul aurului este Au (Aurum)."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Ce pH are o soluție neutră?",
+                    new String[] { "7", "0", "14", "10" },
+                    0,
+                    "Perfect! pH 7 este neutru, sub 7 este acid, peste 7 este bazic.",
+                    "Nu e corect. pH 7 este neutru."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Care este formula chimică a sării de bucătărie?",
+                    new String[] { "NaCl", "KCl", "CaCO₃", "NaOH" },
+                    0,
+                    "Excelent! NaCl este clorura de sodiu - sarea comună.",
+                    "Greșit. Sarea de bucătărie este NaCl (clorură de sodiu)."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Ce gaz eliberează plantele prin fotosinteză?",
+                    new String[] { "Oxigen", "Dioxid de carbon", "Azot", "Hidrogen" },
+                    0,
+                    "Corect! Plantele absorb CO₂ și eliberează oxigen.",
+                    "Nu e corect. Plantele eliberează oxigen (O₂)."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Care este unitatea de măsură pentru cantitatea de substanță?",
+                    new String[] { "Mol", "Gram", "Litru", "Atom" },
+                    0,
+                    "Perfect! Molul este unitatea de bază în chimie.",
+                    "Greșit. Răspunsul corect este molul."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Ce element chimic are simbolul Fe?",
+                    new String[] { "Fierul", "Fluorul", "Fosfor", "Franciul" },
+                    0,
+                    "Corect! Fe provine din latinescul Ferrum - fier.",
+                    "Nu e corect. Fe este simbolul fierului."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Ce reacție chimică produce căldură?",
+                    new String[] { "Exotermă", "Endotermă", "Reversibilă", "Ireversibilă" },
+                    0,
+                    "Excelent! Reacțiile exoterme eliberează energie sub formă de căldură.",
+                    "Greșit. Reacțiile exoterme produce căldură."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Ce stare de agregare are dioxidul de carbon la temperatura camerei?",
+                    new String[] { "Gazoasă", "Lichidă", "Solidă", "Plasma" },
+                    0,
+                    "Perfect! CO₂ este un gaz la temperatura normală.",
+                    "Nu e corect. CO₂ este gaz la temperatura camerei."
+                ));
+        
+                questions.add(new DialogueQuestion(
+                    "chemistry",
+                    "Care este formula chimică a metanului?",
+                    new String[] { "CH₄", "CO₂", "H₂O", "NH₃" },
+                    0,
+                    "Corect! Metanul (CH₄) este cel mai simplu hidrocarbură.",
+                    "Greșit. Formula metanului este CH₄."
+                ));
+        
+                return questions;
+            }
+        }
