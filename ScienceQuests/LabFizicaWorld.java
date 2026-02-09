@@ -40,8 +40,10 @@ public class LabFizicaWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, PendulumTimingQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
+        // Draw UI on top, then overlay, then arrows, then characters and teacher
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                     TeacherInteractionDisplay.class, DirectionArrow.class, PendulumTimingQuest.class, 
+                     RhythmReleaseQuest.class, KeySequenceQuest.class, Boy.class, Girl.class, PhysicsTeacher.class);
         
         // Load physics lab map (start broken until repaired, unless already completed)
         if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
@@ -127,6 +129,12 @@ public class LabFizicaWorld extends World implements CollisionWorld
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
         addObject(experienceBar, 110, 20);
+        
+        // Add return arrow at right edge to go back to MainMapWorld (only if lab is completed)
+        if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            addObject(new DirectionArrow("right", "ÎNAPOI LA CLASĂ"), getWidth() - 110, getHeight() / 2);
+        }
     }
     
     /**

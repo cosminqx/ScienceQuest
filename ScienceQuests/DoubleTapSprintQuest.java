@@ -91,9 +91,38 @@ public class DoubleTapSprintQuest extends Actor
         int drawX = (48 - img.getWidth()) / 2;
         int drawY = Math.max(0, (32 - img.getHeight()) / 2);
         marker.drawImage(img, drawX, drawY);
-        marker.setColor(new Color(255, 255, 255));
-        marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPATIU", 4, 46);
+        // Don't draw "SPATIU" text here - will be added dynamically when player is near
+        setImage(marker);
+    }
+    
+    private void updateMarkerImage(boolean showLabel)
+    {
+        GreenfootImage img = new GreenfootImage("exclamation-mark.png");
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
+        GreenfootImage marker = new GreenfootImage(48, 48);
+        marker.setColor(new Color(0, 0, 0, 0));
+        marker.fillRect(0, 0, 48, 48);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
+        if (showLabel)
+        {
+            marker.setColor(new Color(255, 255, 255));
+            marker.setFont(new greenfoot.Font("Arial", true, false, 10));
+            marker.drawString("SPATIU", 4, 46);
+        }
         setImage(marker);
     }
     
@@ -128,6 +157,9 @@ public class DoubleTapSprintQuest extends Actor
             boolean startPressed = Greenfoot.isKeyDown("space");
             if (distance < 100)
             {
+                // Show "SPATIU" label when player is near
+                updateMarkerImage(true);
+                
                 if (!tutorialActive)
                 {
                     if (interactionCooldown == 0 && startPressed && !startKeyDown)
@@ -156,10 +188,15 @@ public class DoubleTapSprintQuest extends Actor
                     }
                 }
             }
-            else if (tutorialActive)
+            else
             {
-                tutorialActive = false;
-                clearOverlay();
+                // Hide "SPATIU" label when player is far
+                updateMarkerImage(false);
+                if (tutorialActive)
+                {
+                    tutorialActive = false;
+                    clearOverlay();
+                }
             }
             startKeyDown = startPressed;
         }
@@ -491,28 +528,28 @@ public class DoubleTapSprintQuest extends Actor
         
         // Title
         img.setColor(new Color(100, 200, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        img.setFont(FontManager.getPixeledLarge());
         drawCenteredString(img, "TUTORIAL", panelW / 2, 45, 28);
         
         // Instructions
-        img.setFont(new greenfoot.Font("Arial", false, false, 18));
+        img.setFont(FontManager.getPixeled());
         img.setColor(new Color(220, 220, 220));
         
         img.drawString("Scopul:", 40, 100);
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
         img.drawString("Completeaza " + targetDoubleTaps + " duble apasari pe SPATIU", 60, 125);
         
-        img.setFont(new greenfoot.Font("Arial", false, false, 18));
+        img.setFont(FontManager.getPixeled());
         img.setColor(new Color(220, 220, 220));
         img.drawString("Cum se joaca:", 40, 165);
         
-        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(200, 200, 200));
         img.drawString("1. Apasa SPATIU de doua ori rapid", 60, 190);
         img.drawString("2. Daca le apropii suficient, obtii un punct", 60, 210);
         img.drawString("3. Evita sa apesi prea lent", 60, 230);
         
-        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(100, 200, 255));
         drawCenteredString(img, "Apasa SPATIU din nou pentru a incepe", panelW / 2, 280, 16);
         

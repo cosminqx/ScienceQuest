@@ -10,6 +10,7 @@ public class PhysicsTeacher extends Actor implements NPC
     private boolean fKeyPressed = false;
     private boolean hasShownPanicDialogue = false;
     private LabFizicaWorld labWorld;
+    private int dialogueCooldown = 0;
     
     public PhysicsTeacher()
     {
@@ -33,6 +34,11 @@ public class PhysicsTeacher extends Actor implements NPC
     
     public void act()
     {
+        if (dialogueCooldown > 0)
+        {
+            dialogueCooldown--;
+        }
+        
         // Store reference to world
         if (labWorld == null && getWorld() instanceof LabFizicaWorld)
         {
@@ -82,7 +88,20 @@ public class PhysicsTeacher extends Actor implements NPC
             if (distance < INTERACTION_DISTANCE)
             {
                 DialogueManager manager = DialogueManager.getInstance();
-                if (!manager.isDialogueActive() && !fKeyPressed)
+                if (manager.isDialogueActive())
+                {
+                    return;
+                }
+
+                if (fKeyPressed)
+                {
+                    // Dialogue closed - allow next question after short cooldown
+                    fKeyPressed = false;
+                    dialogueCooldown = 15;
+                    return;
+                }
+
+                if (dialogueCooldown == 0)
                 {
                     fKeyPressed = true;
                     initiateRepairDialogue();
@@ -91,6 +110,7 @@ public class PhysicsTeacher extends Actor implements NPC
             else
             {
                 fKeyPressed = false;
+                dialogueCooldown = 0;
             }
         }
     }
@@ -122,23 +142,42 @@ public class PhysicsTeacher extends Actor implements NPC
             return;
         }
 
-        String repairText = "Întrebarea " + (total + 1) + " din 5.\n---\n" +
-            "Corecte: " + correct + "/5.";
-        DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
-        instruction.setTypewriterSpeed(2);
-        
-        // Physics question
-        DialogueQuestion question = buildPhysicsQuestion();
-        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-        questionBox.setTypewriterSpeed(2);
-        
-        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-            GameState gs = GameState.getInstance();
-            gs.recordLabPhysNPCQuizResult(isCorrect);
-        });
-        
-        manager.queueDialogue(questionBox);
-        manager.showDialogue(instruction, world, this);
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String repairText = "Bine ai venit la Laboratorul de Fizică!\n---\n" +
+                "Întrebarea 1 din 5.\n---\n" +
+                "Corecte: 0/5.";
+            DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
+            instruction.setTypewriterSpeed(2);
+            
+            // Physics question
+            DialogueQuestion question = buildPhysicsQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabPhysNPCQuizResult(isCorrect);
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(instruction, world, this);
+        }
+        else
+        {
+            // Show question directly for subsequent questions
+            DialogueQuestion question = buildPhysicsQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabPhysNPCQuizResult(isCorrect);
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
     
     private DialogueQuestion buildPhysicsQuestion()

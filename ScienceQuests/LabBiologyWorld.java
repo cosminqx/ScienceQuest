@@ -41,8 +41,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+        // Draw UI on top, then overlay, then arrows, then characters and teacher
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                     TeacherInteractionDisplay.class, DirectionArrow.class, DnaReplicationQuest.class, 
+                     ChemicalBondQuest.class, PrecisionHoldQuest.class, Boy.class, Girl.class, 
+                     BiologyTeacher.class, BiologyAssistant.class);
         
         // Load biology lab map (start destroyed until repaired, unless already completed)
         if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
@@ -142,6 +145,12 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
         addObject(experienceBar, 110, 20);
+        
+        // Add return arrow at top to go back to MainMapWorld (only if lab is completed)
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
+        }
     }
     
     /**

@@ -12,6 +12,7 @@ public class BiologyTeacher extends Actor implements NPC
     private boolean hasShownPanicDialogue = false;
     private LabBiologyWorld labWorld;
     private static final int NPC_QUIZ_LIMIT_LAB = 3; // Number of quizzes in lab
+    private int dialogueCooldown = 0;
     
     public BiologyTeacher()
     {
@@ -35,6 +36,11 @@ public class BiologyTeacher extends Actor implements NPC
     
     public void act()
     {
+        if (dialogueCooldown > 0)
+        {
+            dialogueCooldown--;
+        }
+        
         // Store reference to world
         if (labWorld == null && getWorld() instanceof LabBiologyWorld)
         {
@@ -85,7 +91,20 @@ public class BiologyTeacher extends Actor implements NPC
             if (distance < INTERACTION_DISTANCE)
             {
                 DialogueManager manager = DialogueManager.getInstance();
-                if (!manager.isDialogueActive() && !fKeyPressed)
+                if (manager.isDialogueActive())
+                {
+                    return;
+                }
+
+                if (fKeyPressed)
+                {
+                    // Dialogue closed - allow next question after short cooldown
+                    fKeyPressed = false;
+                    dialogueCooldown = 15;
+                    return;
+                }
+
+                if (dialogueCooldown == 0)
                 {
                     fKeyPressed = true;
                     // Always use quiz dialogue; lab repair is handled by LabBiologyWorld
@@ -96,6 +115,7 @@ public class BiologyTeacher extends Actor implements NPC
             {
                 // Reset when player moves away
                 fKeyPressed = false;
+                dialogueCooldown = 0;
             }
         }
     }
@@ -128,28 +148,45 @@ public class BiologyTeacher extends Actor implements NPC
             return;
         }
 
-        // Greeting dialogue
-        String playerName = PlayerData.getPlayerName();
-        String greetText = "Salut " + playerName + "! Sunt profesorul de biologie.\n---\n" +
-            "Întrebarea " + (total + 1) + " din 5.\n" +
-            "Corecte: " + correct + "/5";
-        
-        DialogueBox greeting = new DialogueBox(greetText, getIconPath(), true);
-        greeting.setTypewriterSpeed(2);
-        
-        // Biology question
-        DialogueQuestion question = buildBiologyQuestion();
-        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-        questionBox.setTypewriterSpeed(2);
-        
-        // Set callback to track quiz result (for lab-specific tracking, not MainMap)
-        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-            gameState.recordLabBioNPCQuizResult(isCorrect);
-            DebugLog.log("Lab Biology NPC Quiz: " + gameState.getMainMapNPCCorrect() + " correct in MainMap");
-        });
-        
-        manager.queueDialogue(questionBox);
-        manager.showDialogue(greeting, world, this);
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String playerName = PlayerData.getPlayerName();
+            String greetText = "Salut " + playerName + "! Sunt profesorul de biologie.\n---\n" +
+                "Întrebarea 1 din 5.\n" +
+                "Corecte: 0/5";
+            
+            DialogueBox greeting = new DialogueBox(greetText, getIconPath(), true);
+            greeting.setTypewriterSpeed(2);
+            
+            // Biology question
+            DialogueQuestion question = buildBiologyQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                gameState.recordLabBioNPCQuizResult(isCorrect);
+                DebugLog.log("Lab Biology NPC Quiz: " + gameState.getLabBioQuizCorrect() + "/" + gameState.getLabBioQuizTotal() + " correct");
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(greeting, world, this);
+        }
+        else
+        {
+            // Show question directly for subsequent questions
+            DialogueQuestion question = buildBiologyQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            // Set callback to track quiz result (for lab-specific tracking, not MainMap)
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                gameState.recordLabBioNPCQuizResult(isCorrect);
+                DebugLog.log("Lab Biology NPC Quiz: " + gameState.getLabBioQuizCorrect() + "/" + gameState.getLabBioQuizTotal() + " correct");
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
     
     private DialogueQuestion buildBiologyQuestion()

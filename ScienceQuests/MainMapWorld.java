@@ -24,6 +24,10 @@ public class MainMapWorld extends World implements CollisionWorld
     private DoubleTapSprintQuest doubleTapSprintQuest;
     private ComboChainQuest comboChainQuest;
     private DirectionDodgeQuest directionDodgeQuest;
+    private DirectionArrow bioArrow;
+    private DirectionArrow physArrow;
+    private OverlayLayer tutorialOverlay;
+    private int tutorialDisplayTicks = 0;
 
     public MainMapWorld()
     {
@@ -33,12 +37,14 @@ public class MainMapWorld extends World implements CollisionWorld
         DialogueManager.getInstance().reset();
         
         // Set paint order for all quests and UI elements
-        setPaintOrder(ExperienceBar.class, Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
+        // Dialogue boxes on top, then overlays, then UI, then arrows beneath dialogue
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                     SettingsButton.class, TeacherDisplay.class, DirectionArrow.class,
                      RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
                      DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
                      RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
                      ChemicalBondQuest.class, DnaReplicationQuest.class, PendulumTimingQuest.class,
-                 DirectionArrow.class, Boy.class, Girl.class, Teacher.class);
+                     Boy.class, Girl.class, Teacher.class);
         
         FontManager.loadFonts();
         
@@ -91,9 +97,24 @@ public class MainMapWorld extends World implements CollisionWorld
         // Add mini-quests scattered across the map
         addMiniQuests();
 
-        // Exit hints for labs
-        addObject(new DirectionArrow("down", "LAB BIOLOGIE (ÎNCEPE AICI)"), 432, 620);
-        addObject(new DirectionArrow("left", "LAB FIZICĂ (după BIO)"), 70, 190);
+        // Add direction arrows based on game progression
+        // Always show Biology arrow (first lab)
+        bioArrow = new DirectionArrow("down", "LAB BIOLOGIE (ÎNCEPE AICI)");
+        addObject(bioArrow, 432, 620);
+        
+        // Only show Physics arrow if Biology lab is completed
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            physArrow = new DirectionArrow("left", "LAB FIZICĂ");
+            addObject(physArrow, 70, 190);
+        }
+        
+        // Show tutorial popup if first time entering MainMapWorld
+        if (!GameState.getInstance().hasShownMainMapTutorial())
+        {
+            showTutorial();
+            GameState.getInstance().setMainMapTutorialShown();
+        }
     }
     
     /**
@@ -167,6 +188,28 @@ public class MainMapWorld extends World implements CollisionWorld
     {
         // Process dialogue input (ENTER key to dismiss)
         dialogueManager.processInput();
+        
+        // Handle tutorial display
+        if (tutorialDisplayTicks > 0)
+        {
+            tutorialDisplayTicks--;
+            if (tutorialDisplayTicks == 0)
+            {
+                clearTutorial();
+            }
+            else if (Greenfoot.isKeyDown("enter") || Greenfoot.isKeyDown("space"))
+            {
+                tutorialDisplayTicks = 0;
+                clearTutorial();
+            }
+        }
+        
+        // Check if Physics arrow should be added after Biology completion
+        if (physArrow == null && GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            physArrow = new DirectionArrow("left", "LAB FIZICĂ");
+            addObject(physArrow, 70, 190);
+        }
         
         // Draw full map without scrolling
         if (character != null && character.getWorld() != null)
@@ -295,6 +338,68 @@ public class MainMapWorld extends World implements CollisionWorld
             && alternatingKeysQuest.isCompleted() && doubleTapSprintQuest.isCompleted()
             && comboChainQuest.isCompleted() && directionDodgeQuest.isCompleted();
     }
+    
+    private void showTutorial()
+    {
+        tutorialOverlay = new OverlayLayer();
+        addObject(tutorialOverlay, getWidth() / 2, getHeight() / 2);
+        
+        int panelW = 600;
+        int panelH = 350;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        
+        // Background
+        img.setColor(new Color(15, 15, 30, 240));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        // Border with glow
+        img.setColor(new Color(100, 200, 255, 220));
+        img.drawRect(0, 0, panelW - 1, panelH - 1);
+        img.setColor(new Color(120, 220, 255, 140));
+        img.drawRect(1, 1, panelW - 3, panelH - 3);
+        
+        // Title
+        img.setColor(new Color(255, 220, 100));
+        img.setFont(FontManager.getPixeledLarge());
+        drawCenteredString(img, "BINE AI VENIT!", panelW / 2, 50);
+        
+        // Instructions
+        img.setFont(FontManager.getPixeled());
+        img.setColor(new Color(220, 220, 220));
+        
+        int startY = 110;
+        int lineHeight = 35;
+        
+        img.drawString("• Obișnuiește-te cu Quiz-urile și mini-quest-urile", 40, startY);
+        img.drawString("  din clasă", 40, startY + lineHeight);
+        
+        img.drawString("• După aceea, mergi la Laboratorul de Biologie", 40, startY + lineHeight * 2);
+        img.drawString("  (în jos, la baza clasei) și fă la fel", 40, startY + lineHeight * 3);
+        
+        img.drawString("• Mergi la Laboratorul de Fizică", 40, startY + lineHeight * 4);
+        img.drawString("  (în stânga clasei)", 40, startY + lineHeight * 5);
+        
+        // Bottom text
+        img.setFont(FontManager.getPixeledSmall());
+        img.setColor(new Color(100, 200, 255));
+        drawCenteredString(img, "Apasă SPACE sau ENTER pentru a continua", panelW / 2, panelH - 30);
+        
+        tutorialOverlay.setImage(img);
+        tutorialDisplayTicks = 600; // Auto-close after 10 seconds if not dismissed
+    }
+    
+    private void clearTutorial()
+    {
+        if (tutorialOverlay != null && tutorialOverlay.getWorld() != null)
+        {
+            removeObject(tutorialOverlay);
+            tutorialOverlay = null;
+        }
+    }
+    
+    private void drawCenteredString(GreenfootImage img, String str, int centerX, int y)
+    {
+        int strWidth = img.getFont().getSize() * str.length() / 2;
+        img.drawString(str, centerX - strWidth / 2, y);
+    }
 }
-
-

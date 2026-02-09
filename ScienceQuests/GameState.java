@@ -34,6 +34,7 @@ public class GameState
     private int labNPCTotalCountBio = 0;           // Total questions in LabBiologyWorld
     private int labNPCCorrectCountPhys = 0;        // Correct answers from NPC in LabFizicaWorld
     private int labNPCTotalCountPhys = 0;          // Total questions in LabFizicaWorld
+    private boolean hasShownMainMapTutorial = false; // Track if tutorial was shown in MainMapWorld
 
     private GameState()
     {
@@ -53,6 +54,7 @@ public class GameState
         labNPCTotalCountBio = 0;
         labNPCCorrectCountPhys = 0;
         labNPCTotalCountPhys = 0;
+        hasShownMainMapTutorial = false;
     }
 
     public static GameState getInstance()
@@ -81,6 +83,17 @@ public class GameState
         labNPCTotalCountBio = 0;
         labNPCCorrectCountPhys = 0;
         labNPCTotalCountPhys = 0;
+        hasShownMainMapTutorial = false;
+    }
+
+    public boolean hasShownMainMapTutorial()
+    {
+        return hasShownMainMapTutorial;
+    }
+
+    public void setMainMapTutorialShown()
+    {
+        hasShownMainMapTutorial = true;
     }
 
     public boolean isMiniQuestActive()

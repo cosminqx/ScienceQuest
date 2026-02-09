@@ -141,34 +141,66 @@ public class Teacher extends Actor implements NPC
         
         // Create and show the dialogue
         String playerName = PlayerData.getPlayerName();
-        String dialogueText = getDialogueText(playerName, gameState);
         String iconPath = getIconPath();
         
-        // Greeting dialogue
-        DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, true);
-        dialogue.setTypewriterSpeed(2);
+        int total = gameState.getMainMapNPCProgress();
+        int correct = gameState.getMainMapNPCCorrect();
 
-        // Queue the quiz question to show after greeting
-        DialogueQuestion question = buildScienceQuestion();
-        DialogueBox questionBox = new DialogueBox(question, iconPath, true);
-        questionBox.setTypewriterSpeed(2);
-        
-        // Set callback to record attempt with correctness flag
-        questionBox.setOnAnswerAttemptCallback(isCorrect -> {
-            GameState gs = GameState.getInstance();
-            gs.recordMainMapNPCQuizResult(isCorrect);
-            int total = gs.getMainMapNPCProgress();
-            int correct = gs.getMainMapNPCCorrect();
-            DebugLog.log("MainMap NPC Quiz Result: " + correct + "/" + total + " correct");
-            if (gs.areMainMapQuestsUnlocked())
-            {
-                DebugLog.log("QUESTS UNLOCKED! Correct: " + correct + "/5");
-            }
-        });
-        
-        manager.queueDialogue(questionBox);
-        
-        manager.showDialogue(dialogue, world, this);
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String dialogueText = "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
+                "---\n" +
+                "Iată o întrebare de știință pentru tine:\n" +
+                "Quiz-ul 1 din 5 (0 corecte)\n" +
+                "---\n" +
+                "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+            
+            DialogueBox greeting = new DialogueBox(dialogueText, iconPath, true);
+            greeting.setTypewriterSpeed(2);
+            
+            // Queue the quiz question to show after greeting
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(greeting, world, this);
+        }
+        else
+        {
+            // Show quiz question directly for subsequent questions
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            
+            // Set callback to record attempt with correctness flag
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
 
     private DialogueQuestion buildScienceQuestion()
