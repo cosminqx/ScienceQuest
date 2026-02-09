@@ -456,6 +456,69 @@ public class DoubleTapSprintQuest extends Actor
         myOverlay.setImage(img);
     }
 
+    private void showTutorial()
+    {
+        World world = getWorld();
+        if (world == null) return;
+        
+        // Get or create overlay layer
+        if (myOverlay == null || myOverlay.getWorld() == null)
+        {
+            myOverlay = new OverlayLayer();
+            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
+        }
+        
+        int panelW = 500;
+        int panelH = 300;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        
+        // Pulsing glow effect
+        int pulse = 70 + (int)(50 * Math.sin(animTick * 0.1));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        // Panel background
+        img.setColor(new Color(12, 12, 28, 250));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        // Border with glow
+        img.setColor(new Color(100, 200, 255, 220));
+        img.drawRect(0, 0, panelW, panelH);
+        img.setColor(new Color(120, 220, 255, 140));
+        img.drawRect(1, 1, panelW - 2, panelH - 2);
+        img.setColor(new Color(140, 240, 255, 70));
+        img.drawRect(2, 2, panelW - 4, panelH - 4);
+        
+        // Title
+        img.setColor(new Color(100, 200, 255));
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        drawCenteredString(img, "TUTORIAL", panelW / 2, 45, 28);
+        
+        // Instructions
+        img.setFont(new greenfoot.Font("Arial", false, false, 18));
+        img.setColor(new Color(220, 220, 220));
+        
+        img.drawString("Scopul:", 40, 100);
+        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.drawString("Completeaza " + targetDoubleTaps + " duble apasari pe SPATIU", 60, 125);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 18));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Cum se joaca:", 40, 165);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.setColor(new Color(200, 200, 200));
+        img.drawString("1. Apasa SPATIU de doua ori rapid", 60, 190);
+        img.drawString("2. Daca le apropii suficient, obtii un punct", 60, 210);
+        img.drawString("3. Evita sa apesi prea lent", 60, 230);
+        
+        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.setColor(new Color(100, 200, 255));
+        drawCenteredString(img, "Apasa SPATIU din nou pentru a incepe", panelW / 2, 280, 16);
+        
+        myOverlay.setImage(img);
+    }
+
     private void drawCenteredString(GreenfootImage img, String str, int centerX, int y, int size)
     {
         int strWidth = size * str.length() / 2;
