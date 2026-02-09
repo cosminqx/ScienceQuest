@@ -25,7 +25,8 @@ public class ChemistryTeacher extends Actor implements NPC
         
         // Set NPC appearance using man_teacher sprite
         GreenfootImage sprite = new GreenfootImage("man_teacher.png");
-        sprite.scale(80, 80);
+        // Scale up by 40% from the previous 80x80 size
+        sprite.scale(112, 112);
         setImage(sprite);
     }
     
