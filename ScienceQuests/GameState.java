@@ -153,8 +153,27 @@ public class GameState
      */
     public boolean canEnterLab(LabType lab)
     {
-        // All labs are accessible without prerequisites
-        return true;
+        boolean mainMapComplete = mainMapQuestsUnlocked
+            && rapidFireQuestComplete
+            && keySequenceQuestComplete
+            && alternatingKeysQuestComplete
+            && doubleTapSprintQuestComplete
+            && comboChainQuestComplete
+            && directionDodgeQuestComplete;
+
+        if (lab == LabType.BIOLOGY)
+        {
+            return mainMapComplete;
+        }
+        if (lab == LabType.PHYSICS)
+        {
+            return mainMapComplete && completedLabs.contains(LabType.BIOLOGY);
+        }
+        if (lab == LabType.CHEMISTRY)
+        {
+            return mainMapComplete && completedLabs.contains(LabType.PHYSICS);
+        }
+        return false;
     }
 
     public int getXp()
@@ -281,16 +300,17 @@ public class GameState
         if (mainMapNPCTotalCount < NPC_QUIZ_LIMIT)
         {
             mainMapNPCTotalCount++;
-            if (correct)
-            {
-                mainMapNPCCorrectCount++;
-            }
-            
-            // Unlock quests if 3 correct achieved
-            if (!mainMapQuestsUnlocked && mainMapNPCCorrectCount >= CORRECT_NEEDED)
-            {
-                mainMapQuestsUnlocked = true;
-            }
+        }
+
+        if (correct && mainMapNPCCorrectCount < NPC_QUIZ_LIMIT)
+        {
+            mainMapNPCCorrectCount++;
+        }
+        
+        // Unlock quests if 3 correct achieved
+        if (!mainMapQuestsUnlocked && mainMapNPCCorrectCount >= CORRECT_NEEDED)
+        {
+            mainMapQuestsUnlocked = true;
         }
     }
     

@@ -6,6 +6,8 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  */
 public class Teacher extends QuizNPCBase
 {
+    private boolean completionShown = false;
+
     public Teacher()
     {
         try
@@ -32,7 +34,7 @@ public class Teacher extends QuizNPCBase
      */
     protected boolean isInteractionEnabled()
     {
-        return true;
+        return !completionShown;
     }
 
     protected void onInteract(World world)
@@ -102,6 +104,7 @@ public class Teacher extends QuizNPCBase
             DialogueBox completion = new DialogueBox(completionText, iconPath, true);
             completion.setTypewriterSpeed(2);
             manager.showDialogue(completion, world, this);
+            completionShown = true;
             return;
         }
 

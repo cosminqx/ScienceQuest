@@ -97,10 +97,6 @@ public class MainMapWorld extends World implements CollisionWorld
         addMiniQuests();
 
         // Add direction arrows based on game progression
-        // Always show Biology arrow (first lab)
-        bioArrow = new DirectionArrow("down", "LAB BIOLOGIE (ÎNCEPE AICI)");
-        addObject(bioArrow, 432, 620);
-        
         // Only show Physics arrow if Biology lab is completed
         if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
         {
@@ -237,6 +233,13 @@ public class MainMapWorld extends World implements CollisionWorld
                 tutorialDisplayTicks = 0;
                 clearTutorial();
             }
+        }
+
+        // Show Biology arrow only after all MainMap quests are completed
+        if (bioArrow == null && GameState.getInstance().areMainMapQuestsUnlocked() && areMainMapMiniQuestsComplete())
+        {
+            bioArrow = new DirectionArrow("down", "LABORATOR BIOLOGIE");
+            addObject(bioArrow, 432, 620);
         }
         
         // Check if Physics arrow should be added after Biology completion

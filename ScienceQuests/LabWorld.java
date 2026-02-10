@@ -93,10 +93,10 @@ public class LabWorld extends World implements CollisionWorld
             miniQuestsAdded = true;
         }
         
-        // Add return arrow at top to go back to MainMapWorld (only if lab is completed)
+        // Add return arrow at left edge to go back to MainMapWorld (only if lab is completed)
         if (GameState.getInstance().isLabCompleted(LabType.CHEMISTRY))
         {
-            addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
+            addObject(new DirectionArrow("left", "ÎNAPOI LA CLASĂ"), 70, getHeight() / 2);
         }
     }
     
@@ -262,7 +262,7 @@ public class LabWorld extends World implements CollisionWorld
                 DebugLog.log("Chemistry Lab completed!");
                 
                 // Add return arrow when lab is completed
-                addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
+                addObject(new DirectionArrow("left", "ÎNAPOI LA CLASĂ"), 70, getHeight() / 2);
             }
             
             // Check for transition back to MainMapWorld

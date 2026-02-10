@@ -25,6 +25,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
     private boolean waitingForDialogue = false; // Waiting for dialogue to finish
     private boolean miniQuestsAdded = false;
     private boolean repairTriggered = false;
+    private DirectionArrow returnArrow;
     private PendulumTimingQuest pendulumQuest;
     private RhythmReleaseQuest rhythmQuest;
     private KeySequenceQuest sequenceQuest;
@@ -135,7 +136,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
         // Add return arrow at right edge to go back to MainMapWorld (only if lab is completed)
         if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
         {
-            addObject(new DirectionArrow("right", "ÎNAPOI LA CLASĂ"), getWidth() - 110, getHeight() / 2);
+            addReturnArrow();
         }
     }
     
@@ -288,11 +289,22 @@ public class LabFizicaWorld extends World implements CollisionWorld
                     state.awardBadge("physics_expert");
                     state.addXp(50);
                 }
+                addReturnArrow();
             }
 
             // Check for transition back to MainMapWorld
             checkWorldTransition();
         }
+    }
+
+    private void addReturnArrow()
+    {
+        if (returnArrow != null && returnArrow.getWorld() != null)
+        {
+            return;
+        }
+        returnArrow = new DirectionArrow("right", "MERGI LA CLASA");
+        addObject(returnArrow, getWidth() - 110, getHeight() / 2);
     }
     
     /**

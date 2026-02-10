@@ -25,6 +25,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private boolean waitingForDialogue = false; // Waiting for dialogue to finish
     private boolean miniQuestsAdded = false;
     private boolean repairTriggered = false;
+    private DirectionArrow returnArrow;
     private DnaReplicationQuest dnaQuest;
     private ChemicalBondQuest bondQuest;
     private PrecisionHoldQuest precisionQuest;
@@ -135,7 +136,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Add return arrow at top to go back to MainMapWorld (only if lab is completed)
         if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
         {
-            addObject(new DirectionArrow("up", "ÎNAPOI LA CLASĂ"), getWidth() / 2, 60);
+            addReturnArrow();
         }
     }
     
@@ -271,6 +272,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
                 lastScrollY = scrollY;
             }
         }
+
+        if (miniQuestsAdded)
+        {
+            cleanupCompletedQuests();
+        }
         
         // Gate mini-quests until NPC quiz requirement is met
         if (!miniQuestsAdded && GameState.getInstance().isLabBioQuizGateComplete())
@@ -291,10 +297,47 @@ public class LabBiologyWorld extends World implements CollisionWorld
                 state.awardBadge("biology_master");
                 state.addXp(50);
             }
+            addReturnArrow();
         }
 
         // Check for world transitions
         checkWorldTransition();
+    }
+
+    private void cleanupCompletedQuests()
+    {
+        if (dnaQuest != null && dnaQuest.isCompleted() && dnaQuest.getWorld() != null)
+        {
+            hideQuestMarker(dnaQuest);
+        }
+
+        if (bondQuest != null && bondQuest.isCompleted() && bondQuest.getWorld() != null)
+        {
+            hideQuestMarker(bondQuest);
+        }
+
+        if (precisionQuest != null && precisionQuest.isCompleted() && precisionQuest.getWorld() != null)
+        {
+            hideQuestMarker(precisionQuest);
+        }
+    }
+
+    private void hideQuestMarker(Actor quest)
+    {
+        GreenfootImage transparent = new GreenfootImage(48, 48);
+        transparent.setColor(new Color(0, 0, 0, 0));
+        transparent.fillRect(0, 0, 48, 48);
+        quest.setImage(transparent);
+    }
+
+    private void addReturnArrow()
+    {
+        if (returnArrow != null && returnArrow.getWorld() != null)
+        {
+            return;
+        }
+        returnArrow = new DirectionArrow("up", "MERGI LA CLASA");
+        addObject(returnArrow, getWidth() / 2, 60);
     }
     
     /**
