@@ -16,7 +16,6 @@ public class MainMapWorld extends World implements CollisionWorld
     private int teacherMapX = 339; // Fixed position on map
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
-    private SettingsButton settingsButton; // Settings icon in top-right
     private ExperienceBar experienceBar; // XP bar in top-left
     private RapidFireQuest rapidFireQuest;
     private KeySequenceQuest keySequenceQuest;
@@ -42,7 +41,7 @@ public class MainMapWorld extends World implements CollisionWorld
         // Set paint order for all quests and UI elements
         // Dialogue boxes on top, then overlays, then UI, then arrows beneath dialogue
         setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
-                     SettingsButton.class, TeacherDisplay.class, DirectionArrow.class,
+                 TeacherDisplay.class, DirectionArrow.class,
                      RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
                      DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
                      RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
@@ -88,10 +87,6 @@ public class MainMapWorld extends World implements CollisionWorld
         
         // Add collision objects AFTER character so they render behind
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
-        
-        // Add settings button in top-right corner
-        settingsButton = new SettingsButton();
-        addObject(settingsButton, getWidth() - 20, 20);
         
         // Add mini-quests scattered across the map
         addMiniQuests();
