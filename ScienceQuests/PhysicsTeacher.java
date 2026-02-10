@@ -3,11 +3,8 @@ import greenfoot.*;
 /**
  * PhysicsTeacher - Teacher in the physics lab who reacts when equipment breaks
  */
-public class PhysicsTeacher extends Actor implements NPC
+public class PhysicsTeacher extends QuizNPCBase
 {
-    private TeacherInteractionDisplay interactionDisplay;
-    private static final int INTERACTION_DISTANCE = 80;
-    private boolean fKeyPressed = false;
     private boolean hasShownPanicDialogue = false;
     private LabFizicaWorld labWorld;
     
@@ -28,19 +25,30 @@ public class PhysicsTeacher extends Actor implements NPC
             setImage(image);
         }
         
-        interactionDisplay = new TeacherInteractionDisplay();
     }
-    
-    public void act()
+
+    protected void onWorldTick(World world)
     {
-        // Store reference to world
-        if (labWorld == null && getWorld() instanceof LabFizicaWorld)
+        if (labWorld == null && world instanceof LabFizicaWorld)
         {
-            labWorld = (LabFizicaWorld) getWorld();
+            labWorld = (LabFizicaWorld) world;
         }
-        
-        checkPlayerProximity();
-        checkDialogueInteraction();
+    }
+
+    protected boolean isInteractionEnabled()
+    {
+        GameState state = GameState.getInstance();
+        return labWorld != null && !state.isLabPhysQuizGateComplete();
+    }
+
+    protected boolean shouldShowPrompt()
+    {
+        return labWorld != null && labWorld.isBroken();
+    }
+
+    protected void onInteract(World world)
+    {
+        initiateRepairDialogue();
     }
     
     /**
@@ -64,41 +72,9 @@ public class PhysicsTeacher extends Actor implements NPC
         manager.showDialogue(panicDialogue, world, this);
     }
     
-    /**
-     * Check for F key interaction to fix the lab
-     */
-    private void checkDialogueInteraction()
-    {
-        World world = getWorld();
-        if (world == null || labWorld == null) return;
-        
-        // Only allow interaction if lab is broken
-        if (!labWorld.isBroken()) return;
-        
-        Actor player = getPlayer();
-        if (player != null)
-        {
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < INTERACTION_DISTANCE && Greenfoot.isKeyDown("f"))
-            {
-                if (!fKeyPressed)
-                {
-                    fKeyPressed = true;
-                    initiateRepairDialogue();
-                }
-            }
-            else if (!Greenfoot.isKeyDown("f"))
-            {
-                fKeyPressed = false;
-            }
-        }
-    }
     
     /**
-     * Show repair question dialogue
+     * Show physics lab quiz dialogue
      */
     private void initiateRepairDialogue()
     {
@@ -109,33 +85,77 @@ public class PhysicsTeacher extends Actor implements NPC
         
         if (manager.isDialogueActive()) return;
         
-        // Repair instruction dialogue
-        String repairText = "Pentru a repara echipamentul, trebuie să răspunzi corect la o întrebare!";
-        DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
-        instruction.setTypewriterSpeed(2);
-        
-        // Physics question
-        DialogueQuestion question = buildPhysicsQuestion();
-        DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
-        questionBox.setTypewriterSpeed(2);
-        
-        // Add callback to fix lab when answered correctly
-        questionBox.setOnCorrectAnswerCallback(() -> {
-            if (labWorld != null)
-            {
-                labWorld.repairLab();
-                
-                // Mark physics lab as completed and award badge
-                GameState state = GameState.getInstance();
-                state.completeLab(LabType.PHYSICS);
-                state.awardBadge("physics_expert");
-                state.addXp(25); // XP for lab repair
-                state.addXp(50); // Bonus XP for completing the lab
-            }
-        });
-        
-        manager.queueDialogue(questionBox);
-        manager.showDialogue(instruction, world, this);
+        GameState state = GameState.getInstance();
+        int total = state.getLabPhysQuizTotal();
+        int correct = state.getLabPhysQuizCorrect();
+
+        if (state.isLabPhysQuizGateComplete())
+        {
+            String doneText = "Ai terminat toate cele 5 întrebări.\n---\n" +
+                "Corecte: " + correct + "/5.\n---\n" +
+                "Continuă cu mini‑quest‑urile.";
+            DialogueBox done = new DialogueBox(doneText, getIconPath(), true);
+            done.setTypewriterSpeed(2);
+            manager.showDialogue(done, world, this);
+            return;
+        }
+
+        if (total >= 5 && correct < 3)
+        {
+            String retryText = "Nu ai suficiente răspunsuri corecte.\n---\n" +
+                "Mai ai nevoie de " + (3 - correct) + " corecte.";
+            DialogueBox retry = new DialogueBox(retryText, getIconPath(), true);
+            retry.setTypewriterSpeed(2);
+
+            DialogueQuestion question = buildPhysicsQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabPhysNPCQuizResult(isCorrect);
+            });
+
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(retry, world, this);
+            return;
+        }
+
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String repairText = "Bine ai venit la Laboratorul de Fizică!\n---\n" +
+                "Întrebarea 1 din 5.\n---\n" +
+                "Corecte: 0/5.";
+            DialogueBox instruction = new DialogueBox(repairText, getIconPath(), true);
+            instruction.setTypewriterSpeed(2);
+            
+            // Physics question
+            DialogueQuestion question = buildPhysicsQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabPhysNPCQuizResult(isCorrect);
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(instruction, world, this);
+        }
+        else
+        {
+            // Show question directly for subsequent questions
+            DialogueQuestion question = buildPhysicsQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabPhysNPCQuizResult(isCorrect);
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
     
     private DialogueQuestion buildPhysicsQuestion()
@@ -143,63 +163,6 @@ public class PhysicsTeacher extends Actor implements NPC
         return GameState.getInstance().getRandomQuestion("physics", QuestionPools.getPhysicsQuestions());
     }
     
-    /**
-     * Check player proximity for interaction prompt
-     */
-    private void checkPlayerProximity()
-    {
-        World world = getWorld();
-        if (world == null || labWorld == null) return;
-        
-        // Only show interaction when lab is broken
-        if (!labWorld.isBroken())
-        {
-            if (interactionDisplay.getWorld() != null)
-            {
-                world.removeObject(interactionDisplay);
-            }
-            return;
-        }
-        
-        Actor player = getPlayer();
-        if (player != null)
-        {
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < INTERACTION_DISTANCE)
-            {
-                if (interactionDisplay.getWorld() == null)
-                {
-                    world.addObject(interactionDisplay, getX(), getY() - 80);
-                }
-            }
-            else
-            {
-                if (interactionDisplay.getWorld() != null)
-                {
-                    world.removeObject(interactionDisplay);
-                }
-            }
-        }
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            return world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            return world.getObjects(Girl.class).get(0);
-        }
-        return null;
-    }
     
     @Override
     public String getDialogueText(String playerName)

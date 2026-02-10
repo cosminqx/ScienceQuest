@@ -1,6 +1,9 @@
 import greenfoot.Greenfoot;
 import greenfoot.World;
 
+
+
+
 public class WorldNavigator
 {
     private WorldNavigator()
@@ -15,6 +18,10 @@ public class WorldNavigator
     public static boolean tryEnterLab(LabType lab)
     {
         GameState state = GameState.getInstance();
+        if (state.isMiniQuestActive() || DialogueManager.getInstance().isDialogueActive())
+        {
+            return false;
+        }
         if (!state.canEnterLab(lab))
         {
             DebugLog.log("Access blocked to lab: " + lab);

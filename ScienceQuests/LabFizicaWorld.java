@@ -12,6 +12,8 @@ public class LabFizicaWorld extends World implements CollisionWorld
     private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
+    private int lastScrollX = -1;
+    private int lastScrollY = -1;
     private int maxScrollX;
     private int maxScrollY;
     private int tileSize = 48;
@@ -21,6 +23,12 @@ public class LabFizicaWorld extends World implements CollisionWorld
     private int frameCounter = 0; // Frame counter for delayed trigger
     private int dialogueWaitCounter = 0; // Counter to wait after dialogue
     private boolean waitingForDialogue = false; // Waiting for dialogue to finish
+    private boolean miniQuestsAdded = false;
+    private boolean repairTriggered = false;
+    private DirectionArrow returnArrow;
+    private PendulumTimingQuest pendulumQuest;
+    private RhythmReleaseQuest rhythmQuest;
+    private KeySequenceQuest sequenceQuest;
     
     // Flicker animation state
     private boolean isAnimating = false;
@@ -35,11 +43,24 @@ public class LabFizicaWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, PendulumTimingQuest.class, OverlayLayer.class, Boy.class, Girl.class, PhysicsTeacher.class);
+        // Draw UI on top, then overlay, then arrows, then characters and teacher
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                     TeacherInteractionDisplay.class, DirectionArrow.class, PendulumTimingQuest.class, 
+                     RhythmReleaseQuest.class, KeySequenceQuest.class, Boy.class, Girl.class, PhysicsTeacher.class);
         
-        // Load physics lab map
-        loadMap("images/labfizica-normal.json");
+        // Load physics lab map (start broken until repaired, unless already completed)
+        if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            loadMap("images/labfizica-normal.json");
+            isBroken = false;
+            hasTriggeredBreakSequence = true;
+        }
+        else
+        {
+            loadMap("images/labfizica-broken.json");
+            isBroken = true;
+            hasTriggeredBreakSequence = true;
+        }
         
         // Retrieve player data
         Gender playerGender = PlayerData.getPlayerGender();
@@ -98,15 +119,25 @@ public class LabFizicaWorld extends World implements CollisionWorld
         DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
         
         // Instructions
-        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apropie-te pentru a interactiona", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
-        // Add mini-quests scattered across the map
-        addMiniQuests();
+        // Add mini-quests only after NPC quiz gate is completed
+        if (GameState.getInstance().isLabPhysQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
         addObject(experienceBar, 110, 20);
+        
+        // Add return arrow at right edge to go back to MainMapWorld (only if lab is completed)
+        if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            addReturnArrow();
+        }
     }
     
     /**
@@ -115,9 +146,19 @@ public class LabFizicaWorld extends World implements CollisionWorld
     private void addMiniQuests()
     {
         // Different physics-themed challenges at specified positions
-        addObject(new PendulumTimingQuest(645, 546), 645, 546);         // Pendulum motion
-        addObject(new RhythmReleaseQuest(504, 546), 504, 546);          // Timing & rhythm
-        addObject(new KeySequenceQuest(366, 546), 366, 546);            // Sequential patterns
+        pendulumQuest = new PendulumTimingQuest(645, 546);
+        rhythmQuest = new RhythmReleaseQuest(504, 546);
+        sequenceQuest = new KeySequenceQuest(366, 546);
+
+        addObject(pendulumQuest, 645, 546);         // Pendulum motion
+        addObject(rhythmQuest, 504, 546);           // Timing & rhythm
+        addObject(sequenceQuest, 366, 546);         // Sequential patterns
+    }
+
+    private boolean areLabMiniQuestsComplete()
+    {
+        return pendulumQuest != null && rhythmQuest != null && sequenceQuest != null
+            && pendulumQuest.isCompleted() && rhythmQuest.isCompleted() && sequenceQuest.isCompleted();
     }
     
     private void loadMap(String mapPath)
@@ -147,7 +188,6 @@ public class LabFizicaWorld extends World implements CollisionWorld
         catch (Exception e)
         {
             DebugLog.log("ERROR loading map: " + e.getMessage());
-            e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50));
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
@@ -164,15 +204,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
         // Process dialogue input so dialogues can advance/close
         DialogueManager.getInstance().processInput();
 
-        // Trigger break sequence after 60 frames (1 second)
-        if (!hasTriggeredBreakSequence)
-        {
-            frameCounter++;
-            if (frameCounter >= 60)
-            {
-                triggerInitialBreakSequence();
-            }
-        }
+        // No automatic break sequence; lab starts broken until repaired
         
         // Handle waiting for dialogue to finish before starting animation
         if (waitingForDialogue)
@@ -220,22 +252,59 @@ public class LabFizicaWorld extends World implements CollisionWorld
                 teacher.setLocation(teacherScreenX, teacherScreenY);
             }
             
-            // Draw the background (or black during flicker)
-            if (!isAnimating || !showBlack)
+            boolean scrollChanged = scrollX != lastScrollX || scrollY != lastScrollY;
+            boolean shouldRedraw = scrollChanged || isAnimating || showBlack;
+            if (shouldRedraw)
             {
-                drawBackground();
-            }
-            else
-            {
-                // Draw black screen during flicker
-                GreenfootImage worldImage = getBackground();
-                worldImage.setColor(Color.BLACK);
-                worldImage.fillRect(0, 0, getWidth(), getHeight());
+                if (showBlack)
+                {
+                    GreenfootImage worldImage = getBackground();
+                    worldImage.setColor(Color.BLACK);
+                    worldImage.fillRect(0, 0, getWidth(), getHeight());
+                }
+                else
+                {
+                    drawBackground();
+                }
+                lastScrollX = scrollX;
+                lastScrollY = scrollY;
             }
             
+            // Gate mini-quests until NPC quiz requirement is met
+            if (!miniQuestsAdded && GameState.getInstance().isLabPhysQuizGateComplete())
+            {
+                addMiniQuests();
+                miniQuestsAdded = true;
+            }
+
+            // Repair lab after mini-quests are completed
+            if (!repairTriggered && isBroken && miniQuestsAdded && areLabMiniQuestsComplete())
+            {
+                repairTriggered = true;
+                repairLab();
+                GameState state = GameState.getInstance();
+                if (!state.isLabCompleted(LabType.PHYSICS))
+                {
+                    state.completeLab(LabType.PHYSICS);
+                    state.awardBadge("physics_expert");
+                    state.addXp(50);
+                }
+                addReturnArrow();
+            }
+
             // Check for transition back to MainMapWorld
             checkWorldTransition();
         }
+    }
+
+    private void addReturnArrow()
+    {
+        if (returnArrow != null && returnArrow.getWorld() != null)
+        {
+            return;
+        }
+        returnArrow = new DirectionArrow("right", "MERGI LA CLASA");
+        addObject(returnArrow, getWidth() - 110, getHeight() / 2);
     }
     
     /**
@@ -393,6 +462,7 @@ public class LabFizicaWorld extends World implements CollisionWorld
             DebugLog.log("Lab changed to broken state");
         }
         
+        showBlack = false;
         // Draw the new map
         drawBackground();
         
@@ -448,18 +518,27 @@ public class LabFizicaWorld extends World implements CollisionWorld
      * Toggle between normal and broken lab states
      */
     /**
-     * Check if player should transition back to MainMapWorld (exit through left wall)
+     * Check if player should transition back to MainMapWorld (exit through right wall)
      */
     private void checkWorldTransition()
     {
         if (character == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
         int mapY = screenToMapY(character.getY());
+
+        int mapWidth = backgroundImage != null ? backgroundImage.getWidth() : 0;
+        boolean inExitBand = mapY >= 75 && mapY <= 291;
+        boolean atRightEdge = mapWidth > 0 && mapX >= mapWidth - 5;
         
-        // Transition to MainMapWorld when reaching left edge
-        if (mapX <= 5)
+        // Transition to MainMapWorld when reaching right edge in the allowed Y band
+        if (atRightEdge && inExitBand)
         {
             DebugLog.log("TRANSITION TRIGGERED - Returning to MainMapWorld!");
             WorldNavigator.goToMainMap();

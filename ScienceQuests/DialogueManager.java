@@ -156,14 +156,19 @@ public class DialogueManager
                         // Confirm answer and show follow-up response
                         boolean correct = currentDialogue.confirmSelection();
                         DialogueQuestion q = currentDialogue.getQuestion();
-                        if (q != null)
-                        {
-                            GameState.getInstance().recordQuizResult(q.getTopic(), correct);
-                        }
                         String responseText = correct ? q.getCorrectResponse() : q.getIncorrectResponse();
                         String iconPath = currentDialogue.getIconPath();
                         World w = currentWorld;
                         NPC npc = currentNPC;
+                        if (!correct)
+                        {
+                            DialogueBox retry = currentDialogue.createRetryBox();
+                            queuedDialogue = retry;
+                        }
+                        else
+                        {
+                            queuedDialogue = null;
+                        }
                         hideDialogue();
                         DialogueBox response = new DialogueBox(responseText, iconPath, true);
                         response.setTypewriterSpeed(2);

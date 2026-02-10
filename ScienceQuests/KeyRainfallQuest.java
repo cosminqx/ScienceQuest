@@ -5,9 +5,8 @@ import java.util.*;
  * KeyRainfallQuest - Catch falling keys with speed progression and depth scaling
  * Features: Cyan glowing aura, falling animations, catch zone visualization, difficulty escalation
  */
-public class KeyRainfallQuest extends Actor
+public class KeyRainfallQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int catchCount = 0;
     private int targetCount = 8;
     private List<FallingKey> fallingKeys = new ArrayList<>();
@@ -16,16 +15,7 @@ public class KeyRainfallQuest extends Actor
     private int combo = 0;
     private int baseSpawnRate = 45;
     private int currentSpawnRate;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean upDown = false;
     private boolean downDown = false;
     private boolean leftDown = false;
@@ -33,8 +23,7 @@ public class KeyRainfallQuest extends Actor
     
     public KeyRainfallQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -62,7 +51,7 @@ public class KeyRainfallQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -70,14 +59,7 @@ public class KeyRainfallQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -90,23 +72,40 @@ public class KeyRainfallQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                catchCount = 0;
-                totalScore = 0;
-                combo = 0;
-                fallingKeys.clear();
-                spawnTimer = 0;
-                currentSpawnRate = baseSpawnRate;
-                animTick = 0;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        beginQuest();
+                        catchCount = 0;
+                        totalScore = 0;
+                        combo = 0;
+                        fallingKeys.clear();
+                        spawnTimer = 0;
+                        currentSpawnRate = baseSpawnRate;
+                        animTick = 0;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -200,14 +199,7 @@ public class KeyRainfallQuest extends Actor
         int w = world != null ? world.getWidth() : 800;
         int h = world != null ? world.getHeight() : 600;
         
-        if (world != null)
-        {
-            if (myOverlay == null || myOverlay.getWorld() == null)
-            {
-                myOverlay = new OverlayLayer();
-                world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-            }
-        }
+        ensureOverlay();
         
         GreenfootImage img = new GreenfootImage(w, h);
 
@@ -237,14 +229,15 @@ public class KeyRainfallQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("KEY RAINFALL", px + 95, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("PLOAIA DE SĂGEȚI", px + 70, py + 50);
 
         // Difficulty level and speed
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 14));
         int diffLevel = Math.min(8, (catchCount / 2) + 1);
-        img.drawString("LEVEL " + diffLevel + " | SPAWN RATE: " + (baseSpawnRate - currentSpawnRate) + "%", px + 95, py + 75);
+        img.drawString("INSTRUCȚIUNI: prinde săgețile în zona albastră", px + 45, py + 75);
+        img.drawString("NIVEL " + diffLevel + " | RITM: " + (baseSpawnRate - currentSpawnRate) + "%", px + 125, py + 95);
 
         // Catch zone visualization at bottom
         int zoneX = px + 80;
@@ -259,7 +252,7 @@ public class KeyRainfallQuest extends Actor
         // Zone label
         img.setColor(new Color(150, 220, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 16));
-        img.drawString("CATCH ZONE", zoneX + 100, zoneY + 35);
+        img.drawString("ZONA DE PRINDERE", zoneX + 60, zoneY + 35);
         
         // Pulsing zone glow
         int zoneGlow = 100 + (int)(80 * Math.sin(animTick * 0.15));
@@ -286,9 +279,9 @@ public class KeyRainfallQuest extends Actor
             
             img.setColor(new Color(100, 255, 200, alpha));
             
-            String arrow = key.keyName.equals("up") ? "▲" :
-                          key.keyName.equals("down") ? "▼" :
-                          key.keyName.equals("left") ? "◀" : "▶";
+            String arrow = key.keyName.equals("up") ? "^" :
+                          key.keyName.equals("down") ? "v" :
+                          key.keyName.equals("left") ? "<" : ">";
             
             img.setFont(new greenfoot.Font("Arial", true, false, keySize));
             int keyX = px + key.x - (int)(keySize / 2.5);
@@ -303,12 +296,12 @@ public class KeyRainfallQuest extends Actor
         // Progress tracking
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
-        img.drawString("CAUGHT: " + catchCount + " / " + targetCount, px + 135, py + 145);
+        img.drawString("PRINSE: " + catchCount + " / " + targetCount, px + 150, py + 145);
 
         // Score and combo display
         img.setColor(new Color(100, 255, 200));
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
-        img.drawString("Score: " + totalScore, px + 170, py + 260);
+        img.drawString("Scor: " + totalScore, px + 180, py + 260);
 
         if (combo > 1)
         {
@@ -317,22 +310,22 @@ public class KeyRainfallQuest extends Actor
             img.drawString("Combo x" + combo, px + 190, py + 235);
         }
 
-        setImage(img);
-        if (myOverlay != null)
+        if (overlay != null)
         {
-            myOverlay.setImage(img);
+            overlay.setImage(img);
         }
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -347,16 +340,16 @@ public class KeyRainfallQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("CAUGHT ALL!", panelW / 2 - 130, panelH / 2 - 30);
+            img.drawString("AI PRINS TOT!", panelW / 2 - 125, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 20));
             img.setColor(new Color(150, 255, 255));
-            img.drawString("Score: " + totalScore, panelW / 2 - 80, panelH / 2 + 15);
+            img.drawString("Scor: " + totalScore, panelW / 2 - 70, panelH / 2 + 15);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 15));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Keys Caught: " + catchCount, panelW / 2 - 85, panelH / 2 + 50);
-            img.drawString("Best Combo: x" + combo, panelW / 2 - 95, panelH / 2 + 70);
+            img.drawString("Săgeți prinse: " + catchCount, panelW / 2 - 105, panelH / 2 + 50);
+            img.drawString("Combo maxim: x" + combo, panelW / 2 - 105, panelH / 2 + 70);
         }
         else
         {
@@ -367,16 +360,16 @@ public class KeyRainfallQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("MISSED!", panelW / 2 - 100, panelH / 2 - 30);
+            img.drawString("RATAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
             img.setColor(new Color(255, 150, 150));
-            img.drawString("A key slipped away!", panelW / 2 - 110, panelH / 2 + 10);
+            img.drawString("O săgeată a scăpat!", panelW / 2 - 120, panelH / 2 + 10);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 15));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Caught: " + catchCount + " / " + targetCount, panelW / 2 - 95, panelH / 2 + 50);
-            img.drawString("Score: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
+            img.drawString("Prinse: " + catchCount + " / " + targetCount, panelW / 2 - 95, panelH / 2 + 50);
+            img.drawString("Scor: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
         }
         
         // Set transparent actor image
@@ -385,47 +378,35 @@ public class KeyRainfallQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(120, 200, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: PLOAIA DE SĂGEȚI", 70, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă săgeata potrivită când trece prin zona albastră.", 25, 70);
+        img.drawString("Scop: prinde " + targetCount + " săgeți.", 140, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        overlay.setImage(img);
     }
     
     private class FallingKey
@@ -448,8 +429,6 @@ public class KeyRainfallQuest extends Actor
         }
     }
     
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

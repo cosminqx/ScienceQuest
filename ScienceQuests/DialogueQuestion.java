@@ -1,3 +1,5 @@
+import java.util.Random;
+
 /**
  * DialogueQuestion - Represents a multiple-choice question for dialogue
  */
@@ -25,6 +27,39 @@ public class DialogueQuestion
         this.correctAnswerIndex = Math.max(0, Math.min(correctAnswerIndex, this.answers.length - 1));
         this.correctResponse = correctResponse;
         this.incorrectResponse = incorrectResponse;
+        
+        // Shuffle answers and update correctAnswerIndex
+        shuffleAnswers();
+    }
+    
+    /**
+     * Shuffle the answer array and update the correctAnswerIndex accordingly
+     */
+    private void shuffleAnswers()
+    {
+        if (answers.length <= 1) return;
+        
+        Random random = new Random();
+        String correctAnswer = answers[correctAnswerIndex];
+        
+        // Fisher-Yates shuffle
+        for (int i = answers.length - 1; i > 0; i--)
+        {
+            int j = random.nextInt(i + 1);
+            String temp = answers[i];
+            answers[i] = answers[j];
+            answers[j] = temp;
+        }
+        
+        // Find the new index of the correct answer
+        for (int i = 0; i < answers.length; i++)
+        {
+            if (answers[i].equals(correctAnswer))
+            {
+                correctAnswerIndex = i;
+                break;
+            }
+        }
     }
     
     public String getTopic()

@@ -3,33 +3,23 @@ import greenfoot.*;
 /**
  * DnaReplicationQuest - BIOLOGY: Press complementary base pairs in sequence
  */
-public class DnaReplicationQuest extends Actor
+public class DnaReplicationQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int strandsCompleted = 0;
-    private int targetStrands = 3;
-    private int timeRemaining = 720; // 12 seconds
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
+    private int targetStrands = 1;
+    private int timeRemaining = 360; // 6 seconds
+    private int timeMax = 360;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     
-    private String[] bases = {"A", "T", "G", "C", "T", "A", "G", "C"};
+    private String[] bases = {"A", "T", "G", "C"};
     private int currentBaseIndex = 0;
     private int correctFeedbackTick = 0;
     private int wrongFeedbackTick = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean anyArrowDown = false;
     
     public DnaReplicationQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -57,7 +47,7 @@ public class DnaReplicationQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -65,14 +55,7 @@ public class DnaReplicationQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -85,20 +68,37 @@ public class DnaReplicationQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                animTick = 0;
-                strandsCompleted = 0;
-                currentBaseIndex = 0;
-                timeRemaining = 720;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        beginQuest();
+                        animTick = 0;
+                        strandsCompleted = 0;
+                        currentBaseIndex = 0;
+                        timeRemaining = timeMax;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -112,6 +112,7 @@ public class DnaReplicationQuest extends Actor
             if (wrongFeedbackTick > 0) wrongFeedbackTick--;
             
             checkInput();
+            if (!questActive) return;
             
             timeRemaining--;
             updateDisplay();
@@ -122,7 +123,7 @@ public class DnaReplicationQuest extends Actor
             }
         }
     }
-    
+
     private void checkInput()
     {
         String currentBase = bases[currentBaseIndex];
@@ -191,10 +192,10 @@ public class DnaReplicationQuest extends Actor
     {
         switch(base)
         {
-            case "A": return "▲";
-            case "T": return "▼";
-            case "G": return "◀";
-            case "C": return "▶";
+            case "A": return "↑";
+            case "T": return "↓";
+            case "G": return "←";
+            case "C": return "→";
             default: return "";
         }
     }
@@ -204,11 +205,8 @@ public class DnaReplicationQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 320;
@@ -233,21 +231,21 @@ public class DnaReplicationQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("DNA REPLICATION", 100, 40);
+        img.drawString("REPLICAREA ADN", 110, 40);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(255, 150, 220));
-        img.drawString("BIOLOGY: Press complementary base pairs", 70, 65);
+        img.drawString("INSTRUCȚIUNI: apasă baza complementară", 70, 65);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 12));
-        img.drawString("A=▲  T=▼  G=◀  C=▶", 155, 85);
+        img.drawString("A=↑  T=↓  G=←  C=→", 155, 85);
 
         // DNA strand visualization
         int strandY = 120;
         int baseSpacing = 45;
         int startX = 50;
         
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < bases.length; i++)
         {
             int x = startX + i * baseSpacing;
             String base = bases[i];
@@ -297,11 +295,11 @@ public class DnaReplicationQuest extends Actor
             
             img.setFont(new greenfoot.Font("Arial", true, false, 24));
             img.setColor(instrColor);
-            img.drawString("Press: " + complement + " " + arrow, 145, 220);
+            img.drawString("Apasă: " + complement + " " + arrow, 145, 220);
         }
 
         // Progress
-        float progress = currentBaseIndex / 8.0f;
+        float progress = currentBaseIndex / (float)bases.length;
         int barW = (int)((panelW - 80) * progress);
         img.setColor(new Color(100, 255, 100, 100));
         img.fillRect(40, 250, barW, 15);
@@ -311,24 +309,25 @@ public class DnaReplicationQuest extends Actor
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Strands: " + strandsCompleted + "/" + targetStrands + " | Bases: " + currentBaseIndex + "/8", 85, 285);
+        img.drawString("Catene: " + strandsCompleted + "/" + targetStrands + " | Baze: " + currentBaseIndex + "/" + bases.length, 95, 285);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(255, 150, 220));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 305);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 305);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -343,11 +342,11 @@ public class DnaReplicationQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("DNA replicated perfectly!", panelW / 2 - 110, panelH / 2 + 30);
-            img.drawString("Base pairing understood.", panelW / 2 - 105, panelH / 2 + 55);
+            img.drawString("ADN replicat perfect!", panelW / 2 - 105, panelH / 2 + 30);
+            img.drawString("Împerecherea bazelor e corectă.", panelW / 2 - 150, panelH / 2 + 55);
         }
         else
         {
@@ -358,58 +357,43 @@ public class DnaReplicationQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Replication error. Review", panelW / 2 - 115, panelH / 2 + 30);
-            img.drawString("complementary base rules. " + strandsCompleted + "/" + targetStrands, panelW / 2 - 140, panelH / 2 + 55);
+            img.drawString("Eroare de replicare. Recitește", panelW / 2 - 150, panelH / 2 + 30);
+            img.drawString("regulile de complementaritate. " + strandsCompleted + "/" + targetStrands, panelW / 2 - 170, panelH / 2 + 55);
         }
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
+
+        int w = 460;
+        int h = 200;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 140, 220, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: ADN", 170, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă baza complementară (A↔T, G↔C).", 90, 70);
+        img.drawString("Scop: " + targetStrands + " catene complete.", 135, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 150);
+
+        overlay.setImage(img);
     }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

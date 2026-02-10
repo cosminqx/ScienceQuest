@@ -4,9 +4,8 @@ import greenfoot.*;
  * RhythmReleaseQuest - Hold key at the right rhythm (3 levels with increasing difficulty)
  * Features: Red glowing aura, pulsing animations, target zone visualization, speed progression
  */
-public class RhythmReleaseQuest extends Actor
+public class RhythmReleaseQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int hitCount = 0;
     private int targetHits = 3;
     private int barWidth = 360;
@@ -17,23 +16,13 @@ public class RhythmReleaseQuest extends Actor
     private int successZoneWidth = 50;
     private int totalScore = 0;
     private int combo = 0;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int failCooldown = 0;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean spaceDown = false;
     
     public RhythmReleaseQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -61,7 +50,7 @@ public class RhythmReleaseQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -69,14 +58,7 @@ public class RhythmReleaseQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -89,23 +71,40 @@ public class RhythmReleaseQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                hitCount = 0;
-                totalScore = 0;
-                combo = 0;
-                indicatorSpeed = 2;
-                successZoneWidth = 50;
-                animTick = 0;
-                spaceDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        beginQuest();
+                        hitCount = 0;
+                        totalScore = 0;
+                        combo = 0;
+                        indicatorSpeed = 2;
+                        successZoneWidth = 50;
+                        animTick = 0;
+                        spaceDown = false;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -195,18 +194,13 @@ public class RhythmReleaseQuest extends Actor
             updateDisplay();
         }
     }
-    
+
     private void updateDisplay()
     {
         World world = getWorld();
         if (world == null) return;
-        
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -236,13 +230,14 @@ public class RhythmReleaseQuest extends Actor
 
         // Title
         img.setColor(new Color(255, 255, 255));
-        img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("RHYTHM RELEASE", px + 75, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 24));
+        img.drawString("ELIBERARE PE RITM", px + 50, py + 50);
 
         // Speed indicator - difficulty progression
         img.setColor(new Color(255, 150, 150));
         img.setFont(new greenfoot.Font("Arial", true, false, 14));
-        img.drawString("LEVEL: " + (hitCount + 1) + " | SPEED: " + indicatorSpeed, px + 110, py + 75);
+        img.drawString("INSTRUCȚIUNI: apasă SPATIU când indicatorul e în zona verde", px + 20, py + 75);
+        img.drawString("NIVEL: " + (hitCount + 1) + " | VITEZĂ: " + indicatorSpeed, px + 140, py + 95);
 
         // Bar background
         img.setColor(new Color(40, 40, 40, 200));
@@ -251,9 +246,9 @@ public class RhythmReleaseQuest extends Actor
         // Zone labels
         img.setColor(new Color(200, 200, 200));
         img.setFont(new greenfoot.Font("Arial", true, false, 12));
-        img.drawString("MISS", px + 55, py + 115);
+        img.drawString("RATAT", px + 45, py + 115);
         img.drawString("PERFECT", px + 160, py + 115);
-        img.drawString("MISS", px + 410, py + 115);
+        img.drawString("RATAT", px + 400, py + 115);
 
         // Red miss zone
         img.setColor(new Color(200, 50, 50, 100));
@@ -290,11 +285,11 @@ public class RhythmReleaseQuest extends Actor
         // Status and scoring
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
-        img.drawString("HITS: " + hitCount + " / " + targetHits, px + 150, py + 205);
+        img.drawString("REUȘITE: " + hitCount + " / " + targetHits, px + 130, py + 205);
 
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
-        img.drawString("Score: " + totalScore, px + 165, py + 235);
+        img.drawString("Scor: " + totalScore, px + 175, py + 235);
 
         if (combo > 1)
         {
@@ -303,18 +298,19 @@ public class RhythmReleaseQuest extends Actor
             img.drawString("Combo x" + combo, px + 180, py + 260);
         }
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -329,15 +325,15 @@ public class RhythmReleaseQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("SUCCESS!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 20));
             img.setColor(new Color(255, 200, 100));
-            img.drawString("Final Score: " + totalScore, panelW / 2 - 100, panelH / 2 + 15);
+            img.drawString("Scor final: " + totalScore, panelW / 2 - 100, panelH / 2 + 15);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 16));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Perfect Hits: " + hitCount + " | Combo: x" + combo, panelW / 2 - 130, panelH / 2 + 50);
+            img.drawString("Lovituri perfecte: " + hitCount + " | Combo: x" + combo, panelW / 2 - 150, panelH / 2 + 50);
         }
         else
         {
@@ -348,16 +344,16 @@ public class RhythmReleaseQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 38));
-            img.drawString("FAILED!", panelW / 2 - 100, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
             img.setColor(new Color(255, 100, 100));
-            img.drawString("Better luck next time!", panelW / 2 - 110, panelH / 2 + 10);
+            img.drawString("Încearcă din nou!", panelW / 2 - 90, panelH / 2 + 10);
             
             img.setFont(new greenfoot.Font("Arial", true, false, 14));
             img.setColor(new Color(200, 200, 200));
-            img.drawString("Completed: " + hitCount + " / " + targetHits, panelW / 2 - 95, panelH / 2 + 50);
-            img.drawString("Score: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
+            img.drawString("Finalizat: " + hitCount + " / " + targetHits, panelW / 2 - 95, panelH / 2 + 50);
+            img.drawString("Scor: " + totalScore, panelW / 2 - 70, panelH / 2 + 70);
         }
         
         // Set transparent actor image
@@ -366,51 +362,36 @@ public class RhythmReleaseQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(255, 120, 120, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: ELIBERARE PE RITM", 60, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Apasă SPATIU când indicatorul intră în zona verde.", 40, 70);
+        img.drawString("Scop: " + targetHits + " reușite.", 160, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        overlay.setImage(img);
     }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

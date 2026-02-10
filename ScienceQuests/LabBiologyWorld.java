@@ -4,7 +4,6 @@ import java.util.*;
 public class LabBiologyWorld extends World implements CollisionWorld
 {
     private Actor character;
-    private BiologyTeacher teacher;
     private BiologyAssistant assistant;
     private GreenfootImage backgroundImage;
     private GreenfootImage onTopLayerImage;
@@ -13,6 +12,8 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
+    private int lastScrollX = -1;
+    private int lastScrollY = -1;
     private int maxScrollX;
     private int maxScrollY;
     private int tileSize = 48;
@@ -22,6 +23,12 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private int frameCounter = 0; // Frame counter for delayed trigger
     private int dialogueWaitCounter = 0; // Counter to wait after dialogue
     private boolean waitingForDialogue = false; // Waiting for dialogue to finish
+    private boolean miniQuestsAdded = false;
+    private boolean repairTriggered = false;
+    private DirectionArrow returnArrow;
+    private DnaReplicationQuest dnaQuest;
+    private ChemicalBondQuest bondQuest;
+    private PrecisionHoldQuest precisionQuest;
     
     // Flicker animation state
     private boolean isAnimating = false;
@@ -36,11 +43,25 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
-        // Draw UI on top, then overlay, then characters and teacher
-        setPaintOrder(ExperienceBar.class, Label.class, TeacherInteractionDisplay.class, DnaReplicationQuest.class, OverlayLayer.class, Boy.class, Girl.class, BiologyTeacher.class, BiologyAssistant.class);
+        // Draw UI on top, then overlay, then arrows, then characters and assistant
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                     TeacherInteractionDisplay.class, DirectionArrow.class, DnaReplicationQuest.class, 
+                     ChemicalBondQuest.class, PrecisionHoldQuest.class, Boy.class, Girl.class, 
+                     BiologyAssistant.class);
         
-        // Load biology lab map
-        loadMap("images/LabBiologyWorld-Normal.json");
+        // Load biology lab map (start destroyed until repaired, unless already completed)
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            loadMap("images/LabBiologyWorld-Normal.json");
+            isDestroyed = false;
+            hasTriggeredDestroySequence = true;
+        }
+        else
+        {
+            loadMap("images/LabBiologyWorld-destroyed.json");
+            isDestroyed = true;
+            hasTriggeredDestroySequence = true;
+        }
         
         // Retrieve player data
         Gender playerGender = PlayerData.getPlayerGender();
@@ -83,24 +104,9 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Draw initial background
         drawBackground();
         
-        // Add biology teacher at MAP coordinates
-        // Teacher position in map: x=144, y=266
-        int teacherMapX = 144;
-        int teacherMapY = 266;
-        teacher = new BiologyTeacher();
-        
-        // Calculate screen position from map position
-        int teacherScreenX = teacherMapX - scrollX;
-        int teacherScreenY = teacherMapY - scrollY;
-        addObject(teacher, teacherScreenX, teacherScreenY);
-        
-        DebugLog.log("Biology Teacher added at screen position: (" + teacherScreenX + ", " + teacherScreenY + ")");
-        DebugLog.log("Biology Teacher map position: (" + teacherMapX + ", " + teacherMapY + ")");
-        DebugLog.log("Current scroll: scrollX=" + scrollX + ", scrollY=" + scrollY);
-        
-        // Add biology assistant at MAP coordinates (opposite side of the lab)
-        // Assistant position in map: x=720, y=266
-        int assistantMapX = 720;
+        // Add biology assistant at MAP coordinates (center of the lab)
+        // Assistant position in map: x=432, y=266
+        int assistantMapX = 432;
         int assistantMapY = 266;
         assistant = new BiologyAssistant();
         
@@ -113,15 +119,25 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DebugLog.log("Biology Assistant map position: (" + assistantMapX + ", " + assistantMapY + ")");
         
         // Instructions
-        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apropie-te pentru a interactiona", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
-        // Add mini-quests scattered across the map
-        addMiniQuests();
+        // Add mini-quests only after NPC quiz gate is completed
+        if (GameState.getInstance().isLabBioQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
         addObject(experienceBar, 110, 20);
+        
+        // Add return arrow at top to go back to MainMapWorld (only if lab is completed)
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            addReturnArrow();
+        }
     }
     
     /**
@@ -130,9 +146,19 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private void addMiniQuests()
     {
         // Different biology-themed challenges at specified positions
-        addObject(new DnaReplicationQuest(77, 547), 77, 547);           // DNA base pairing
-        addObject(new ChemicalBondQuest(222, 547), 222, 547);           // Molecular bonding
-        addObject(new PrecisionHoldQuest(357, 547), 357, 547);          // Precision timing
+        dnaQuest = new DnaReplicationQuest(77, 547);
+        bondQuest = new ChemicalBondQuest(222, 547);
+        precisionQuest = new PrecisionHoldQuest(357, 547);
+
+        addObject(dnaQuest, 77, 547);           // DNA base pairing
+        addObject(bondQuest, 222, 547);         // Molecular bonding
+        addObject(precisionQuest, 357, 547);    // Precision timing
+    }
+
+    private boolean areLabMiniQuestsComplete()
+    {
+        return dnaQuest != null && bondQuest != null && precisionQuest != null
+            && dnaQuest.isCompleted() && bondQuest.isCompleted() && precisionQuest.isCompleted();
     }
     
     private void loadMap(String mapPath)
@@ -172,7 +198,6 @@ public class LabBiologyWorld extends World implements CollisionWorld
         catch (Exception e)
         {
             DebugLog.log("Error loading biology lab map: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
@@ -181,15 +206,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         // Process dialogue input so dialogues can advance/close
         DialogueManager.getInstance().processInput();
 
-        // Trigger destroy sequence after 60 frames (1 second)
-        if (!hasTriggeredDestroySequence)
-        {
-            frameCounter++;
-            if (frameCounter >= 60)
-            {
-                triggerInitialDestroySequence();
-            }
-        }
+        // No automatic destroy sequence; lab starts destroyed until repaired
         
         // Handle waiting for dialogue to finish before starting animation
         if (waitingForDialogue)
@@ -227,42 +244,100 @@ public class LabBiologyWorld extends World implements CollisionWorld
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
             
-            // Update teacher position based on scroll (teacher at map coords 144, 266)
-            if (teacher != null && teacher.getWorld() != null)
-            {
-                int teacherMapX = 144;
-                int teacherMapY = 266;
-                int teacherScreenX = teacherMapX - scrollX;
-                int teacherScreenY = teacherMapY - scrollY;
-                teacher.setLocation(teacherScreenX, teacherScreenY);
-            }
-            
-            // Update assistant position based on scroll (assistant at map coords 720, 266)
+            // Update assistant position based on scroll (assistant at map coords 432, 266)
             if (assistant != null && assistant.getWorld() != null)
             {
-                int assistantMapX = 720;
+                int assistantMapX = 432;
                 int assistantMapY = 266;
                 int assistantScreenX = assistantMapX - scrollX;
                 int assistantScreenY = assistantMapY - scrollY;
                 assistant.setLocation(assistantScreenX, assistantScreenY);
             }
             
-            // Draw the background (or black during flicker)
-            if (!isAnimating || !showBlack)
+            boolean scrollChanged = scrollX != lastScrollX || scrollY != lastScrollY;
+            boolean shouldRedraw = scrollChanged || isAnimating || showBlack;
+            if (shouldRedraw)
             {
-                drawBackground();
-            }
-            else
-            {
-                // Draw black screen during flicker
-                GreenfootImage worldImage = getBackground();
-                worldImage.setColor(Color.BLACK);
-                worldImage.fillRect(0, 0, getWidth(), getHeight());
+                if (showBlack)
+                {
+                    GreenfootImage worldImage = getBackground();
+                    worldImage.setColor(Color.BLACK);
+                    worldImage.fillRect(0, 0, getWidth(), getHeight());
+                }
+                else
+                {
+                    drawBackground();
+                }
+                lastScrollX = scrollX;
+                lastScrollY = scrollY;
             }
         }
+
+        if (miniQuestsAdded)
+        {
+            cleanupCompletedQuests();
+        }
         
+        // Gate mini-quests until NPC quiz requirement is met
+        if (!miniQuestsAdded && GameState.getInstance().isLabBioQuizGateComplete())
+        {
+            addMiniQuests();
+            miniQuestsAdded = true;
+        }
+
+        // Repair lab after mini-quests are completed
+        if (!repairTriggered && isDestroyed && miniQuestsAdded && areLabMiniQuestsComplete())
+        {
+            repairTriggered = true;
+            repairLab();
+            GameState state = GameState.getInstance();
+            if (!state.isLabCompleted(LabType.BIOLOGY))
+            {
+                state.completeLab(LabType.BIOLOGY);
+                state.awardBadge("biology_master");
+                state.addXp(50);
+            }
+            addReturnArrow();
+        }
+
         // Check for world transitions
         checkWorldTransition();
+    }
+
+    private void cleanupCompletedQuests()
+    {
+        if (dnaQuest != null && dnaQuest.isCompleted() && dnaQuest.getWorld() != null)
+        {
+            hideQuestMarker(dnaQuest);
+        }
+
+        if (bondQuest != null && bondQuest.isCompleted() && bondQuest.getWorld() != null)
+        {
+            hideQuestMarker(bondQuest);
+        }
+
+        if (precisionQuest != null && precisionQuest.isCompleted() && precisionQuest.getWorld() != null)
+        {
+            hideQuestMarker(precisionQuest);
+        }
+    }
+
+    private void hideQuestMarker(Actor quest)
+    {
+        GreenfootImage transparent = new GreenfootImage(48, 48);
+        transparent.setColor(new Color(0, 0, 0, 0));
+        transparent.fillRect(0, 0, 48, 48);
+        quest.setImage(transparent);
+    }
+
+    private void addReturnArrow()
+    {
+        if (returnArrow != null && returnArrow.getWorld() != null)
+        {
+            return;
+        }
+        returnArrow = new DirectionArrow("up", "MERGI LA CLASA");
+        addObject(returnArrow, getWidth() / 2, 60);
     }
     
     /**
@@ -275,15 +350,8 @@ public class LabBiologyWorld extends World implements CollisionWorld
         
         DebugLog.log("Triggering biology lab destruction sequence...");
         
-        // Show panic dialogue through teacher
-        if (teacher != null)
-        {
-            teacher.showPanicReaction();
-        }
-        
-        // Wait for dialogue to finish, then start animation
-        waitingForDialogue = true;
-        dialogueWaitCounter = 0;
+        // Start animation directly (no panic dialogue)
+        startFlickerAnimation();
     }
     
     private void startFlickerAnimation()
@@ -419,6 +487,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
             DebugLog.log("Biology lab changed to destroyed state");
         }
         
+        showBlack = false;
         // Draw the new map
         drawBackground();
         
@@ -477,6 +546,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());

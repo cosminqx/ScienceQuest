@@ -3,30 +3,19 @@ import greenfoot.*;
 /**
  * PendulumTimingQuest - PHYSICS: Release SPACE when pendulum reaches center
  */
-public class PendulumTimingQuest extends Actor
+public class PendulumTimingQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int successfulReleases = 0;
     private int targetReleases = 3;
     private int timeRemaining = 900; // 15 seconds
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     private boolean wasSpacePressed = false;
     private double pendulumAngle = -45; // -45 to 45 degrees
     private double pendulumVelocity = 1.5;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     
     public PendulumTimingQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -54,7 +43,7 @@ public class PendulumTimingQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -62,14 +51,7 @@ public class PendulumTimingQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -82,21 +64,38 @@ public class PendulumTimingQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                animTick = 0;
-                successfulReleases = 0;
-                pendulumAngle = -45;
-                pendulumVelocity = 1.5;
-                timeRemaining = 900;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        beginQuest();
+                        animTick = 0;
+                        successfulReleases = 0;
+                        pendulumAngle = -45;
+                        pendulumVelocity = 1.5;
+                        timeRemaining = 900;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -142,17 +141,13 @@ public class PendulumTimingQuest extends Actor
             }
         }
     }
-    
+
     private void updateDisplay()
     {
         World world = getWorld();
         if (world == null) return;
-        
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 300;
@@ -177,11 +172,11 @@ public class PendulumTimingQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 26));
-        img.drawString("PENDULUM TIMING", 100, 40);
+        img.drawString("TIMINGUL PENDULULUI", 80, 40);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 200, 255));
-        img.drawString("PHYSICS: Release SPACE at center position", 60, 65);
+        img.drawString("INSTRUCȚIUNI: eliberează SPATIU în centru", 70, 65);
 
         // Draw pendulum
         int pivotX = panelW / 2;
@@ -215,28 +210,29 @@ public class PendulumTimingQuest extends Actor
         // Stats
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 255, 255));
-        img.drawString("Successful Releases: " + successfulReleases + " / " + targetReleases, 90, 220);
+        img.drawString("Eliberări corecte: " + successfulReleases + " / " + targetReleases, 90, 220);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(150, 200, 255));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", 190, 245);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 245);
         
         img.setFont(new greenfoot.Font("Arial", false, false, 12));
         img.setColor(inCenterZone ? new Color(100, 255, 100) : new Color(255, 200, 100));
         img.drawString(inCenterZone ? "RELEASE NOW!" : "Wait for center...", 165, 270);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -251,11 +247,11 @@ public class PendulumTimingQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+            img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Perfect timing! Understanding of", panelW / 2 - 140, panelH / 2 + 30);
-            img.drawString("periodic motion demonstrated.", panelW / 2 - 125, panelH / 2 + 55);
+            img.drawString("Timing perfect! Mișcarea periodică", panelW / 2 - 150, panelH / 2 + 30);
+            img.drawString("este înțeleasă.", panelW / 2 - 85, panelH / 2 + 55);
         }
         else
         {
@@ -266,58 +262,49 @@ public class PendulumTimingQuest extends Actor
 
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+            img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             
             img.setFont(new greenfoot.Font("Arial", false, false, 16));
-            img.drawString("Mistimed release. Study harmonic", panelW / 2 - 140, panelH / 2 + 30);
-            img.drawString("motion principles. " + successfulReleases + "/" + targetReleases + " completed.", panelW / 2 - 140, panelH / 2 + 55);
+            img.drawString("Eliberare greșită. Recitește", panelW / 2 - 135, panelH / 2 + 30);
+            img.drawString("mișcarea armonică. " + successfulReleases + "/" + targetReleases + " finalizat.", panelW / 2 - 150, panelH / 2 + 55);
         }
+
+        // Hide exclamation marker after completion
+        GreenfootImage transparent = new GreenfootImage(48, 48);
+        transparent.setColor(new Color(0, 0, 0, 0));
+        transparent.fillRect(0, 0, 48, 48);
+        setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(120, 180, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: PENDUL", 140, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Ține SPATIU și eliberează când pendulul e în centru.", 35, 70);
+        img.drawString("Scop: " + targetReleases + " eliberări corecte.", 130, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        overlay.setImage(img);
     }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

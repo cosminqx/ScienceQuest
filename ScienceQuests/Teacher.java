@@ -4,12 +4,10 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  * Teacher - A static NPC character (man teacher) in the classroom
  * Implements NPC interface for dialogue system
  */
-public class Teacher extends Actor implements NPC
+public class Teacher extends QuizNPCBase
 {
-    private TeacherInteractionDisplay interactionDisplay;
-    private static final int INTERACTION_DISTANCE = 80; // Distance in pixels to trigger interaction
-    private boolean fKeyPressed = false; // Track F key state to prevent repeated presses
-    
+    private boolean completionShown = false;
+
     public Teacher()
     {
         try
@@ -28,70 +26,20 @@ public class Teacher extends Actor implements NPC
             setImage(image);
         }
         
-        // Create interaction display (initially not in world)
-        interactionDisplay = new TeacherInteractionDisplay();
     }
 
     /**
      * Act - do whatever the Teacher wants to do. This method is called whenever
      * the 'Act' or 'Run' button gets pressed in the environment.
      */
-    public void act()
+    protected boolean isInteractionEnabled()
     {
-        checkPlayerProximity();
-        checkDialogueInteraction();
+        return !completionShown;
     }
-    
-    /**
-     * Check if player presses F key nearby to initiate dialogue
-     */
-    private void checkDialogueInteraction()
+
+    protected void onInteract(World world)
     {
-        World world = getWorld();
-        if (world == null) return;
-        
-        // Find the player character (Boy or Girl)
-        Actor player = null;
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            player = world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            player = world.getObjects(Girl.class).get(0);
-        }
-        
-        if (player != null)
-        {
-            // Calculate distance to player
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Debug output
-            boolean fKeyDown = Greenfoot.isKeyDown("f");
-            if (distance < INTERACTION_DISTANCE)
-            {
-                DebugLog.log("DEBUG: Player in range. Distance: " + distance + ", F key: " + fKeyDown);
-            }
-            
-            // Check if player is close enough and F key is pressed
-            if (distance < INTERACTION_DISTANCE && fKeyDown)
-            {
-                // Prevent repeated dialogue triggers from holding F key
-                if (!fKeyPressed)
-                {
-                    DebugLog.log("DEBUG: F key pressed, initiating dialogue");
-                    fKeyPressed = true;
-                    initiateDialogue();
-                }
-            }
-            else if (!fKeyDown)
-            {
-                // Reset when F key is released
-                fKeyPressed = false;
-            }
-        }
+        initiateDialogue();
     }
     
     /**
@@ -111,22 +59,110 @@ public class Teacher extends Actor implements NPC
             return;
         }
         
+        GameState gameState = GameState.getInstance();
+        
         // Create and show the dialogue
         String playerName = PlayerData.getPlayerName();
-        String dialogueText = getDialogueText(playerName);
         String iconPath = getIconPath();
         
-        // Greeting dialogue
-        DialogueBox dialogue = new DialogueBox(dialogueText, iconPath, true);
-        dialogue.setTypewriterSpeed(2);
+        int total = gameState.getMainMapNPCProgress();
+        int correct = gameState.getMainMapNPCCorrect();
 
-        // Queue the quiz question to show after greeting
-        DialogueQuestion question = buildScienceQuestion();
-        DialogueBox questionBox = new DialogueBox(question, iconPath, true);
-        questionBox.setTypewriterSpeed(2);
-        manager.queueDialogue(questionBox);
-        
-        manager.showDialogue(dialogue, world, this);
+        if (total >= 5 && correct < 3)
+        {
+            String retryText = "Nu ai suficiente răspunsuri corecte.\n---\n" +
+                "Mai ai nevoie de " + (3 - correct) + " corecte.";
+            DialogueBox retry = new DialogueBox(retryText, iconPath, true);
+            retry.setTypewriterSpeed(2);
+
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(retry, world, this);
+            return;
+        }
+
+        if (total >= 5)
+        {
+            String completionText = gameState.areMainMapQuestsUnlocked()
+                ? "Bravo! Ai răspuns corect la " + correct + "/5 întrebări.\n---\nAcum rezolvă și mini-jocurile notate cu '!' (apasă SPACE în jurul lor)."
+                : "Ai terminat toate 5 întrebări! Continuă cu celelalte activități pe hartă.";
+
+            DialogueBox completion = new DialogueBox(completionText, iconPath, true);
+            completion.setTypewriterSpeed(2);
+            manager.showDialogue(completion, world, this);
+            completionShown = true;
+            return;
+        }
+
+        // Show introduction only on first question
+        if (total == 0)
+        {
+            String dialogueText = "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
+                "---\n" +
+                "Iată o întrebare de știință pentru tine:\n" +
+                "Quiz-ul 1 din 5 (0 corecte)\n" +
+                "---\n" +
+                "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+            
+            DialogueBox greeting = new DialogueBox(dialogueText, iconPath, true);
+            greeting.setTypewriterSpeed(2);
+            
+            // Queue the quiz question to show after greeting
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+            
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(greeting, world, this);
+        }
+        else
+        {
+            // Show quiz question directly for subsequent questions
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            
+            // Set callback to record attempt with correctness flag
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+            
+            manager.showDialogue(questionBox, world, this);
+        }
     }
 
     private DialogueQuestion buildScienceQuestion()
@@ -134,51 +170,6 @@ public class Teacher extends Actor implements NPC
         return GameState.getInstance().getRandomQuestion("general", QuestionPools.getGeneralScienceQuestions());
     }
     
-    /**
-     * Check if player is nearby and show/hide interaction display
-     */
-    private void checkPlayerProximity()
-    {
-        World world = getWorld();
-        if (world == null) return;
-        
-        // Find the player character (Boy or Girl)
-        Actor player = null;
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            player = world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            player = world.getObjects(Girl.class).get(0);
-        }
-        
-        if (player != null)
-        {
-            // Calculate distance to player
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Show/hide interaction display based on distance
-            if (distance < INTERACTION_DISTANCE)
-            {
-                // Player is close - show display above teacher
-                if (interactionDisplay.getWorld() == null)
-                {
-                    world.addObject(interactionDisplay, getX(), getY() - 80);
-                }
-            }
-            else
-            {
-                // Player is far - hide display
-                if (interactionDisplay.getWorld() != null)
-                {
-                    world.removeObject(interactionDisplay);
-                }
-            }
-        }
-    }
     
     /**
      * Get the dialogue text for this NPC (from NPC interface)
@@ -186,11 +177,41 @@ public class Teacher extends Actor implements NPC
     @Override
     public String getDialogueText(String playerName)
     {
-        return "Salut " + playerName + "!\n" +
+        GameState gameState = GameState.getInstance();
+        int correct = gameState.getMainMapNPCCorrect();
+        int total = gameState.getMainMapNPCProgress();
+        boolean unlocked = gameState.areMainMapQuestsUnlocked();
+        
+        String progressText = "Quiz-ul " + (total + 1) + " din 5";
+        String unlockStatus = unlocked 
+            ? "✓ Mini-quest-urile sunt DEZBLOCATE!" 
+            : "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+        
+        return "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
             "---\n" +
-            "Bine ai venit la Science Quests!\n" +
+            "Iată o întrebare de știință pentru tine:\n" +
+            progressText + " (" + correct + " corecte)\n" +
             "---\n" +
-            "Simte-te liber să explorezi și să înveți.";
+            unlockStatus;
+    }
+    
+    private String getDialogueText(String playerName, GameState gameState)
+    {
+        int correct = gameState.getMainMapNPCCorrect();
+        int total = gameState.getMainMapNPCProgress();
+        boolean unlocked = gameState.areMainMapQuestsUnlocked();
+        
+        String progressText = "Quiz-ul " + (total + 1) + " din 5";
+        String unlockStatus = unlocked 
+            ? "✓ Mini-quest-urile sunt DEZBLOCATE!" 
+            : "Răspunde corect la 3 din 5 întrebări pentru a debloca mini-quest-urile.";
+        
+        return "Salut " + playerName + "! Sunt profesorul din clasă.\n" +
+            "---\n" +
+            "Iată o întrebare de știință pentru tine:\n" +
+            progressText + " (" + correct + " corecte)\n" +
+            "---\n" +
+            unlockStatus;
     }
     
     /**

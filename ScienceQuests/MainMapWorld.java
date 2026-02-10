@@ -16,17 +16,32 @@ public class MainMapWorld extends World implements CollisionWorld
     private int teacherMapX = 339; // Fixed position on map
     private int teacherMapY = 115;
     private DialogueManager dialogueManager; // For managing dialogue interactions
-    private SettingsButton settingsButton; // Settings icon in top-right
     private ExperienceBar experienceBar; // XP bar in top-left
+    private RapidFireQuest rapidFireQuest;
+    private KeySequenceQuest keySequenceQuest;
+    private AlternatingKeysQuest alternatingKeysQuest;
+    private DoubleTapSprintQuest doubleTapSprintQuest;
+    private ComboChainQuest comboChainQuest;
+    private DirectionDodgeQuest directionDodgeQuest;
+    private DirectionArrow bioArrow;
+    private DirectionArrow physArrow;
+    private DirectionArrow chemArrow;
+    private OverlayLayer tutorialOverlay;
+    private EndingSequence endingSequence;
+    private boolean endingTriggered = false;
+    private int tutorialDisplayTicks = 0;
 
     public MainMapWorld()
     {
-        super(768, 576, 1);
+        // Match world size to full map size (18x14 tiles at 48px)
+        super(864, 672, 1);
         // Ensure any lingering dialogue state is cleared on world init
         DialogueManager.getInstance().reset();
         
         // Set paint order for all quests and UI elements
-        setPaintOrder(ExperienceBar.class, Label.class, SettingsButton.class, TeacherDisplay.class, OverlayLayer.class, 
+        // Dialogue boxes on top, then overlays, then UI, then arrows beneath dialogue
+        setPaintOrder(DialogueBox.class, OverlayLayer.class, ExperienceBar.class, Label.class, 
+                 TeacherDisplay.class, DirectionArrow.class,
                      RapidFireQuest.class, KeySequenceQuest.class, AlternatingKeysQuest.class, 
                      DoubleTapSprintQuest.class, DirectionDodgeQuest.class, ComboChainQuest.class, 
                      RhythmReleaseQuest.class, PrecisionHoldQuest.class, KeyRainfallQuest.class,
@@ -64,20 +79,39 @@ public class MainMapWorld extends World implements CollisionWorld
             addObject(girl, getWidth()/2, getHeight()/2);
             character = girl;
         }
+        // Set character spawn position on the map
+        if (character != null)
+        {
+            character.setLocation(505, 155);
+        }
         
         // Add collision objects AFTER character so they render behind
         // (REMOVED: using rectangle-based collision from Collision object layer instead)
         
-        // Instructions
-        Label instructionsLabel = new Label("Folosește săgeţi pentru a te mișca", 16, Color.WHITE);
-        addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
-        
-        // Add settings button in top-right corner
-        settingsButton = new SettingsButton();
-        addObject(settingsButton, getWidth() - 20, 20);
-        
         // Add mini-quests scattered across the map
         addMiniQuests();
+
+        // Add direction arrows based on game progression
+        // Only show Physics arrow if Biology lab is completed
+        if (GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            physArrow = new DirectionArrow("left", "LAB FIZICĂ");
+            addObject(physArrow, 70, 190);
+        }
+        
+        // Only show Chemistry arrow if Physics lab is completed
+        if (GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            chemArrow = new DirectionArrow("right", "LAB CHIMIE");
+            addObject(chemArrow, 790, 350);
+        }
+        
+        // Show tutorial popup if first time entering MainMapWorld
+        if (!GameState.getInstance().hasShownMainMapTutorial())
+        {
+            showTutorial();
+            GameState.getInstance().setMainMapTutorialShown();
+        }
     }
     
     /**
@@ -85,13 +119,44 @@ public class MainMapWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
-        // Arcade-style quests scattered around the map
-        addObject(new RapidFireQuest(150, 200), 150, 200);           // Near spawn area
-        addObject(new KeySequenceQuest(400, 180), 400, 180);         // Right side
-        addObject(new AlternatingKeysQuest(600, 250), 600, 250);     // Far right
-        addObject(new DoubleTapSprintQuest(200, 400), 200, 400);     // Bottom left
-        addObject(new ComboChainQuest(500, 350), 500, 350);          // Center area
-        addObject(new DirectionDodgeQuest(650, 400), 650, 400);      // Bottom right
+        GameState state = GameState.getInstance();
+        
+        // Only add quests that haven't been completed yet
+        if (!state.isRapidFireQuestComplete())
+        {
+            rapidFireQuest = new RapidFireQuest(150, 200);
+            addObject(rapidFireQuest, 150, 200);
+        }
+        
+        if (!state.isKeySequenceQuestComplete())
+        {
+            keySequenceQuest = new KeySequenceQuest(400, 180);
+            addObject(keySequenceQuest, 400, 180);
+        }
+        
+        if (!state.isAlternatingKeysQuestComplete())
+        {
+            alternatingKeysQuest = new AlternatingKeysQuest(600, 250);
+            addObject(alternatingKeysQuest, 600, 250);
+        }
+        
+        if (!state.isDoubleTapSprintQuestComplete())
+        {
+            doubleTapSprintQuest = new DoubleTapSprintQuest(200, 400);
+            addObject(doubleTapSprintQuest, 200, 400);
+        }
+        
+        if (!state.isComboChainQuestComplete())
+        {
+            comboChainQuest = new ComboChainQuest(500, 350);
+            addObject(comboChainQuest, 500, 350);
+        }
+        
+        if (!state.isDirectionDodgeQuestComplete())
+        {
+            directionDodgeQuest = new DirectionDodgeQuest(650, 400);
+            addObject(directionDodgeQuest, 650, 400);
+        }
         
         // Add XP bar in top-left corner
         experienceBar = new ExperienceBar();
@@ -102,9 +167,26 @@ public class MainMapWorld extends World implements CollisionWorld
     {
         try
         {
-            tiledMap = new TiledMap("test-map-LayersFixed.tmj");
+            tiledMap = new TiledMap("images/classroom-new.json");
             tileSize = tiledMap.tileSize;
-            backgroundImage = tiledMap.getFullMapImage();
+            // Render layers in the specified order
+            String[] layerOrder = new String[] {
+                "Tile Layer 1",
+                "Obiecte",
+                "Tile Layer 2",
+                "Tile Layer 4",
+                "Object Layer 1" // collision layer (not rendered if not a tile layer)
+            };
+
+            backgroundImage = new GreenfootImage(tiledMap.mapW * tileSize, tiledMap.mapH * tileSize);
+            for (String layerName : layerOrder)
+            {
+                GreenfootImage layerImage = tiledMap.getLayerImage(layerName);
+                if (layerImage != null)
+                {
+                    backgroundImage.drawImage(layerImage, 0, 0);
+                }
+            }
             DebugLog.log("SUCCESS: Loaded TMJ map, backgroundImage size: " + 
                              backgroundImage.getWidth() + "x" + backgroundImage.getHeight());
         }
@@ -121,6 +203,11 @@ public class MainMapWorld extends World implements CollisionWorld
         // Calculate max scroll values to prevent scrolling past the edges
         maxScrollX = Math.max(0, backgroundImage.getWidth() - getWidth());
         maxScrollY = Math.max(0, backgroundImage.getHeight() - getHeight());
+
+        if (backgroundImage != null)
+        {
+            setBackground(backgroundImage);
+        }
     }
 
     public void act()
@@ -128,36 +215,50 @@ public class MainMapWorld extends World implements CollisionWorld
         // Process dialogue input (ENTER key to dismiss)
         dialogueManager.processInput();
         
-        // Update the camera position to keep the character centered
+        // Handle tutorial display
+        if (tutorialDisplayTicks > 0)
+        {
+            tutorialDisplayTicks--;
+            if (tutorialDisplayTicks == 0)
+            {
+                clearTutorial();
+            }
+            else if (Greenfoot.isKeyDown("enter") || Greenfoot.isKeyDown("space"))
+            {
+                tutorialDisplayTicks = 0;
+                clearTutorial();
+            }
+        }
+
+        // Show Biology arrow only after all MainMap quests are completed
+        if (bioArrow == null && GameState.getInstance().areMainMapQuestsUnlocked() && areMainMapMiniQuestsComplete())
+        {
+            bioArrow = new DirectionArrow("down", "LABORATOR BIOLOGIE");
+            addObject(bioArrow, 432, 620);
+        }
+        
+        // Check if Physics arrow should be added after Biology completion
+        if (physArrow == null && GameState.getInstance().isLabCompleted(LabType.BIOLOGY))
+        {
+            physArrow = new DirectionArrow("left", "LAB FIZICĂ");
+            addObject(physArrow, 70, 190);
+        }
+        
+        // Check if Chemistry arrow should be added after Physics completion
+        if (chemArrow == null && GameState.getInstance().isLabCompleted(LabType.PHYSICS))
+        {
+            chemArrow = new DirectionArrow("right", "LAB CHIMIE");
+            addObject(chemArrow, 790, 350);
+        }
+        
+        // Track quest completions in GameState
+        checkQuestCompletions();
+        
         if (character != null && character.getWorld() != null)
         {
-            // Calculate scroll position to center the character
-            scrollX = character.getX() - getWidth() / 2;
-            scrollY = character.getY() - getHeight() / 2;
-            
-            // Clamp scroll values to prevent viewing beyond the background
-            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
-            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-            
-            // Draw the background image with the scroll offset
-            GreenfootImage worldImage = getBackground();
-            // Fill with solid color first to avoid StartWorld bleed-through
-            worldImage.setColor(new Color(0, 0, 0));
-            worldImage.fillRect(0, 0, getWidth(), getHeight());
-            // Draw map at scroll offset
-            if (backgroundImage != null)
-            {
-                worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
-            }
-            else
-            {
-                DebugLog.log("WARNING: backgroundImage is null!");
-            }
-            
-            // Update teacher position to stay static on map
+            scrollX = 0;
+            scrollY = 0;
             updateTeacherPosition();
-            
-            // Check for world transition
             checkWorldTransition();
         }
     }
@@ -169,10 +270,8 @@ public class MainMapWorld extends World implements CollisionWorld
     {
         if (teacher != null && teacher.getWorld() != null)
         {
-            int screenX = teacherMapX - scrollX;
-            int screenY = teacherMapY - scrollY;
-            teacher.setLocation(screenX, screenY);
-            teacherDisplay.setLocation(screenX, screenY);
+            teacher.setLocation(teacherMapX, teacherMapY);
+            teacherDisplay.setLocation(teacherMapX, teacherMapY);
         }
     }
     
@@ -183,24 +282,12 @@ public class MainMapWorld extends World implements CollisionWorld
      */
     public int screenToMapX(int screenX)
     {
-        // Update scroll first to ensure latest values
-        if (character != null && character.getWorld() != null)
-        {
-            scrollX = character.getX() - getWidth() / 2;
-            scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
-        }
-        return screenX + scrollX;
+        return screenX;
     }
     
     public int screenToMapY(int screenY)
     {
-        // Update scroll first to ensure latest values
-        if (character != null && character.getWorld() != null)
-        {
-            scrollY = character.getY() - getHeight() / 2;
-            scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-        }
-        return screenY + scrollY;
+        return screenY;
     }
     
     /**
@@ -238,6 +325,25 @@ public class MainMapWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null || backgroundImage == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
+
+        GameState state = GameState.getInstance();
+        
+        // Check if game is completely finished - all labs completed + all mini-quests done
+        if (!endingTriggered && state.isLabCompleted(LabType.CHEMISTRY) && areMainMapMiniQuestsComplete())
+        {
+            endingTriggered = true;
+            endingSequence = new EndingSequence();
+            addObject(endingSequence, getWidth() / 2, getHeight() / 2);
+            DebugLog.log("GAME COMPLETED! Ending sequence triggered!");
+            return;
+        }
+        
+        // Labs are accessible without quest requirements
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());
@@ -261,6 +367,121 @@ public class MainMapWorld extends World implements CollisionWorld
             WorldNavigator.tryEnterLab(LabType.BIOLOGY);
         }
     }
+
+    private boolean areMainMapMiniQuestsComplete()
+    {
+        GameState state = GameState.getInstance();
+        return state.isRapidFireQuestComplete() && state.isKeySequenceQuestComplete()
+            && state.isAlternatingKeysQuestComplete() && state.isDoubleTapSprintQuestComplete()
+            && state.isComboChainQuestComplete() && state.isDirectionDodgeQuestComplete();
+    }
+    
+    /**
+     * Check and track quest completions in GameState
+     */
+    private void checkQuestCompletions()
+    {
+        GameState state = GameState.getInstance();
+        
+        if (rapidFireQuest != null && rapidFireQuest.isCompleted() && !state.isRapidFireQuestComplete())
+        {
+            state.setRapidFireQuestComplete(true);
+            DebugLog.log("RapidFireQuest completed - saved to GameState");
+        }
+        
+        if (keySequenceQuest != null && keySequenceQuest.isCompleted() && !state.isKeySequenceQuestComplete())
+        {
+            state.setKeySequenceQuestComplete(true);
+            DebugLog.log("KeySequenceQuest completed - saved to GameState");
+        }
+        
+        if (alternatingKeysQuest != null && alternatingKeysQuest.isCompleted() && !state.isAlternatingKeysQuestComplete())
+        {
+            state.setAlternatingKeysQuestComplete(true);
+            DebugLog.log("AlternatingKeysQuest completed - saved to GameState");
+        }
+        
+        if (doubleTapSprintQuest != null && doubleTapSprintQuest.isCompleted() && !state.isDoubleTapSprintQuestComplete())
+        {
+            state.setDoubleTapSprintQuestComplete(true);
+            DebugLog.log("DoubleTapSprintQuest completed - saved to GameState");
+        }
+        
+        if (comboChainQuest != null && comboChainQuest.isCompleted() && !state.isComboChainQuestComplete())
+        {
+            state.setComboChainQuestComplete(true);
+            DebugLog.log("ComboChainQuest completed - saved to GameState");
+        }
+        
+        if (directionDodgeQuest != null && directionDodgeQuest.isCompleted() && !state.isDirectionDodgeQuestComplete())
+        {
+            state.setDirectionDodgeQuestComplete(true);
+            DebugLog.log("DirectionDodgeQuest completed - saved to GameState");
+        }
+    }
+    
+    private void showTutorial()
+    {
+        tutorialOverlay = new OverlayLayer();
+        addObject(tutorialOverlay, getWidth() / 2, getHeight() / 2);
+        
+        int panelW = 600;
+        int panelH = 350;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
+        
+        // Background
+        img.setColor(new Color(15, 15, 30, 240));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        // Border with glow
+        img.setColor(new Color(100, 200, 255, 220));
+        img.drawRect(0, 0, panelW - 1, panelH - 1);
+        img.setColor(new Color(120, 220, 255, 140));
+        img.drawRect(1, 1, panelW - 3, panelH - 3);
+        
+        // Title
+        img.setColor(new Color(255, 220, 100));
+        img.setFont(FontManager.getPixeledLarge());
+        drawCenteredString(img, "BINE AI VENIT!", panelW / 2, 50);
+        
+        // Instructions
+        img.setFont(FontManager.getPixeled());
+        img.setColor(new Color(220, 220, 220));
+        
+        int startY = 110;
+        int lineHeight = 35;
+        
+        img.drawString("• Rezolva toate Quiz-urile date de profesor apropiindu-te de el", 40, startY);
+        img.drawString("apoi mini-quest-urile apăsând SPACE în dreptul a fiecarui '!'", 40, startY + lineHeight);
+        
+        img.drawString("• După aceea, vei debloca Laboratorul de Biologie", 40, startY + lineHeight * 2);
+        img.drawString("unde v-a trebui să repari laboratorul.", 40, startY + lineHeight * 3);
+        
+        img.drawString("• Apoi vei debloca Laboratorul de Fizică", 40, startY + lineHeight * 4);
+        img.drawString("• La final vei debloca Laboratorul de Chimie", 40, startY + lineHeight * 5);
+
+
+        // Bottom text
+        img.setFont(FontManager.getPixeledSmall());
+        img.setColor(new Color(100, 200, 255));
+        drawCenteredString(img, "Apasă SPACE sau ENTER pentru a continua", panelW / 2, panelH - 30);
+        
+        tutorialOverlay.setImage(img);
+        tutorialDisplayTicks = 1500; // Auto-close after 15 seconds if not dismissed
+    }
+    
+    private void clearTutorial()
+    {
+        if (tutorialOverlay != null && tutorialOverlay.getWorld() != null)
+        {
+            removeObject(tutorialOverlay);
+            tutorialOverlay = null;
+        }
+    }
+    
+    private void drawCenteredString(GreenfootImage img, String str, int centerX, int y)
+    {
+        int strWidth = img.getFont().getSize() * str.length() / 2;
+        img.drawString(str, centerX - strWidth / 2, y);
+    }
 }
-
-

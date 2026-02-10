@@ -3,17 +3,13 @@ import greenfoot.*;
 /**
  * DoubleTapSprintQuest - Double-tap SPACE with visual flash feedback, particle bursts, and glowing UI
  */
-public class DoubleTapSprintQuest extends Actor
+public class DoubleTapSprintQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int score = 0;
     private int totalTaps = 0;
     private int successfulDoubleTaps = 0;
     private int targetDoubleTaps = 8;
-    private boolean questActive = false;
-    private boolean completed = false;
     private boolean success = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int lastSpacePress = -100;
     private int doubleTapWindow = 20;
@@ -22,12 +18,6 @@ public class DoubleTapSprintQuest extends Actor
     private boolean lastWasSuccess = false;
     private int particleEmitTick = 0;
     private java.util.List<Particle> particles;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean spaceDown = false;
     
     private class Particle
@@ -62,8 +52,7 @@ public class DoubleTapSprintQuest extends Actor
     
     public DoubleTapSprintQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         particles = new java.util.ArrayList<Particle>();
         createImage();
     }
@@ -90,9 +79,38 @@ public class DoubleTapSprintQuest extends Actor
         int drawX = (48 - img.getWidth()) / 2;
         int drawY = Math.max(0, (32 - img.getHeight()) / 2);
         marker.drawImage(img, drawX, drawY);
-        marker.setColor(new Color(255, 255, 255));
-        marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        // Don't draw "SPATIU" text here - will be added dynamically when player is near
+        setImage(marker);
+    }
+    
+    private void updateMarkerImage(boolean showLabel)
+    {
+        GreenfootImage img = new GreenfootImage("exclamation-mark.png");
+        int maxSize = 32;
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW >= imgH)
+        {
+            int scaledH = (int)Math.round(imgH * (maxSize / (double)imgW));
+            img.scale(maxSize, Math.max(1, scaledH));
+        }
+        else
+        {
+            int scaledW = (int)Math.round(imgW * (maxSize / (double)imgH));
+            img.scale(Math.max(1, scaledW), maxSize);
+        }
+        GreenfootImage marker = new GreenfootImage(48, 48);
+        marker.setColor(new Color(0, 0, 0, 0));
+        marker.fillRect(0, 0, 48, 48);
+        int drawX = (48 - img.getWidth()) / 2;
+        int drawY = Math.max(0, (32 - img.getHeight()) / 2);
+        marker.drawImage(img, drawX, drawY);
+        if (showLabel)
+        {
+            marker.setColor(new Color(255, 255, 255));
+            marker.setFont(new greenfoot.Font("Arial", true, false, 10));
+            marker.drawString("SPATIU", 4, 46);
+        }
         setImage(marker);
     }
     
@@ -100,14 +118,7 @@ public class DoubleTapSprintQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -120,23 +131,49 @@ public class DoubleTapSprintQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                score = 0;
-                totalTaps = 0;
-                successfulDoubleTaps = 0;
-                lastSpacePress = -100;
-                animTick = 0;
-                particles.clear();
-                spaceDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                // Show "SPATIU" label when player is near
+                updateMarkerImage(true);
+                
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        beginQuest();
+                        score = 0;
+                        totalTaps = 0;
+                        successfulDoubleTaps = 0;
+                        lastSpacePress = -100;
+                        animTick = 0;
+                        particles.clear();
+                        spaceDown = false;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else
+            {
+                // Hide "SPATIU" label when player is far
+                updateMarkerImage(false);
+                if (tutorialActive)
+                {
+                    tutorialActive = false;
+                    clearOverlay();
+                }
             }
             startKeyDown = startPressed;
         }
@@ -163,7 +200,7 @@ public class DoubleTapSprintQuest extends Actor
             updateDisplay();
             if (resultScreenTick > 120)
             {
-                GameState.getInstance().setMiniQuestActive(false);
+                endQuest();
             }
         }
     }
@@ -230,12 +267,7 @@ public class DoubleTapSprintQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 280;
@@ -254,8 +286,10 @@ public class DoubleTapSprintQuest extends Actor
             drawQuestScreen(img, panelW, panelH);
         }
         
-        setImage(img);
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private void drawQuestScreen(GreenfootImage img, int w, int h)
@@ -284,19 +318,19 @@ public class DoubleTapSprintQuest extends Actor
         
         // Title
         img.setColor(new Color(255, 180, 80));
-        img.setFont(new greenfoot.Font("Arial", true, false, 34));
-        img.drawString("DOUBLE TAP SPRINT", px + 50, py + 50);
+        img.setFont(new greenfoot.Font("Arial", true, false, 28));
+        drawCenteredString(img, "SPRINT CU DUBLĂ APĂSARE", px + panelW / 2, py + 45, 28);
         
         // Status display
         img.setFont(new greenfoot.Font("Arial", true, false, 22));
         img.setColor(new Color(120, 255, 120));
-        img.drawString("Successful Taps: " + successfulDoubleTaps + "/" + targetDoubleTaps, px + 40, py + 110);
+        img.drawString("Duble reușite: " + successfulDoubleTaps + "/" + targetDoubleTaps, px + 40, py + 110);
         
         img.setColor(new Color(255, 200, 120));
-        img.drawString("Score: " + score, px + 40, py + 145);
+        img.drawString("Scor: " + score, px + 40, py + 145);
         
         img.setColor(new Color(150, 180, 255));
-        img.drawString("Total Presses: " + totalTaps, px + 40, py + 180);
+        img.drawString("Apăsări totale: " + totalTaps, px + 40, py + 180);
         
         // Progress bar with glow
         int barW = 420;
@@ -333,7 +367,7 @@ public class DoubleTapSprintQuest extends Actor
         // Double-tap window indicator
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
         img.setColor(new Color(180, 180, 200, 200));
-        img.drawString("Press SPACE twice quickly", px + 120, py + 305);
+        drawCenteredString(img, "INSTRUCȚIUNI: apasă SPATIU de două ori rapid", px + panelW / 2, py + 300, 16);
         
         // Draw particles
         for (Particle p : particles)
@@ -365,17 +399,17 @@ public class DoubleTapSprintQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 36));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
-        img.drawString(resultText, px + 70, py + 60);
+        String resultText = success ? "SUCCES!" : "COMPLET!";
+        drawCenteredString(img, resultText, px + panelW / 2, py + 60, 36);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        img.drawString("Double Taps: " + successfulDoubleTaps, px + 50, py + 120);
-        img.drawString("Total Score: " + score, px + 50, py + 160);
+        img.drawString("Duble: " + successfulDoubleTaps, px + 50, py + 120);
+        img.drawString("Scor total: " + score, px + 50, py + 160);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 16));
-        img.drawString("Sprint Challenge Complete!", px + 60, py + 240);
+        drawCenteredString(img, "Provocare de sprint completă!", px + panelW / 2, py + 235, 16);
     }
     
     private void finishQuest(boolean success)
@@ -385,9 +419,10 @@ public class DoubleTapSprintQuest extends Actor
         questActive = false;
         resultScreenTick = 0;
         resultDisplayTicks = 120;
+        endQuest();
         
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null || overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -407,17 +442,17 @@ public class DoubleTapSprintQuest extends Actor
         
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 32));
-        String resultText = success ? "SUCCESS!" : "COMPLETE!";
+        String resultText = success ? "SUCCES!" : "COMPLET!";
         img.drawString(resultText, panelW / 2 - 70, panelH / 2 - 30);
         
         img.setColor(new Color(255, 200, 100));
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
-        img.drawString("Double Taps: " + successfulDoubleTaps, panelW / 2 - 90, panelH / 2 + 20);
-        img.drawString("Total Score: " + score, panelW / 2 - 90, panelH / 2 + 55);
+        img.drawString("Duble: " + successfulDoubleTaps, panelW / 2 - 80, panelH / 2 + 20);
+        img.drawString("Scor total: " + score, panelW / 2 - 80, panelH / 2 + 55);
         
         img.setColor(new Color(150, 200, 255));
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
-        img.drawString("Sprint Challenge Complete!", panelW / 2 - 105, panelH / 2 + 95);
+        img.drawString("Provocare de sprint completă!", panelW / 2 - 130, panelH / 2 + 95);
         
         // Set transparent actor image
         GreenfootImage transparent = new GreenfootImage(48, 48);
@@ -425,48 +460,76 @@ public class DoubleTapSprintQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
+        if (world == null) return;
+
+        ensureOverlay();
         
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
+        int panelW = 500;
+        int panelH = 300;
+        GreenfootImage img = new GreenfootImage(panelW, panelH);
         
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
+        // Pulsing glow effect
+        int pulse = 70 + (int)(50 * Math.sin(animTick * 0.1));
+        img.setColor(new Color(0, 0, 0, pulse));
+        img.fillRect(0, 0, panelW, panelH);
         
-        return null;
+        // Panel background
+        img.setColor(new Color(12, 12, 28, 250));
+        img.fillRect(0, 0, panelW, panelH);
+        
+        // Border with glow
+        img.setColor(new Color(100, 200, 255, 220));
+        img.drawRect(0, 0, panelW, panelH);
+        img.setColor(new Color(120, 220, 255, 140));
+        img.drawRect(1, 1, panelW - 2, panelH - 2);
+        img.setColor(new Color(140, 240, 255, 70));
+        img.drawRect(2, 2, panelW - 4, panelH - 4);
+        
+        // Title
+        img.setColor(new Color(100, 200, 255));
+        img.setFont(FontManager.getPixeledLarge());
+        drawCenteredString(img, "TUTORIAL", panelW / 2, 45, 28);
+        
+        // Instructions
+        img.setFont(FontManager.getPixeled());
+        img.setColor(new Color(220, 220, 220));
+        
+        img.drawString("Scopul:", 40, 100);
+        img.setFont(new greenfoot.Font("Arial", false, false, 16));
+        img.drawString("Completeaza " + targetDoubleTaps + " duble apasari pe SPATIU", 60, 125);
+        
+        img.setFont(FontManager.getPixeled());
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Cum se joaca:", 40, 165);
+        
+        img.setFont(FontManager.getPixeledSmall());
+        img.setColor(new Color(200, 200, 200));
+        img.drawString("1. Apasa SPATIU de doua ori rapid", 60, 190);
+        img.drawString("2. Daca le apropii suficient, obtii un punct", 60, 210);
+        img.drawString("3. Evita sa apesi prea lent", 60, 230);
+        
+        img.setFont(FontManager.getPixeledSmall());
+        img.setColor(new Color(100, 200, 255));
+        drawCenteredString(img, "Apasa SPATIU din nou pentru a incepe", panelW / 2, 280, 16);
+        
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
+
+    private void drawCenteredString(GreenfootImage img, String str, int centerX, int y, int size)
+    {
+        int strWidth = size * str.length() / 2;
+        img.drawString(str, centerX - strWidth / 2, y + size / 4);
+    }
+    
     
     public int getMapX() { return mapX; }
     public int getMapY() { return mapY; }

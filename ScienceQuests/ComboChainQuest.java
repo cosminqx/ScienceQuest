@@ -3,32 +3,21 @@ import greenfoot.*;
 /**
  * ComboChainQuest - Complete key combinations (SPACE+arrow) with stylish UI
  */
-public class ComboChainQuest extends Actor
+public class ComboChainQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int comboStep = 0;
     private String[] combos = {"up", "down", "left", "right"};
-    private String[] comboArrows = {"▲", "▼", "◀", "▶"};
+    private String[] comboArrows = {"^", "v", "<", ">"};
     private boolean spaceHeld = false;
     private int timeRemaining = 300;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int successTick = 0;
     private int failTick = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean comboKeyDown = false;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     
     public ComboChainQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -56,7 +45,7 @@ public class ComboChainQuest extends Actor
         marker.drawImage(img, drawX, drawY);
         marker.setColor(new Color(255, 255, 255));
         marker.setFont(new greenfoot.Font("Arial", true, false, 10));
-        marker.drawString("SPACE", 6, 46);
+        marker.drawString("SPATIU", 4, 46);
         setImage(marker);
     }
     
@@ -64,14 +53,7 @@ public class ComboChainQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -84,21 +66,40 @@ public class ComboChainQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100 && interactionCooldown == 0 && startPressed && !startKeyDown)
+            if (canStartQuest(player, 100))
             {
-                questActive = true;
-                comboStep = 0;
-                animTick = 0;
-                successTick = 0;
-                failTick = 0;
-                comboKeyDown = false;
-                GameState.getInstance().setMiniQuestActive(true);
-                interactionCooldown = 10;
+                if (!tutorialActive)
+                {
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = true;
+                        showTutorial();
+                        interactionCooldown = 10;
+                    }
+                }
+                else
+                {
+                    showTutorial();
+                    if (interactionCooldown == 0 && startPressed && !startKeyDown)
+                    {
+                        tutorialActive = false;
+                        questActive = true;
+                        beginQuest();
+                        comboStep = 0;
+                        animTick = 0;
+                        successTick = 0;
+                        failTick = 0;
+                        comboKeyDown = false;
+                        timeRemaining = 300;
+                        interactionCooldown = 10;
+                    }
+                }
+            }
+            else if (tutorialActive)
+            {
+                tutorialActive = false;
+                clearOverlay();
             }
             startKeyDown = startPressed;
         }
@@ -121,6 +122,7 @@ public class ComboChainQuest extends Actor
                 }
             }
             comboKeyDown = comboPressed;
+            if (!questActive) return;
             
             timeRemaining--;
             updateDisplay();
@@ -131,18 +133,14 @@ public class ComboChainQuest extends Actor
             }
         }
     }
-    
+
     private void updateDisplay()
     {
         World world = getWorld();
         if (world == null) return;
         
         // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 280;
@@ -172,18 +170,19 @@ public class ComboChainQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 28));
-        img.drawString("COMBO CHAIN", px + 110, py + 50);
+        img.drawString("LANȚ COMBO", px + 135, py + 50);
 
         // Instruction
         img.setFont(new greenfoot.Font("Arial", true, false, 16));
         img.setColor(new Color(200, 200, 255));
-        img.drawString("Press SPACE + Direction Arrow", px + 95, py + 80);
+        img.drawString("INSTRUCȚIUNI: ține SPATIU și apasă săgeata", px + 45, py + 80);
 
         // Current combo instruction
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
         Color instrColor = spaceHeld ? new Color(100, 255, 100) : new Color(255, 200, 100);
         img.setColor(instrColor);
-        img.drawString("SPACE + " + comboArrows[comboStep], px + 130, py + 130);
+        int safeStep = Math.min(comboStep, comboArrows.length - 1);
+        img.drawString("SPATIU + " + comboArrows[safeStep], px + 130, py + 130);
 
         // Combo step indicators with glow
         for (int i = 0; i < combos.length; i++)
@@ -223,25 +222,28 @@ public class ComboChainQuest extends Actor
         // Progress text
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.setColor(new Color(255, 200, 100));
-        img.drawString("Step: " + comboStep + " / " + combos.length, px + 155, py + 240);
+        img.drawString("Pas: " + comboStep + " / " + combos.length, px + 175, py + 240);
 
         // Time remaining
         img.setColor(new Color(100, 200, 255));
-        img.drawString("Time: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
+        img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
 
-        setImage(img);
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -257,10 +259,10 @@ public class ComboChainQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("SUCCESS!", panelW / 2 - 120, panelH / 2 - 30);
+               img.drawString("SUCCES!", panelW / 2 - 100, panelH / 2 - 30);
             img.setFont(new greenfoot.Font("Arial", true, false, 18));
-            img.drawString("All combos completed!", panelW / 2 - 110, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+               img.drawString("Toate combo-urile completate!", panelW / 2 - 145, panelH / 2 + 30);
+            img.drawString("Scor: " + score, panelW / 2 - 60, panelH / 2 + 60);
         }
         else
         {
@@ -271,10 +273,10 @@ public class ComboChainQuest extends Actor
             
             img.setColor(new Color(255, 255, 255));
             img.setFont(new greenfoot.Font("Arial", true, false, 40));
-            img.drawString("FAILED!", panelW / 2 - 110, panelH / 2 - 30);
+               img.drawString("EȘUAT!", panelW / 2 - 90, panelH / 2 - 30);
             img.setFont(new greenfoot.Font("Arial", true, false, 16));
-            img.drawString("Completed " + comboStep + "/" + combos.length, panelW / 2 - 90, panelH / 2 + 30);
-            img.drawString("Score: " + score, panelW / 2 - 60, panelH / 2 + 60);
+               img.drawString("Finalizat " + comboStep + "/" + combos.length, panelW / 2 - 90, panelH / 2 + 30);
+            img.drawString("Scor: " + score, panelW / 2 - 60, panelH / 2 + 60);
         }
         
         // Set transparent actor image
@@ -283,51 +285,36 @@ public class ComboChainQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
+    private void showTutorial()
     {
         World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
+
+        int w = 460;
+        int h = 190;
+        GreenfootImage img = new GreenfootImage(w, h);
+        img.setColor(new Color(0, 0, 0, 200));
+        img.fillRect(0, 0, w, h);
+        img.setColor(new Color(100, 170, 255, 200));
+        img.drawRect(0, 0, w - 1, h - 1);
+
+        img.setFont(new greenfoot.Font("Arial", true, false, 20));
+        img.setColor(Color.WHITE);
+        img.drawString("TUTORIAL: COMBO", 145, 30);
+        img.setFont(new greenfoot.Font("Arial", false, false, 14));
+        img.setColor(new Color(220, 220, 220));
+        img.drawString("Ține SPATIU și apasă săgeata indicată.", 85, 70);
+        img.drawString("Scop: completează toate combo‑urile.", 105, 95);
+        img.setColor(new Color(200, 255, 200));
+        img.drawString("Apasă SPATIU pentru a începe", 140, 145);
+
+        overlay.setImage(img);
     }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
         public java.util.List<TiledMap.CollisionRect> getCollisionRects()
         {
