@@ -5,9 +5,8 @@ import java.util.*;
  * KeyRainfallQuest - Catch falling keys with speed progression and depth scaling
  * Features: Cyan glowing aura, falling animations, catch zone visualization, difficulty escalation
  */
-public class KeyRainfallQuest extends Actor
+public class KeyRainfallQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int catchCount = 0;
     private int targetCount = 8;
     private List<FallingKey> fallingKeys = new ArrayList<>();
@@ -16,26 +15,15 @@ public class KeyRainfallQuest extends Actor
     private int combo = 0;
     private int baseSpawnRate = 45;
     private int currentSpawnRate;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean upDown = false;
     private boolean downDown = false;
     private boolean leftDown = false;
     private boolean rightDown = false;
-    private boolean tutorialActive = false;
     
     public KeyRainfallQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -71,14 +59,7 @@ public class KeyRainfallQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -91,12 +72,8 @@ public class KeyRainfallQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -113,7 +90,7 @@ public class KeyRainfallQuest extends Actor
                     if (interactionCooldown == 0 && startPressed && !startKeyDown)
                     {
                         tutorialActive = false;
-                        questActive = true;
+                        beginQuest();
                         catchCount = 0;
                         totalScore = 0;
                         combo = 0;
@@ -121,7 +98,6 @@ public class KeyRainfallQuest extends Actor
                         spawnTimer = 0;
                         currentSpawnRate = baseSpawnRate;
                         animTick = 0;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -223,14 +199,7 @@ public class KeyRainfallQuest extends Actor
         int w = world != null ? world.getWidth() : 800;
         int h = world != null ? world.getHeight() : 600;
         
-        if (world != null)
-        {
-            if (myOverlay == null || myOverlay.getWorld() == null)
-            {
-                myOverlay = new OverlayLayer();
-                world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-            }
-        }
+        ensureOverlay();
         
         GreenfootImage img = new GreenfootImage(w, h);
 
@@ -261,7 +230,7 @@ public class KeyRainfallQuest extends Actor
         // Title
         img.setColor(new Color(255, 255, 255));
         img.setFont(new greenfoot.Font("Arial", true, false, 24));
-        img.drawString("PLAOAIA DE SĂGEȚI", px + 70, py + 50);
+        img.drawString("PLOAIA DE SĂGEȚI", px + 70, py + 50);
 
         // Difficulty level and speed
         img.setColor(new Color(150, 200, 255));
@@ -341,22 +310,22 @@ public class KeyRainfallQuest extends Actor
             img.drawString("Combo x" + combo, px + 190, py + 235);
         }
 
-        setImage(img);
-        if (myOverlay != null)
+        if (overlay != null)
         {
-            myOverlay.setImage(img);
+            overlay.setImage(img);
         }
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -409,27 +378,15 @@ public class KeyRainfallQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
     private void showTutorial()
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
 
         int w = 460;
         int h = 190;
@@ -441,7 +398,7 @@ public class KeyRainfallQuest extends Actor
 
         img.setFont(new greenfoot.Font("Arial", true, false, 20));
         img.setColor(Color.WHITE);
-        img.drawString("TUTORIAL: PLAOAIA DE SĂGEȚI", 70, 30);
+        img.drawString("TUTORIAL: PLOAIA DE SĂGEȚI", 70, 30);
         img.setFont(new greenfoot.Font("Arial", false, false, 14));
         img.setColor(new Color(220, 220, 220));
         img.drawString("Apasă săgeata potrivită când trece prin zona albastră.", 25, 70);
@@ -449,38 +406,7 @@ public class KeyRainfallQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 140, 145);
 
-        myOverlay.setImage(img);
-    }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        overlay.setImage(img);
     }
     
     private class FallingKey
@@ -503,13 +429,6 @@ public class KeyRainfallQuest extends Actor
         }
     }
     
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
-    
-    public boolean isCompleted()
-    {
-        return completed;
-    }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

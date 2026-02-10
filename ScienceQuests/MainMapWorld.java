@@ -212,6 +212,11 @@ public class MainMapWorld extends World implements CollisionWorld
         // Calculate max scroll values to prevent scrolling past the edges
         maxScrollX = Math.max(0, backgroundImage.getWidth() - getWidth());
         maxScrollY = Math.max(0, backgroundImage.getHeight() - getHeight());
+
+        if (backgroundImage != null)
+        {
+            setBackground(backgroundImage);
+        }
     }
 
     public void act()
@@ -251,22 +256,10 @@ public class MainMapWorld extends World implements CollisionWorld
         // Track quest completions in GameState
         checkQuestCompletions();
         
-        // Draw full map without scrolling
         if (character != null && character.getWorld() != null)
         {
             scrollX = 0;
             scrollY = 0;
-            GreenfootImage worldImage = getBackground();
-            worldImage.setColor(new Color(0, 0, 0));
-            worldImage.fillRect(0, 0, getWidth(), getHeight());
-            if (backgroundImage != null)
-            {
-                worldImage.drawImage(backgroundImage, 0, 0);
-            }
-            else
-            {
-                DebugLog.log("WARNING: backgroundImage is null!");
-            }
             updateTeacherPosition();
             checkWorldTransition();
         }
@@ -334,6 +327,11 @@ public class MainMapWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null || backgroundImage == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
 
         GameState state = GameState.getInstance();
         

@@ -3,9 +3,8 @@ import greenfoot.*;
 /**
  * KeySequenceQuest - Complete key sequences with visual feedback
  */
-public class KeySequenceQuest extends Actor
+public class KeySequenceQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int sequenceIndex = 0;
     private int targetSequences = 4;
     private int completedSequences = 0;
@@ -13,29 +12,18 @@ public class KeySequenceQuest extends Actor
     private String[] sequence = new String[SEQUENCE_LENGTH];
     private int timeRemaining = 600;
     private int timeMax = 600;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int resetCooldown = 0;
     private int animTick = 0;
     private int correctFeedbackTick = 0;
     private int wrongFeedbackTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean upDown = false;
     private boolean downDown = false;
     private boolean leftDown = false;
     private boolean rightDown = false;
-    private boolean tutorialActive = false;
     
     public KeySequenceQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         generateSequence();
         createImage();
     }
@@ -88,14 +76,7 @@ public class KeySequenceQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -108,12 +89,8 @@ public class KeySequenceQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -131,6 +108,7 @@ public class KeySequenceQuest extends Actor
                     {
                         tutorialActive = false;
                         questActive = true;
+                        beginQuest();
                         sequenceIndex = 0;
                         completedSequences = 0;
                         animTick = 0;
@@ -139,7 +117,6 @@ public class KeySequenceQuest extends Actor
                         downDown = false;
                         leftDown = false;
                         rightDown = false;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -172,11 +149,6 @@ public class KeySequenceQuest extends Actor
         }
     }
 
-    public boolean isCompleted()
-    {
-        return completed;
-    }
-    
     private void checkInput()
     {
         String currentKey = sequence[sequenceIndex];
@@ -238,12 +210,7 @@ public class KeySequenceQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 300;
@@ -347,7 +314,10 @@ public class KeySequenceQuest extends Actor
         img.setColor(new Color(200, 200, 220));
         img.drawString(Math.round(timeRemaining / 60.0f) + "s", px + panelW - 45, py + 258);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private String getArrowForKey(String key)
@@ -363,11 +333,7 @@ public class KeySequenceQuest extends Actor
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
 
         int w = 460;
         int h = 200;
@@ -387,7 +353,10 @@ public class KeySequenceQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 140, 150);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private void finishQuest(boolean success)
@@ -395,10 +364,10 @@ public class KeySequenceQuest extends Actor
         questActive = false;
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
+        endQuest();
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null || overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -425,54 +394,10 @@ public class KeySequenceQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
+        if (overlay != null)
         {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
+            overlay.setImage(img);
         }
     }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
     
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
-    }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
-    
-    public java.util.List<TiledMap.CollisionRect> getCollisionRects()
-    {
-        return java.util.Collections.emptyList();
-    }
 }

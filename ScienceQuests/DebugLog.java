@@ -1,6 +1,8 @@
 public final class DebugLog
 {
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = Boolean.parseBoolean(
+        System.getProperty("sciencequest.debug", "true")
+    );
 
     private DebugLog()
     {

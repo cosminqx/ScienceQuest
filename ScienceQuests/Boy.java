@@ -4,10 +4,8 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  * Boy - Playable character that can be controlled with arrow keys
  * Uses directional spritesheets (UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT) with 8 frames each
  */
-public class Boy extends Actor
+public class Boy extends BasePlayer
 {
-    private int speed = 3;
-    
     // Directional spritesheets
     private GreenfootImage[] upFrames;
     private GreenfootImage[] downFrames;
@@ -21,9 +19,6 @@ public class Boy extends Actor
     private int currentFrame = 0;
     private int animationCounter = 0;
     private static final int FRAME_DELAY = 5; // acts between frames
-    private boolean isMoving = false;
-     // Direction indices: 0=up,1=left,2=down,3=right,4=up-left,5=up-right,6=down-left,7=down-right
-     private int lastDirection = 2;
     
     // Frame dimensions
     private static final int FRAME_WIDTH = 96;
@@ -104,220 +99,57 @@ public class Boy extends Actor
     /**
      * Act - Handle keyboard input for movement and animation
      */
-    public void act()
+    protected int getHitboxWidth()
     {
-        // Only allow movement if no dialogue is active
-        if (!DialogueManager.getInstance().isDialogueActive() && !GameState.getInstance().isMiniQuestActive())
-        {
-            handleMovement();
-        }
-        updateAnimation();
+        return CROP_WIDTH;
     }
 
-    private void handleMovement()
+    protected int getHitboxHeight()
     {
-        isMoving = false;
-
-        boolean up = Greenfoot.isKeyDown("up");
-        boolean down = Greenfoot.isKeyDown("down");
-        boolean left = Greenfoot.isKeyDown("left");
-        boolean right = Greenfoot.isKeyDown("right");
-
-        // Neutralize opposing keys
-        if (up && down) { up = false; down = false; }
-        if (left && right) { left = false; right = false; }
-
-        int startX = getX();
-        int startY = getY();
-        int newX = startX;
-        int newY = startY;
-        int chosenDir = lastDirection;
-        GreenfootImage[] chosenFrames = currentAnimation;
-
-        if (up && left)
-        {
-            newY -= speed;
-            newX -= speed;
-            chosenDir = 4;
-            chosenFrames = upLeftFrames != null ? upLeftFrames : leftFrames;
-        }
-        else if (up && right)
-        {
-            newY -= speed;
-            newX += speed;
-            chosenDir = 5;
-            chosenFrames = upRightFrames != null ? upRightFrames : rightFrames;
-        }
-        else if (down && left)
-        {
-            newY += speed;
-            newX -= speed;
-            chosenDir = 6;
-            chosenFrames = leftFrames;
-        }
-        else if (down && right)
-        {
-            newY += speed;
-            newX += speed;
-            chosenDir = 7;
-            chosenFrames = rightFrames;
-        }
-        else if (up)
-        {
-            newY -= speed;
-            chosenDir = 0;
-            chosenFrames = upFrames;
-        }
-        else if (down)
-        {
-            newY += speed;
-            chosenDir = 2;
-            chosenFrames = downFrames;
-        }
-        else if (left)
-        {
-            newX -= speed;
-            chosenDir = 1;
-            chosenFrames = leftFrames;
-        }
-        else if (right)
-        {
-            newX += speed;
-            chosenDir = 3;
-            chosenFrames = rightFrames;
-        }
-
-        if (chosenDir != lastDirection)
-        {
-            setDirection(chosenDir, chosenFrames);
-        }
-
-        // Check collision using feet rectangle with sliding collision
-        World world = getWorld();
-        if (world != null && (world instanceof MainMapWorld || world instanceof LabWorld || world instanceof LabFizicaWorld || world instanceof LabBiologyWorld))
-        {
-            int newMapX, newMapY, xOnlyMapX, xOnlyMapY, yOnlyMapX, yOnlyMapY;
-            boolean fullMoveCollides, xMoveCollides, yMoveCollides;
-            
-            if (world instanceof MainMapWorld) {
-                MainMapWorld mainWorld = (MainMapWorld) world;
-                newMapX = mainWorld.screenToMapX(newX);
-                newMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                fullMoveCollides = mainWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-            } else if (world instanceof LabFizicaWorld) {
-                LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                newMapX = labFizicaWorld.screenToMapX(newX);
-                newMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                fullMoveCollides = labFizicaWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-            } else if (world instanceof LabBiologyWorld) {
-                LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                newMapX = labBiologyWorld.screenToMapX(newX);
-                newMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                fullMoveCollides = labBiologyWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-            } else {
-                LabWorld labWorld = (LabWorld) world;
-                newMapX = labWorld.screenToMapX(newX);
-                newMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                fullMoveCollides = labWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-            }
-            
-            // Feet hitbox: full character width, 18px height
-            
-            if (fullMoveCollides)
-            {
-                // Try moving only horizontally
-                if (world instanceof MainMapWorld) {
-                    MainMapWorld mainWorld = (MainMapWorld) world;
-                    xOnlyMapX = mainWorld.screenToMapX(newX);
-                    xOnlyMapY = mainWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                    xMoveCollides = mainWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabFizicaWorld) {
-                    LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                    xOnlyMapX = labFizicaWorld.screenToMapX(newX);
-                    xOnlyMapY = labFizicaWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                    xMoveCollides = labFizicaWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabBiologyWorld) {
-                    LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                    xOnlyMapX = labBiologyWorld.screenToMapX(newX);
-                    xOnlyMapY = labBiologyWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                    xMoveCollides = labBiologyWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                } else {
-                    LabWorld labWorld = (LabWorld) world;
-                    xOnlyMapX = labWorld.screenToMapX(newX);
-                    xOnlyMapY = labWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                    xMoveCollides = labWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                }
-                
-                if (!xMoveCollides && newX != startX)
-                {
-                    // Can slide horizontally
-                    setLocation(newX, startY);
-                    isMoving = true;
-                    return;
-                }
-                
-                // Try moving only vertically
-                if (world instanceof MainMapWorld) {
-                    MainMapWorld mainWorld = (MainMapWorld) world;
-                    yOnlyMapX = mainWorld.screenToMapX(startX);
-                    yOnlyMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    yMoveCollides = mainWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabFizicaWorld) {
-                    LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                    yOnlyMapX = labFizicaWorld.screenToMapX(startX);
-                    yOnlyMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    yMoveCollides = labFizicaWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabBiologyWorld) {
-                    LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                    yOnlyMapX = labBiologyWorld.screenToMapX(startX);
-                    yOnlyMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    yMoveCollides = labBiologyWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                } else {
-                    LabWorld labWorld = (LabWorld) world;
-                    yOnlyMapX = labWorld.screenToMapX(startX);
-                    yOnlyMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    yMoveCollides = labWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                }
-                
-                if (!yMoveCollides && newY != startY)
-                {
-                    // Can slide vertically
-                    setLocation(startX, newY);
-                    isMoving = true;
-                    return;
-                }
-                
-                // Completely blocked
-                isMoving = false;
-                currentFrame = 0;
-                animationCounter = 0;
-                return;
-            }
-        }
-
-        // No collision; apply movement
-        setLocation(newX, newY);
-
-        // Mark moving if any directional key was active
-        isMoving = up || down || left || right;
-
-        // If not moving, reset to first frame of current direction
-        if (!isMoving)
-        {
-            currentFrame = 0;
-            animationCounter = 0;
-        }
+        return 18;
     }
-    
-    /**
-     * Set the current direction and animation
-     */
-    private void setDirection(int direction, GreenfootImage[] frames)
+
+    protected int getHitboxOffsetY()
     {
-        if (frames == null) return;
-        if (lastDirection != direction)
+        return HITBOX_OFFSET_Y;
+    }
+
+    protected void onDirectionChanged(int newDirection)
+    {
+        GreenfootImage[] frames = null;
+        switch (newDirection)
         {
-            lastDirection = direction;
+            case DIR_UP:
+                frames = upFrames;
+                break;
+            case DIR_DOWN:
+                frames = downFrames;
+                break;
+            case DIR_LEFT:
+                frames = leftFrames;
+                break;
+            case DIR_RIGHT:
+                frames = rightFrames;
+                break;
+            case DIR_UP_LEFT:
+                frames = upLeftFrames != null ? upLeftFrames : leftFrames;
+                break;
+            case DIR_UP_RIGHT:
+                frames = upRightFrames != null ? upRightFrames : rightFrames;
+                break;
+            case DIR_DOWN_LEFT:
+                frames = leftFrames;
+                break;
+            case DIR_DOWN_RIGHT:
+                frames = rightFrames;
+                break;
+            default:
+                frames = downFrames;
+                break;
+        }
+
+        if (frames != null)
+        {
             currentAnimation = frames;
             currentFrame = 0;
             animationCounter = 0;
@@ -327,7 +159,7 @@ public class Boy extends Actor
     /**
      * Update the animation frame
      */
-    private void updateAnimation()
+    protected void updateAnimation()
     {
         if (currentAnimation == null) return;
         
@@ -339,6 +171,11 @@ public class Boy extends Actor
                 animationCounter = 0;
                 currentFrame = (currentFrame + 1) % FRAMES_PER_DIRECTION;
             }
+        }
+        else
+        {
+            currentFrame = 0;
+            animationCounter = 0;
         }
         
         setImage(currentAnimation[currentFrame]);

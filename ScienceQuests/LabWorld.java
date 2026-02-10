@@ -12,6 +12,8 @@ public class LabWorld extends World implements CollisionWorld
     private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
+    private int lastScrollX = -1;
+    private int lastScrollY = -1;
     private int maxScrollX;
     private int maxScrollY;
     private int tileSize = 48;
@@ -77,7 +79,7 @@ public class LabWorld extends World implements CollisionWorld
         DebugLog.log("Chemistry Teacher added to LabWorld at (250, 200)");
         
         // Instructions
-        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apropie-te pentru a interactiona", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
         // Add XP bar in top-left corner
@@ -103,21 +105,56 @@ public class LabWorld extends World implements CollisionWorld
      */
     private void addMiniQuests()
     {
-        if (!getObjects(KeyRainfallQuest.class).isEmpty()
-            || !getObjects(ComboChainQuest.class).isEmpty()
-            || !getObjects(RhythmReleaseQuest.class).isEmpty())
+        java.util.List<KeyRainfallQuest> rainfallExisting = getObjects(KeyRainfallQuest.class);
+        java.util.List<ComboChainQuest> comboExisting = getObjects(ComboChainQuest.class);
+        java.util.List<RhythmReleaseQuest> rhythmExisting = getObjects(RhythmReleaseQuest.class);
+
+        if (!rainfallExisting.isEmpty())
         {
-            return;
+            rainfallQuest = rainfallExisting.get(0);
+            for (int i = 1; i < rainfallExisting.size(); i++)
+            {
+                removeObject(rainfallExisting.get(i));
+            }
+        }
+        if (!comboExisting.isEmpty())
+        {
+            comboQuest = comboExisting.get(0);
+            for (int i = 1; i < comboExisting.size(); i++)
+            {
+                removeObject(comboExisting.get(i));
+            }
+        }
+        if (!rhythmExisting.isEmpty())
+        {
+            rhythmQuest = rhythmExisting.get(0);
+            for (int i = 1; i < rhythmExisting.size(); i++)
+            {
+                removeObject(rhythmExisting.get(i));
+            }
         }
 
-        // Three chemistry-themed challenges positioned below the main area
-        rainfallQuest = new KeyRainfallQuest(150, 400);
-        comboQuest = new ComboChainQuest(300, 400);
-        rhythmQuest = new RhythmReleaseQuest(450, 400);
+        // Create any missing quests
+        if (rainfallQuest == null)
+        {
+            rainfallQuest = new KeyRainfallQuest(150, 400);
+            addObject(rainfallQuest, 150, 400);
+        }
+        if (comboQuest == null)
+        {
+            comboQuest = new ComboChainQuest(300, 400);
+            addObject(comboQuest, 300, 400);
+        }
+        if (rhythmQuest == null)
+        {
+            rhythmQuest = new RhythmReleaseQuest(450, 400);
+            addObject(rhythmQuest, 450, 400);
+        }
 
-        addObject(rainfallQuest, 150, 400);      // Chemical reactions (elements falling)
-        addObject(comboQuest, 300, 400);         // Chain reactions
-        addObject(rhythmQuest, 450, 400);        // Periodic table patterns
+        // Ensure positions are correct
+        rainfallQuest.setLocation(150, 400);
+        comboQuest.setLocation(300, 400);
+        rhythmQuest.setLocation(450, 400);
         
         DebugLog.log("Chemistry mini-quests added to lab");
     }
@@ -154,7 +191,6 @@ public class LabWorld extends World implements CollisionWorld
         {
             // Fallback: create a simple background if image not found
             DebugLog.log("ERROR loading lab map: " + e.getMessage());
-            e.printStackTrace();
             backgroundImage = new GreenfootImage(getWidth(), getHeight());
             backgroundImage.setColor(new Color(34, 34, 50)); // Dark blue-gray
             backgroundImage.fillRect(0, 0, getWidth(), getHeight());
@@ -181,25 +217,35 @@ public class LabWorld extends World implements CollisionWorld
             // Clamp scroll values to prevent viewing beyond the background
             scrollX = Math.max(0, Math.min(scrollX, maxScrollX));
             scrollY = Math.max(0, Math.min(scrollY, maxScrollY));
-            
-            // Draw the background image with the scroll offset
-            GreenfootImage worldImage = getBackground();
-            worldImage.setColor(new Color(0, 0, 0));
-            worldImage.fillRect(0, 0, getWidth(), getHeight());
-            
-            if (backgroundImage != null)
-            {
-                worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
-            }
-            else
-            {
-                DebugLog.log("WARNING: backgroundImage is null!");
-            }
 
-            updateOverlayImage();
+            boolean scrollChanged = scrollX != lastScrollX || scrollY != lastScrollY;
+            if (scrollChanged)
+            {
+                GreenfootImage worldImage = getBackground();
+                worldImage.setColor(new Color(0, 0, 0));
+                worldImage.fillRect(0, 0, getWidth(), getHeight());
+
+                if (backgroundImage != null)
+                {
+                    worldImage.drawImage(backgroundImage, -scrollX, -scrollY);
+                }
+                else
+                {
+                    DebugLog.log("WARNING: backgroundImage is null!");
+                }
+
+                updateOverlayImage();
+                lastScrollX = scrollX;
+                lastScrollY = scrollY;
+            }
             
             // Update quest block positions
             updateQuestBlockPositions();
+
+            if (miniQuestsAdded)
+            {
+                cleanupMiniQuestDuplicates();
+            }
             
             // Check if player got enough correct quizzes to unlock mini-quests
             if (!miniQuestsAdded && GameState.getInstance().isLabChemQuizGateComplete())
@@ -223,6 +269,73 @@ public class LabWorld extends World implements CollisionWorld
             checkWorldTransition();
         }
     }
+
+    private void cleanupMiniQuestDuplicates()
+    {
+        java.util.List<KeyRainfallQuest> rainfallExisting = getObjects(KeyRainfallQuest.class);
+        java.util.List<ComboChainQuest> comboExisting = getObjects(ComboChainQuest.class);
+        java.util.List<RhythmReleaseQuest> rhythmExisting = getObjects(RhythmReleaseQuest.class);
+
+        if (!rainfallExisting.isEmpty())
+        {
+            if (rainfallQuest == null || !rainfallExisting.contains(rainfallQuest))
+            {
+                rainfallQuest = rainfallExisting.get(0);
+            }
+            for (int i = 0; i < rainfallExisting.size(); i++)
+            {
+                KeyRainfallQuest quest = rainfallExisting.get(i);
+                if (quest != rainfallQuest)
+                {
+                    removeObject(quest);
+                }
+            }
+            if (rainfallQuest.getWorld() != null)
+            {
+                rainfallQuest.setLocation(150, 400);
+            }
+        }
+
+        if (!comboExisting.isEmpty())
+        {
+            if (comboQuest == null || !comboExisting.contains(comboQuest))
+            {
+                comboQuest = comboExisting.get(0);
+            }
+            for (int i = 0; i < comboExisting.size(); i++)
+            {
+                ComboChainQuest quest = comboExisting.get(i);
+                if (quest != comboQuest)
+                {
+                    removeObject(quest);
+                }
+            }
+            if (comboQuest.getWorld() != null)
+            {
+                comboQuest.setLocation(300, 400);
+            }
+        }
+
+        if (!rhythmExisting.isEmpty())
+        {
+            if (rhythmQuest == null || !rhythmExisting.contains(rhythmQuest))
+            {
+                rhythmQuest = rhythmExisting.get(0);
+            }
+            for (int i = 0; i < rhythmExisting.size(); i++)
+            {
+                RhythmReleaseQuest quest = rhythmExisting.get(i);
+                if (quest != rhythmQuest)
+                {
+                    removeObject(quest);
+                }
+            }
+            if (rhythmQuest.getWorld() != null)
+            {
+                rhythmQuest.setLocation(450, 400);
+            }
+        }
+    }
     
     /**
      * Check if player should transition back to MainMapWorld
@@ -230,6 +343,11 @@ public class LabWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
         
         // Character's map position (adjusted by scroll)
         int mapX = character.getX() + scrollX;
@@ -237,6 +355,14 @@ public class LabWorld extends World implements CollisionWorld
         
         // Transition to MainMapWorld when inside the exit window (bottom-left area)
         if (mapX >= 0 && mapX <= 72 && mapY >= 551 && mapY <= 599)
+        {
+            DebugLog.log("TRANSITION TO MainMapWorld TRIGGERED!");
+            WorldNavigator.goToMainMap();
+            return;
+        }
+
+        // Transition to MainMapWorld when exiting to the left edge
+        if (mapX <= 10)
         {
             DebugLog.log("TRANSITION TO MainMapWorld TRIGGERED!");
             WorldNavigator.goToMainMap();

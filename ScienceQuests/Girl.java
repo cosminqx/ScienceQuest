@@ -9,30 +9,16 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  * - DOWN movement: scales slightly larger vertically + brighter (simulates coming closer)
  * - This creates depth perception in top-down pixel art without needing separate sprites
  */
-public class Girl extends Actor
+public class Girl extends BasePlayer
 {
-    // Direction constants
-    private static final int DIR_UP = 0;
-    private static final int DIR_LEFT = 1;
-    private static final int DIR_DOWN = 2;
-    private static final int DIR_RIGHT = 3;
-    private static final int DIR_UP_LEFT = 4;
-    private static final int DIR_UP_RIGHT = 5;
-    private static final int DIR_DOWN_LEFT = 6;
-    private static final int DIR_DOWN_RIGHT = 7;
-    
-    private int speed = 3;
-    
     // Base frames (never modified - kept clean for visual transformations)
     private GreenfootImage[] baseLeftFrames;
     private GreenfootImage[] baseRightFrames;
     
     // Animation state
-    private int currentDirection = DIR_LEFT;
     private int currentFrame = 0;
     private int animationCounter = 0;
     private static final int FRAME_DELAY = 5;
-    private boolean isMoving = false;
     
     // Frame dimensions
     private static final int FRAME_WIDTH = 96;
@@ -113,231 +99,32 @@ public class Girl extends Actor
         setImage(image);
     }
 
-    /**
-     * Act - Handle keyboard input for movement and animation
-     */
-    public void act()
-    {
-        // Only allow movement if no dialogue is active
-        if (!DialogueManager.getInstance().isDialogueActive() && !GameState.getInstance().isMiniQuestActive())
-        {
-            handleMovement();
-        }
-        updateAnimation();
-    }
-
-    /**
-     * Handle keyboard input and determine movement direction
-     * Separates movement logic from visual/animation logic
-     */
-    private void handleMovement()
-    {
-        isMoving = false;
-
-        boolean up = Greenfoot.isKeyDown("up");
-        boolean down = Greenfoot.isKeyDown("down");
-        boolean left = Greenfoot.isKeyDown("left");
-        boolean right = Greenfoot.isKeyDown("right");
-
-        // Neutralize opposing keys
-        if (up && down) { up = false; down = false; }
-        if (left && right) { left = false; right = false; }
-
-        int startX = getX();
-        int startY = getY();
-        int newX = startX;
-        int newY = startY;
-        int newDirection = currentDirection;
-
-        // Determine direction and movement (8 directions)
-        if (up && left)
-        {
-            newY -= speed;
-            newX -= speed;
-            newDirection = DIR_UP_LEFT;
-        }
-        else if (up && right)
-        {
-            newY -= speed;
-            newX += speed;
-            newDirection = DIR_UP_RIGHT;
-        }
-        else if (down && left)
-        {
-            newY += speed;
-            newX -= speed;
-            newDirection = DIR_DOWN_LEFT;
-        }
-        else if (down && right)
-        {
-            newY += speed;
-            newX += speed;
-            newDirection = DIR_DOWN_RIGHT;
-        }
-        else if (up)
-        {
-            newY -= speed;
-            newDirection = DIR_UP;
-        }
-        else if (down)
-        {
-            newY += speed;
-            newDirection = DIR_DOWN;
-        }
-        else if (left)
-        {
-            newX -= speed;
-            newDirection = DIR_LEFT;
-        }
-        else if (right)
-        {
-            newX += speed;
-            newDirection = DIR_RIGHT;
-        }
-
-        // Update direction if changed
-        if (newDirection != currentDirection)
-        {
-            currentDirection = newDirection;
-            currentFrame = 0;
-            animationCounter = 0;
-        }
-
-        // Attempt movement - only if actually moved
-        if (newX != startX || newY != startY)
-        {
-            // Check collision using feet rectangle with sliding collision
-            World world = getWorld();
-            if (world != null && (world instanceof MainMapWorld || world instanceof LabWorld || world instanceof LabFizicaWorld || world instanceof LabBiologyWorld))
-            {
-                int newMapX, newMapY;
-                boolean fullMoveCollides;
-                
-                if (world instanceof MainMapWorld) {
-                    MainMapWorld mainWorld = (MainMapWorld) world;
-                    newMapX = mainWorld.screenToMapX(newX);
-                    newMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    fullMoveCollides = mainWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabFizicaWorld) {
-                    LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                    newMapX = labFizicaWorld.screenToMapX(newX);
-                    newMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    fullMoveCollides = labFizicaWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-                } else if (world instanceof LabBiologyWorld) {
-                    LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                    newMapX = labBiologyWorld.screenToMapX(newX);
-                    newMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    fullMoveCollides = labBiologyWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-                } else {
-                    LabWorld labWorld = (LabWorld) world;
-                    newMapX = labWorld.screenToMapX(newX);
-                    newMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                    fullMoveCollides = labWorld.isCollisionAt(newMapX, newMapY, CROP_WIDTH, 18);
-                }
-                
-                // Feet hitbox: full character width, 18px height
-                
-                if (fullMoveCollides)
-                {
-                    // Try moving only horizontally
-                    int xOnlyMapX, xOnlyMapY;
-                    boolean xMoveCollides;
-                    
-                    if (world instanceof MainMapWorld) {
-                        MainMapWorld mainWorld = (MainMapWorld) world;
-                        xOnlyMapX = mainWorld.screenToMapX(newX);
-                        xOnlyMapY = mainWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                        xMoveCollides = mainWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                    } else if (world instanceof LabFizicaWorld) {
-                        LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                        xOnlyMapX = labFizicaWorld.screenToMapX(newX);
-                        xOnlyMapY = labFizicaWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                        xMoveCollides = labFizicaWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                    } else if (world instanceof LabBiologyWorld) {
-                        LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                        xOnlyMapX = labBiologyWorld.screenToMapX(newX);
-                        xOnlyMapY = labBiologyWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                        xMoveCollides = labBiologyWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                    } else {
-                        LabWorld labWorld = (LabWorld) world;
-                        xOnlyMapX = labWorld.screenToMapX(newX);
-                        xOnlyMapY = labWorld.screenToMapY(startY + HITBOX_OFFSET_Y);
-                        xMoveCollides = labWorld.isCollisionAt(xOnlyMapX, xOnlyMapY, CROP_WIDTH, 18);
-                    }
-                    
-                    if (!xMoveCollides && newX != startX)
-                    {
-                        // Can slide horizontally
-                        setLocation(newX, startY);
-                        isMoving = true;
-                    }
-                    else
-                    {
-                        // Try moving only vertically
-                        int yOnlyMapX, yOnlyMapY;
-                        boolean yMoveCollides;
-                        
-                        if (world instanceof MainMapWorld) {
-                            MainMapWorld mainWorld = (MainMapWorld) world;
-                            yOnlyMapX = mainWorld.screenToMapX(startX);
-                            yOnlyMapY = mainWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                            yMoveCollides = mainWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                        } else if (world instanceof LabFizicaWorld) {
-                            LabFizicaWorld labFizicaWorld = (LabFizicaWorld) world;
-                            yOnlyMapX = labFizicaWorld.screenToMapX(startX);
-                            yOnlyMapY = labFizicaWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                            yMoveCollides = labFizicaWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                        } else if (world instanceof LabBiologyWorld) {
-                            LabBiologyWorld labBiologyWorld = (LabBiologyWorld) world;
-                            yOnlyMapX = labBiologyWorld.screenToMapX(startX);
-                            yOnlyMapY = labBiologyWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                            yMoveCollides = labBiologyWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                        } else {
-                            LabWorld labWorld = (LabWorld) world;
-                            yOnlyMapX = labWorld.screenToMapX(startX);
-                            yOnlyMapY = labWorld.screenToMapY(newY + HITBOX_OFFSET_Y);
-                            yMoveCollides = labWorld.isCollisionAt(yOnlyMapX, yOnlyMapY, CROP_WIDTH, 18);
-                        }
-                        
-                        if (!yMoveCollides && newY != startY)
-                        {
-                            // Can slide vertically
-                            setLocation(startX, newY);
-                            isMoving = true;
-                        }
-                        else
-                        {
-                            // Completely blocked
-                            isMoving = false;
-                        }
-                    }
-                }
-                else
-                {
-                    // No collision, move freely
-                    setLocation(newX, newY);
-                    isMoving = true;
-                }
-            }
-            else
-            {
-                setLocation(newX, newY);
-                isMoving = true;
-            }
-        }
-
-        // If not moving, reset to first frame (idle pose)
-        if (!isMoving)
-        {
-            currentFrame = 0;
-            animationCounter = 0;
-        }
-    }
     
     /**
      * Update animation frame counter and cycle through frames
      */
-    private void updateAnimation()
+    protected int getHitboxWidth()
+    {
+        return CROP_WIDTH;
+    }
+
+    protected int getHitboxHeight()
+    {
+        return 18;
+    }
+
+    protected int getHitboxOffsetY()
+    {
+        return HITBOX_OFFSET_Y;
+    }
+
+    protected void onDirectionChanged(int newDirection)
+    {
+        currentFrame = 0;
+        animationCounter = 0;
+    }
+
+    protected void updateAnimation()
     {
         if (isMoving)
         {

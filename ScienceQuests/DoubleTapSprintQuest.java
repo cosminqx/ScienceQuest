@@ -3,17 +3,13 @@ import greenfoot.*;
 /**
  * DoubleTapSprintQuest - Double-tap SPACE with visual flash feedback, particle bursts, and glowing UI
  */
-public class DoubleTapSprintQuest extends Actor
+public class DoubleTapSprintQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int score = 0;
     private int totalTaps = 0;
     private int successfulDoubleTaps = 0;
     private int targetDoubleTaps = 8;
-    private boolean questActive = false;
-    private boolean completed = false;
     private boolean success = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int lastSpacePress = -100;
     private int doubleTapWindow = 20;
@@ -22,14 +18,7 @@ public class DoubleTapSprintQuest extends Actor
     private boolean lastWasSuccess = false;
     private int particleEmitTick = 0;
     private java.util.List<Particle> particles;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean spaceDown = false;
-    private boolean tutorialActive = false;
     
     private class Particle
     {
@@ -63,8 +52,7 @@ public class DoubleTapSprintQuest extends Actor
     
     public DoubleTapSprintQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         particles = new java.util.ArrayList<Particle>();
         createImage();
     }
@@ -130,14 +118,7 @@ public class DoubleTapSprintQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -150,12 +131,8 @@ public class DoubleTapSprintQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 // Show "SPATIU" label when player is near
                 updateMarkerImage(true);
@@ -176,6 +153,7 @@ public class DoubleTapSprintQuest extends Actor
                     {
                         tutorialActive = false;
                         questActive = true;
+                        beginQuest();
                         score = 0;
                         totalTaps = 0;
                         successfulDoubleTaps = 0;
@@ -183,7 +161,6 @@ public class DoubleTapSprintQuest extends Actor
                         animTick = 0;
                         particles.clear();
                         spaceDown = false;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -223,14 +200,9 @@ public class DoubleTapSprintQuest extends Actor
             updateDisplay();
             if (resultScreenTick > 120)
             {
-                GameState.getInstance().setMiniQuestActive(false);
+                endQuest();
             }
         }
-    }
-
-    public boolean isCompleted()
-    {
-        return completed;
     }
     
     private void checkInput()
@@ -295,12 +267,7 @@ public class DoubleTapSprintQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 280;
@@ -319,7 +286,10 @@ public class DoubleTapSprintQuest extends Actor
             drawQuestScreen(img, panelW, panelH);
         }
         
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private void drawQuestScreen(GreenfootImage img, int w, int h)
@@ -449,10 +419,10 @@ public class DoubleTapSprintQuest extends Actor
         questActive = false;
         resultScreenTick = 0;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
+        endQuest();
         
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null || overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -490,20 +460,15 @@ public class DoubleTapSprintQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
 
     private void showTutorial()
     {
         World world = getWorld();
         if (world == null) return;
-        
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+
+        ensureOverlay();
         
         int panelW = 500;
         int panelH = 300;
@@ -553,7 +518,10 @@ public class DoubleTapSprintQuest extends Actor
         img.setColor(new Color(100, 200, 255));
         drawCenteredString(img, "Apasa SPATIU din nou pentru a incepe", panelW / 2, 280, 16);
         
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
 
     private void drawCenteredString(GreenfootImage img, String str, int centerX, int y, int size)
@@ -562,45 +530,6 @@ public class DoubleTapSprintQuest extends Actor
         img.drawString(str, centerX - strWidth / 2, y + size / 4);
     }
     
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
-    }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
-    }
     
     public int getMapX() { return mapX; }
     public int getMapY() { return mapY; }

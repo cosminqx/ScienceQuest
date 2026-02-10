@@ -3,35 +3,23 @@ import greenfoot.*;
 /**
  * DnaReplicationQuest - BIOLOGY: Press complementary base pairs in sequence
  */
-public class DnaReplicationQuest extends Actor
+public class DnaReplicationQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int strandsCompleted = 0;
     private int targetStrands = 1;
     private int timeRemaining = 360; // 6 seconds
     private int timeMax = 360;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     
     private String[] bases = {"A", "T", "G", "C"};
     private int currentBaseIndex = 0;
     private int correctFeedbackTick = 0;
     private int wrongFeedbackTick = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean anyArrowDown = false;
-    private boolean tutorialActive = false;
     
     public DnaReplicationQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -67,14 +55,7 @@ public class DnaReplicationQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -87,12 +68,8 @@ public class DnaReplicationQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -109,12 +86,11 @@ public class DnaReplicationQuest extends Actor
                     if (interactionCooldown == 0 && startPressed && !startKeyDown)
                     {
                         tutorialActive = false;
-                        questActive = true;
+                        beginQuest();
                         animTick = 0;
                         strandsCompleted = 0;
                         currentBaseIndex = 0;
                         timeRemaining = timeMax;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -148,11 +124,6 @@ public class DnaReplicationQuest extends Actor
         }
     }
 
-    public boolean isCompleted()
-    {
-        return completed;
-    }
-    
     private void checkInput()
     {
         String currentBase = bases[currentBaseIndex];
@@ -234,11 +205,8 @@ public class DnaReplicationQuest extends Actor
         World world = getWorld();
         if (world == null) return;
         
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 320;
@@ -347,18 +315,19 @@ public class DnaReplicationQuest extends Actor
         img.setColor(new Color(255, 150, 220));
         img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", 190, 305);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -395,27 +364,15 @@ public class DnaReplicationQuest extends Actor
             img.drawString("regulile de complementaritate. " + strandsCompleted + "/" + targetStrands, panelW / 2 - 170, panelH / 2 + 55);
         }
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
     private void showTutorial()
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
 
         int w = 460;
         int h = 200;
@@ -435,42 +392,8 @@ public class DnaReplicationQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 140, 150);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
-    }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

@@ -352,4 +352,15 @@ public class DialogueBox extends Actor {
     public void setOnAnswerAttemptCallback(java.util.function.Consumer<Boolean> callback) {
         this.onAnswerAttemptCallback = callback;
     }
+
+    public DialogueBox createRetryBox() {
+        if (!questionMode || question == null) {
+            return null;
+        }
+        DialogueBox retry = new DialogueBox(question, iconPath, true);
+        retry.setTypewriterSpeed(typewriterSpeed);
+        retry.setOnCorrectAnswerCallback(onCorrectAnswerCallback);
+        retry.setOnAnswerAttemptCallback(onAnswerAttemptCallback);
+        return retry;
+    }
 }

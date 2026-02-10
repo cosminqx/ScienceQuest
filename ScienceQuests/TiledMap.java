@@ -198,7 +198,6 @@ public class TiledMap
         catch (Exception e)
         {
             DebugLog.log("ERROR building map image: " + e.getMessage());
-            e.printStackTrace();
             // Create fallback empty image
             fullMapImage = new GreenfootImage(mapW * tileSize, mapH * tileSize);
             fullMapImage.setColor(new Color(0, 0, 0));
@@ -270,15 +269,7 @@ public class TiledMap
             DebugLog.log("    GID range: " + minGid + " - " + maxGid);
         }
         
-        // Report available tilesets
-        if (!tilesets.isEmpty()) {
-            System.out.print("    Available tilesets: ");
-            for (int i = 0; i < tilesets.size(); i++) {
-                System.out.print("gid=" + tilesets.get(i).firstgid + 
-                    " (tiles=" + tilesets.get(i).tiles.size() + ") ");
-            }
-            DebugLog.log("");
-        }
+        // Report available tilesets (debug only)
     }
     
     private int countNonZero(int[][] layer)

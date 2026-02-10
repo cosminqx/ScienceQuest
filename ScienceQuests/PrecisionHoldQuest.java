@@ -4,9 +4,8 @@ import greenfoot.*;
  * PrecisionHoldQuest - Hold LEFT for exact duration with increasing difficulty
  * Features: Purple glowing aura, tolerance zone visualization, progress bars, difficulty scaling
  */
-public class PrecisionHoldQuest extends Actor
+public class PrecisionHoldQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int holdTime = 0;
     private int targetTime = 120; // 2 seconds at 60 FPS
     private int tolerance = 12; // ±0.2 seconds
@@ -14,24 +13,13 @@ public class PrecisionHoldQuest extends Actor
     private int targetRounds = 3;
     private int levelCount = 0;
     private int totalScore = 0;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int successFlash = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean holdingStarted = false;
-    private boolean tutorialActive = false;
     
     public PrecisionHoldQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -67,14 +55,7 @@ public class PrecisionHoldQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -84,16 +65,11 @@ public class PrecisionHoldQuest extends Actor
             updateFloating();
         }
         
-        // Check for player proximity and SPACE key to start
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -110,7 +86,7 @@ public class PrecisionHoldQuest extends Actor
                     if (interactionCooldown == 0 && startPressed && !startKeyDown)
                     {
                         tutorialActive = false;
-                        questActive = true;
+                        beginQuest();
                         holdTime = 0;
                         baseTargetTime = 120;
                         targetTime = baseTargetTime;
@@ -120,7 +96,6 @@ public class PrecisionHoldQuest extends Actor
                         animTick = 0;
                         successFlash = 0;
                         holdingStarted = false;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -166,11 +141,6 @@ public class PrecisionHoldQuest extends Actor
         }
     }
 
-    public boolean isCompleted()
-    {
-        return completed;
-    }
-    
     private void finishHold()
     {
         boolean success = holdTime >= (targetTime - tolerance) && holdTime <= (targetTime + tolerance);
@@ -190,9 +160,8 @@ public class PrecisionHoldQuest extends Actor
             
             if (levelCount >= targetRounds)
             {
-                questActive = false;
+                endQuest();
                 completed = true;
-                GameState.getInstance().setMiniQuestActive(false);
                 finishQuest(true);
             }
             else
@@ -204,9 +173,8 @@ public class PrecisionHoldQuest extends Actor
         }
         else
         {
-            questActive = false;
+            endQuest();
             completed = true;
-            GameState.getInstance().setMiniQuestActive(false);
             finishQuest(false);
         }
     }
@@ -215,14 +183,7 @@ public class PrecisionHoldQuest extends Actor
     {
         World world = getWorld();
         
-        if (world != null)
-        {
-            if (myOverlay == null || myOverlay.getWorld() == null)
-            {
-                myOverlay = new OverlayLayer();
-                world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-            }
-        }
+        ensureOverlay();
 
         int panelW = 460;
         int panelH = 280;
@@ -329,16 +290,18 @@ public class PrecisionHoldQuest extends Actor
         img.setFont(new greenfoot.Font("Arial", true, false, 18));
         img.drawString("Scor: " + totalScore, px + 175, py + 250);
 
-        if (myOverlay != null)
+        if (overlay != null)
         {
-            myOverlay.setImage(img);
+            overlay.setImage(img);
         }
     }
     
     private void finishQuest(boolean success)
     {
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         resultDisplayTicks = 120;
         
@@ -394,58 +357,15 @@ public class PrecisionHoldQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
-    }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
+        overlay.setImage(img);
     }
 
     private void showTutorial()
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
 
         int w = 460;
         int h = 190;
@@ -465,11 +385,8 @@ public class PrecisionHoldQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 140, 145);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

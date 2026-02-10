@@ -12,6 +12,8 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private ExperienceBar experienceBar; // XP bar in top-left
     private int scrollX = 0;
     private int scrollY = 0;
+    private int lastScrollX = -1;
+    private int lastScrollY = -1;
     private int maxScrollX;
     private int maxScrollY;
     private int tileSize = 48;
@@ -116,7 +118,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
         DebugLog.log("Biology Assistant map position: (" + assistantMapX + ", " + assistantMapY + ")");
         
         // Instructions
-        Label instructionsLabel = new Label("Apasă F pentru a interacționa", 16, Color.WHITE);
+        Label instructionsLabel = new Label("Apropie-te pentru a interactiona", 16, Color.WHITE);
         addObject(instructionsLabel, getWidth()/2, getHeight() - 30);
         
         // Add mini-quests only after NPC quiz gate is completed
@@ -195,7 +197,6 @@ public class LabBiologyWorld extends World implements CollisionWorld
         catch (Exception e)
         {
             DebugLog.log("Error loading biology lab map: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
@@ -252,17 +253,22 @@ public class LabBiologyWorld extends World implements CollisionWorld
                 assistant.setLocation(assistantScreenX, assistantScreenY);
             }
             
-            // Draw the background (or black during flicker)
-            if (!isAnimating || !showBlack)
+            boolean scrollChanged = scrollX != lastScrollX || scrollY != lastScrollY;
+            boolean shouldRedraw = scrollChanged || isAnimating || showBlack;
+            if (shouldRedraw)
             {
-                drawBackground();
-            }
-            else
-            {
-                // Draw black screen during flicker
-                GreenfootImage worldImage = getBackground();
-                worldImage.setColor(Color.BLACK);
-                worldImage.fillRect(0, 0, getWidth(), getHeight());
+                if (showBlack)
+                {
+                    GreenfootImage worldImage = getBackground();
+                    worldImage.setColor(Color.BLACK);
+                    worldImage.fillRect(0, 0, getWidth(), getHeight());
+                }
+                else
+                {
+                    drawBackground();
+                }
+                lastScrollX = scrollX;
+                lastScrollY = scrollY;
             }
         }
         
@@ -438,6 +444,7 @@ public class LabBiologyWorld extends World implements CollisionWorld
             DebugLog.log("Biology lab changed to destroyed state");
         }
         
+        showBlack = false;
         // Draw the new map
         drawBackground();
         
@@ -496,6 +503,11 @@ public class LabBiologyWorld extends World implements CollisionWorld
     private void checkWorldTransition()
     {
         if (character == null) return;
+
+        if (DialogueManager.getInstance().isDialogueActive() || GameState.getInstance().isMiniQuestActive())
+        {
+            return;
+        }
         
         // Get character's map position
         int mapX = screenToMapX(character.getX());

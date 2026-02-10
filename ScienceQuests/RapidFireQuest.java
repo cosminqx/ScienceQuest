@@ -3,34 +3,22 @@ import greenfoot.*;
 /**
  * RapidFireQuest - Mash SPACE with combo tracking and stylish UI
  */
-public class RapidFireQuest extends Actor
+public class RapidFireQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int spaceCount = 0;
     private int targetCount = 40;
     private int timeRemaining = 300;
     private int timeMax = 300;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int pressFeedbackTick = 0;
     private int combo = 0;
     private int maxCombo = 0;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
     private boolean promptActive = false;
-    private boolean startKeyDown = false;
     private boolean spaceDown = false;
-    private boolean tutorialActive = false;
     
     public RapidFireQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -66,14 +54,7 @@ public class RapidFireQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -86,12 +67,8 @@ public class RapidFireQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -111,13 +88,13 @@ public class RapidFireQuest extends Actor
                     {
                         tutorialActive = false;
                         questActive = true;
+                        beginQuest();
                         animTick = 0;
                         spaceCount = 0;
                         combo = 0;
                         maxCombo = 0;
                         timeRemaining = timeMax;
                         spaceDown = false;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -162,22 +139,12 @@ public class RapidFireQuest extends Actor
         }
     }
 
-    public boolean isCompleted()
-    {
-        return completed;
-    }
-    
     private void updateDisplay()
     {
         World world = getWorld();
         if (world == null) return;
-        
-        // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 280;
@@ -255,7 +222,10 @@ public class RapidFireQuest extends Actor
         img.setFont(new greenfoot.Font("Arial", true, false, 14));
         img.drawString(Math.round(timeRemaining / 60.0f) + "s", px + panelW - 50, py + 205);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private Color getProgressColor(float progress)
@@ -271,10 +241,10 @@ public class RapidFireQuest extends Actor
         questActive = false;
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
+        endQuest();
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null || overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -321,44 +291,14 @@ public class RapidFireQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
-    }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
+        overlay.setImage(img);
     }
 
     private void showStartPrompt(String title)
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
 
         int w = 360;
         int h = 110;
@@ -376,7 +316,10 @@ public class RapidFireQuest extends Actor
         img.drawString("INSTRUCȚIUNI: apasă SPATIU rapid", 20, 60);
         img.drawString("Apasă SPATIU pentru tutorial", 45, 85);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
         promptActive = true;
     }
 
@@ -384,11 +327,7 @@ public class RapidFireQuest extends Actor
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
 
         int w = 420;
         int h = 170;
@@ -408,25 +347,11 @@ public class RapidFireQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 110, 130);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
-    }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
     public java.util.List<TiledMap.CollisionRect> getCollisionRects()
     {

@@ -3,12 +3,9 @@ import greenfoot.*;
 /**
  * ChemistryTeacher - NPC in Chemistry Lab who provides quiz questions
  */
-public class ChemistryTeacher extends Actor implements NPC
+public class ChemistryTeacher extends QuizNPCBase
 {
     private LabWorld labWorld;
-    private static final int INTERACTION_DISTANCE = 80;
-    private boolean fKeyPressed = false;
-    private int dialogueCooldown = 0;
     
     public ChemistryTeacher()
     {
@@ -24,72 +21,29 @@ public class ChemistryTeacher extends Actor implements NPC
         }
         
         // Set NPC appearance using man_teacher sprite
-        GreenfootImage sprite = new GreenfootImage("man_teacher.png");
+        GreenfootImage sprite = new GreenfootImage("images/man_teacher.png");
         // Scale up by 40% from the previous 80x80 size
         sprite.scale(112, 112);
         setImage(sprite);
     }
-    
-    @Override
-    public void act()
+
+    protected void onWorldTick(World world)
     {
-        if (dialogueCooldown > 0)
+        if (labWorld == null && world instanceof LabWorld)
         {
-            dialogueCooldown--;
+            labWorld = (LabWorld) world;
         }
-        checkDialogueInteraction();
     }
-    
-    /**
-     * Check for interaction (auto-trigger when nearby)
-     */
-    private void checkDialogueInteraction()
+
+    protected boolean isInteractionEnabled()
     {
-        World world = getWorld();
-        if (world == null) return;
-        
-        Actor player = getPlayer();
-        if (player != null)
-        {
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < INTERACTION_DISTANCE)
-            {
-                // Stop showing dialogue after 5/5 quizzes complete
-                GameState state = GameState.getInstance();
-                if (state.getLabChemQuizTotal() >= 5)
-                {
-                    return;
-                }
-                
-                DialogueManager manager = DialogueManager.getInstance();
-                if (manager.isDialogueActive())
-                {
-                    return;
-                }
+        GameState state = GameState.getInstance();
+        return labWorld != null && !state.isLabChemQuizGateComplete();
+    }
 
-                if (fKeyPressed)
-                {
-                    // Dialogue closed - allow next question after short cooldown
-                    fKeyPressed = false;
-                    dialogueCooldown = 15;
-                    return;
-                }
-
-                if (dialogueCooldown == 0)
-                {
-                    fKeyPressed = true;
-                    initiateChemistryDialogue();
-                }
-            }
-            else
-            {
-                fKeyPressed = false;
-                dialogueCooldown = 0;
-            }
-        }
+    protected void onInteract(World world)
+    {
+        initiateChemistryDialogue();
     }
     
     /**
@@ -108,7 +62,7 @@ public class ChemistryTeacher extends Actor implements NPC
         int total = state.getLabChemQuizTotal();
         int correct = state.getLabChemQuizCorrect();
 
-        if (total >= 5)
+        if (state.isLabChemQuizGateComplete())
         {
             String doneText = "Ai terminat toate cele 5 întrebări.\n---\n" +
                 "Corecte: " + correct + "/5.\n---\n" +
@@ -116,6 +70,26 @@ public class ChemistryTeacher extends Actor implements NPC
             DialogueBox done = new DialogueBox(doneText, getIconPath(), true);
             done.setTypewriterSpeed(2);
             manager.showDialogue(done, world, this);
+            return;
+        }
+
+        if (total >= 5 && correct < 3)
+        {
+            String retryText = "Nu ai suficiente răspunsuri corecte.\n---\n" +
+                "Mai ai nevoie de " + (3 - correct) + " corecte.";
+            DialogueBox retry = new DialogueBox(retryText, getIconPath(), true);
+            retry.setTypewriterSpeed(2);
+
+            DialogueQuestion question = buildChemistryQuestion();
+            DialogueBox questionBox = new DialogueBox(question, getIconPath(), true);
+            questionBox.setTypewriterSpeed(2);
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordLabChemQuizResult(isCorrect);
+            });
+
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(retry, world, this);
             return;
         }
         
@@ -135,13 +109,6 @@ public class ChemistryTeacher extends Actor implements NPC
             questionBox.setOnAnswerAttemptCallback(isCorrect -> {
                 GameState gs = GameState.getInstance();
                 gs.recordLabChemQuizResult(isCorrect);
-                int t = gs.getLabChemQuizTotal();
-                int c = gs.getLabChemQuizCorrect();
-                DebugLog.log("Chemistry Lab Quiz Result: " + c + "/" + t + " correct");
-                if (gs.isLabChemQuizGateComplete())
-                {
-                    DebugLog.log("CHEMISTRY MINI-QUESTS UNLOCKED! Correct: " + c + "/5");
-                }
             });
             
             manager.queueDialogue(questionBox);
@@ -157,13 +124,6 @@ public class ChemistryTeacher extends Actor implements NPC
             questionBox.setOnAnswerAttemptCallback(isCorrect -> {
                 GameState gs = GameState.getInstance();
                 gs.recordLabChemQuizResult(isCorrect);
-                int t = gs.getLabChemQuizTotal();
-                int c = gs.getLabChemQuizCorrect();
-                DebugLog.log("Chemistry Lab Quiz Result: " + c + "/" + t + " correct");
-                if (gs.isLabChemQuizGateComplete())
-                {
-                    DebugLog.log("CHEMISTRY MINI-QUESTS UNLOCKED! Correct: " + c + "/5");
-                }
             });
             
             manager.showDialogue(questionBox, world, this);
@@ -193,24 +153,5 @@ public class ChemistryTeacher extends Actor implements NPC
     public String getIconPath()
     {
         return "images/man_teacher.png";
-    }
-    
-    /**
-     * Get the player (Boy or Girl)
-     */
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            return world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            return world.getObjects(Girl.class).get(0);
-        }
-        return null;
     }
 }

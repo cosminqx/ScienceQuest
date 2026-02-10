@@ -4,13 +4,8 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  * Teacher - A static NPC character (man teacher) in the classroom
  * Implements NPC interface for dialogue system
  */
-public class Teacher extends Actor implements NPC
+public class Teacher extends QuizNPCBase
 {
-    private TeacherInteractionDisplay interactionDisplay;
-    private static final int INTERACTION_DISTANCE = 80; // Distance in pixels to trigger interaction
-    private boolean fKeyPressed = false; // Track F key state to prevent repeated presses
-    private int dialogueCooldown = 0;
-    
     public Teacher()
     {
         try
@@ -29,88 +24,20 @@ public class Teacher extends Actor implements NPC
             setImage(image);
         }
         
-        // Create interaction display (initially not in world)
-        interactionDisplay = new TeacherInteractionDisplay();
     }
 
     /**
      * Act - do whatever the Teacher wants to do. This method is called whenever
      * the 'Act' or 'Run' button gets pressed in the environment.
      */
-    public void act()
+    protected boolean isInteractionEnabled()
     {
-        if (dialogueCooldown > 0)
-        {
-            dialogueCooldown--;
-        }
-        checkPlayerProximity();
-        checkDialogueInteraction();
+        return true;
     }
-    
-    /**
-     * Check if player is nearby to initiate dialogue (auto-trigger when close)
-     */
-    private void checkDialogueInteraction()
+
+    protected void onInteract(World world)
     {
-        World world = getWorld();
-        if (world == null) return;
-        
-        // Find the player character (Boy or Girl)
-        Actor player = null;
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            player = world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            player = world.getObjects(Girl.class).get(0);
-        }
-        
-        if (player != null)
-        {
-            // Calculate distance to player
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Auto-trigger dialogue when player is nearby (no F key needed)
-            if (distance < INTERACTION_DISTANCE)
-            {
-                // Stop showing dialogue after 5/5 quizzes complete
-                GameState gameState = GameState.getInstance();
-                if (!gameState.hasMainMapNPCQuizzesRemaining())
-                {
-                    return;
-                }
-                
-                // Check if dialogue is not already active
-                DialogueManager manager = DialogueManager.getInstance();
-                if (manager.isDialogueActive())
-                {
-                    return;
-                }
-
-                if (fKeyPressed)
-                {
-                    // Dialogue closed - allow next question after short cooldown
-                    fKeyPressed = false;
-                    dialogueCooldown = 15;
-                    return;
-                }
-
-                if (dialogueCooldown == 0)
-                {
-                    fKeyPressed = true;
-                    initiateDialogue();
-                }
-            }
-            else
-            {
-                // Reset when player moves away
-                fKeyPressed = false;
-                dialogueCooldown = 0;
-            }
-        }
+        initiateDialogue();
     }
     
     /**
@@ -132,26 +59,51 @@ public class Teacher extends Actor implements NPC
         
         GameState gameState = GameState.getInstance();
         
-        // Check if MainMapWorld NPC quizzes are exhausted
-        if (!gameState.hasMainMapNPCQuizzesRemaining())
-        {
-            // All 5 quizzes done - show completion dialogue
-            String completionText = gameState.areMainMapQuestsUnlocked() 
-                ? "Bravo! Ai răspuns corect la " + gameState.getMainMapNPCCorrect() + "/5 întrebări.\n---\nAcum mergi la Laboratorul de Biologie (săgeți de jos).\n---\nAcolo vei rezolva mai multe puzzle-uri!"
-                : "Ai terminat toate 5 întrebări! Continuă cu celelalte activități pe hartă.";
-            
-            DialogueBox completion = new DialogueBox(completionText, getIconPath(), true);
-            completion.setTypewriterSpeed(2);
-            manager.showDialogue(completion, world, this);
-            return;
-        }
-        
         // Create and show the dialogue
         String playerName = PlayerData.getPlayerName();
         String iconPath = getIconPath();
         
         int total = gameState.getMainMapNPCProgress();
         int correct = gameState.getMainMapNPCCorrect();
+
+        if (total >= 5 && correct < 3)
+        {
+            String retryText = "Nu ai suficiente răspunsuri corecte.\n---\n" +
+                "Mai ai nevoie de " + (3 - correct) + " corecte.";
+            DialogueBox retry = new DialogueBox(retryText, iconPath, true);
+            retry.setTypewriterSpeed(2);
+
+            DialogueQuestion question = buildScienceQuestion();
+            DialogueBox questionBox = new DialogueBox(question, iconPath, true);
+            questionBox.setTypewriterSpeed(2);
+            questionBox.setOnAnswerAttemptCallback(isCorrect -> {
+                GameState gs = GameState.getInstance();
+                gs.recordMainMapNPCQuizResult(isCorrect);
+                int t = gs.getMainMapNPCProgress();
+                int c = gs.getMainMapNPCCorrect();
+                DebugLog.log("MainMap NPC Quiz Result: " + c + "/" + t + " correct");
+                if (gs.areMainMapQuestsUnlocked())
+                {
+                    DebugLog.log("QUESTS UNLOCKED! Correct: " + c + "/5");
+                }
+            });
+
+            manager.queueDialogue(questionBox);
+            manager.showDialogue(retry, world, this);
+            return;
+        }
+
+        if (total >= 5)
+        {
+            String completionText = gameState.areMainMapQuestsUnlocked()
+                ? "Bravo! Ai răspuns corect la " + correct + "/5 întrebări.\n---\nAcum mergi la Laboratorul de Biologie (săgeți de jos).\n---\nAcolo vei rezolva mai multe puzzle-uri!"
+                : "Ai terminat toate 5 întrebări! Continuă cu celelalte activități pe hartă.";
+
+            DialogueBox completion = new DialogueBox(completionText, iconPath, true);
+            completion.setTypewriterSpeed(2);
+            manager.showDialogue(completion, world, this);
+            return;
+        }
 
         // Show introduction only on first question
         if (total == 0)
@@ -215,51 +167,6 @@ public class Teacher extends Actor implements NPC
         return GameState.getInstance().getRandomQuestion("general", QuestionPools.getGeneralScienceQuestions());
     }
     
-    /**
-     * Check if player is nearby and show/hide interaction display
-     */
-    private void checkPlayerProximity()
-    {
-        World world = getWorld();
-        if (world == null) return;
-        
-        // Find the player character (Boy or Girl)
-        Actor player = null;
-        if (!world.getObjects(Boy.class).isEmpty())
-        {
-            player = world.getObjects(Boy.class).get(0);
-        }
-        else if (!world.getObjects(Girl.class).isEmpty())
-        {
-            player = world.getObjects(Girl.class).get(0);
-        }
-        
-        if (player != null)
-        {
-            // Calculate distance to player
-            int dx = player.getX() - getX();
-            int dy = player.getY() - getY();
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Show/hide interaction display based on distance
-            if (distance < INTERACTION_DISTANCE)
-            {
-                // Player is close - show display above teacher
-                if (interactionDisplay.getWorld() == null)
-                {
-                    world.addObject(interactionDisplay, getX(), getY() - 80);
-                }
-            }
-            else
-            {
-                // Player is far - hide display
-                if (interactionDisplay.getWorld() != null)
-                {
-                    world.removeObject(interactionDisplay);
-                }
-            }
-        }
-    }
     
     /**
      * Get the dialogue text for this NPC (from NPC interface)

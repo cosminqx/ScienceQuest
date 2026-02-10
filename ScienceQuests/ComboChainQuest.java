@@ -3,33 +3,21 @@ import greenfoot.*;
 /**
  * ComboChainQuest - Complete key combinations (SPACE+arrow) with stylish UI
  */
-public class ComboChainQuest extends Actor
+public class ComboChainQuest extends BaseQuest
 {
-    private int mapX, mapY;
     private int comboStep = 0;
     private String[] combos = {"up", "down", "left", "right"};
     private String[] comboArrows = {"^", "v", "<", ">"};
     private boolean spaceHeld = false;
     private int timeRemaining = 300;
-    private boolean questActive = false;
-    private boolean completed = false;
-    private int interactionCooldown = 0;
     private int animTick = 0;
     private int successTick = 0;
     private int failTick = 0;
-    private int baseY = 0;
-    private boolean baseYSet = false;
-    private int floatTick = 0;
-    private boolean startKeyDown = false;
     private boolean comboKeyDown = false;
-    private boolean tutorialActive = false;
-    private OverlayLayer myOverlay = null;
-    private int resultDisplayTicks = 0;
     
     public ComboChainQuest(int mapX, int mapY)
     {
-        this.mapX = mapX;
-        this.mapY = mapY;
+        super(mapX, mapY);
         createImage();
     }
     
@@ -65,14 +53,7 @@ public class ComboChainQuest extends Actor
     {
         if (completed)
         {
-            if (resultDisplayTicks > 0)
-            {
-                resultDisplayTicks--;
-                if (resultDisplayTicks == 0)
-                {
-                    clearOverlay();
-                }
-            }
+            updateResultOverlayTicks();
             return;
         }
 
@@ -85,12 +66,8 @@ public class ComboChainQuest extends Actor
         Actor player = getPlayer();
         if (player != null && !questActive)
         {
-            int dx = Math.abs(player.getX() - getX());
-            int dy = Math.abs(player.getY() - getY());
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            
             boolean startPressed = Greenfoot.isKeyDown("space");
-            if (distance < 100)
+            if (canStartQuest(player, 100))
             {
                 if (!tutorialActive)
                 {
@@ -108,13 +85,13 @@ public class ComboChainQuest extends Actor
                     {
                         tutorialActive = false;
                         questActive = true;
+                        beginQuest();
                         comboStep = 0;
                         animTick = 0;
                         successTick = 0;
                         failTick = 0;
                         comboKeyDown = false;
                         timeRemaining = 300;
-                        GameState.getInstance().setMiniQuestActive(true);
                         interactionCooldown = 10;
                     }
                 }
@@ -157,22 +134,13 @@ public class ComboChainQuest extends Actor
         }
     }
 
-    public boolean isCompleted()
-    {
-        return completed;
-    }
-    
     private void updateDisplay()
     {
         World world = getWorld();
         if (world == null) return;
         
         // Get or create overlay layer
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
         
         int panelW = 460;
         int panelH = 280;
@@ -260,18 +228,22 @@ public class ComboChainQuest extends Actor
         img.setColor(new Color(100, 200, 255));
         img.drawString("Timp: " + (timeRemaining / 60 + 1) + "s", px + 320, py + 240);
 
-        myOverlay.setImage(img);
+        if (overlay != null)
+        {
+            overlay.setImage(img);
+        }
     }
     
     private void finishQuest(boolean success)
     {
-        questActive = false;
+        endQuest();
         completed = true;
         resultDisplayTicks = 120;
-        GameState.getInstance().setMiniQuestActive(false);
 
         World world = getWorld();
-        if (world == null || myOverlay == null) return;
+        if (world == null) return;
+        ensureOverlay();
+        if (overlay == null) return;
         
         int panelW = 460;
         int panelH = 280;
@@ -313,27 +285,15 @@ public class ComboChainQuest extends Actor
         transparent.fillRect(0, 0, 48, 48);
         setImage(transparent);
         
-        myOverlay.setImage(img);
-    }
-    
-    private void clearOverlay()
-    {
-        if (myOverlay != null && myOverlay.getWorld() != null)
-        {
-            getWorld().removeObject(myOverlay);
-            myOverlay = null;
-        }
+        overlay.setImage(img);
     }
 
     private void showTutorial()
     {
         World world = getWorld();
         if (world == null) return;
-        if (myOverlay == null || myOverlay.getWorld() == null)
-        {
-            myOverlay = new OverlayLayer();
-            world.addObject(myOverlay, world.getWidth() / 2, world.getHeight() / 2);
-        }
+        ensureOverlay();
+        if (overlay == null) return;
 
         int w = 460;
         int h = 190;
@@ -353,42 +313,8 @@ public class ComboChainQuest extends Actor
         img.setColor(new Color(200, 255, 200));
         img.drawString("Apasă SPATIU pentru a începe", 140, 145);
 
-        myOverlay.setImage(img);
+        overlay.setImage(img);
     }
-
-    private void initBasePosition()
-    {
-        if (!baseYSet && getWorld() != null)
-        {
-            baseY = getY();
-            baseYSet = true;
-        }
-    }
-
-    private void updateFloating()
-    {
-        if (!baseYSet) return;
-        floatTick++;
-        int offset = (int)(Math.sin(floatTick * 0.12) * 4);
-        setLocation(getX(), baseY + offset);
-    }
-    
-    private Actor getPlayer()
-    {
-        World world = getWorld();
-        if (world == null) return null;
-        
-        java.util.List<Boy> boys = world.getObjects(Boy.class);
-        if (!boys.isEmpty()) return boys.get(0);
-        
-        java.util.List<Girl> girls = world.getObjects(Girl.class);
-        if (!girls.isEmpty()) return girls.get(0);
-        
-        return null;
-    }
-    
-    public int getMapX() { return mapX; }
-    public int getMapY() { return mapY; }
     
         public java.util.List<TiledMap.CollisionRect> getCollisionRects()
         {
