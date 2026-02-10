@@ -98,7 +98,7 @@ public class Teacher extends QuizNPCBase
         if (total >= 5)
         {
             String completionText = gameState.areMainMapQuestsUnlocked()
-                ? "Bravo! Ai răspuns corect la " + correct + "/5 întrebări.\n---\nAcum mergi la Laboratorul de Biologie (săgeți de jos).\n---\nAcolo vei rezolva mai multe puzzle-uri!"
+                ? "Bravo! Ai răspuns corect la " + correct + "/5 întrebări.\n---\nAcum rezolvă și mini-jocurile notate cu '!' (apasă SPACE în jurul lor)."
                 : "Ai terminat toate 5 întrebări! Continuă cu celelalte activități pe hartă.";
 
             DialogueBox completion = new DialogueBox(completionText, iconPath, true);

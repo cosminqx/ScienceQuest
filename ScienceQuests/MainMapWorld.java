@@ -456,22 +456,23 @@ public class MainMapWorld extends World implements CollisionWorld
         int startY = 110;
         int lineHeight = 35;
         
-        img.drawString("• Obișnuiește-te cu Quiz-urile și mini-quest-urile", 40, startY);
-        img.drawString("  din clasă", 40, startY + lineHeight);
+        img.drawString("• Rezolva toate Quiz-urile date de profesor apropiindu-te de el", 40, startY);
+        img.drawString("apoi mini-quest-urile apăsând SPACE în dreptul a fiecarui '!'", 40, startY + lineHeight);
         
-        img.drawString("• După aceea, mergi la Laboratorul de Biologie", 40, startY + lineHeight * 2);
-        img.drawString("  (în jos, la baza clasei) și fă la fel", 40, startY + lineHeight * 3);
+        img.drawString("• După aceea, vei debloca Laboratorul de Biologie", 40, startY + lineHeight * 2);
+        img.drawString("unde v-a trebui să repari laboratorul.", 40, startY + lineHeight * 3);
         
-        img.drawString("• Mergi la Laboratorul de Fizică", 40, startY + lineHeight * 4);
-        img.drawString("  (în stânga clasei)", 40, startY + lineHeight * 5);
-        
+        img.drawString("• Apoi vei debloca Laboratorul de Fizică", 40, startY + lineHeight * 4);
+        img.drawString("• La final vei debloca Laboratorul de Chimie", 40, startY + lineHeight * 5);
+
+
         // Bottom text
         img.setFont(FontManager.getPixeledSmall());
         img.setColor(new Color(100, 200, 255));
         drawCenteredString(img, "Apasă SPACE sau ENTER pentru a continua", panelW / 2, panelH - 30);
         
         tutorialOverlay.setImage(img);
-        tutorialDisplayTicks = 600; // Auto-close after 10 seconds if not dismissed
+        tutorialDisplayTicks = 1500; // Auto-close after 15 seconds if not dismissed
     }
     
     private void clearTutorial()
